@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { ProjectsService } from './projects.service';
+import { ProjectsController } from './projects.controller';
+import { DatabaseModule } from '../common/database/database.module';
+import { AuthModule } from '../auth/auth.module';
+
+@Module({
+  imports: [DatabaseModule, AuthModule],
+  providers: [ProjectsService],
+  controllers: [ProjectsController],
+})
+export class ProjectsModule {}
