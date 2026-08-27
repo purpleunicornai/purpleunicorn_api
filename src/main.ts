@@ -2,6 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { RequestExceptionFilter } from './common/middleware/request-exception.filter';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { ConfigType } from '@nestjs/config';
+import baseConfig from './config/base.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -13,6 +17,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  app.useGlobalFilters(new RequestExceptionFilter());
+  app.useGlobalInterceptors(new TimeoutInterceptor(120000)); // 2 minute timeout — the AI-backed candidate search can run long
 
   const config = new DocumentBuilder()
     .setTitle('Purple Unicorn Api')
@@ -41,7 +48,9 @@ async function bootstrap() {
     },
   });
 
-  const port = Number(process.env.PORT ?? 4000);
+  const baseConf: ConfigType<typeof baseConfig> = app.get(baseConfig.KEY);
+
+  const port = Number(baseConf.port ?? 4000);
   await app.listen(port);
   Logger.debug(
     `Purple Unicorn API listening on http://localhost:${port}`,

@@ -1,0 +1,17 @@
+enum DistanceUnit {
+  MILES
+  KILOMETERS
+}
+
+model filter_location_cities {
+  uid             String        @id @unique @default(uuid()) @db.Uuid
+  created         DateTime      @default(now())
+  updated         DateTime      @updatedAt
+  role_filters_id String        @db.Uuid
+  role_filters    role_filters  @relation(fields: [role_filters_id], references: [uid])
+  name            String
+  state           String?
+  postcode        String?
+  distance_unit   DistanceUnit?
+  distance_value  Int?
+}

@@ -1,0 +1,18 @@
+model role_result {
+  uid             String        @id @unique @default(uuid()) @db.Uuid
+  created         DateTime      @default(now())
+  updated         DateTime      @updatedAt
+  candidate_uid   String?       @db.Uuid
+  candidate       candidate?    @relation(fields: [candidate_uid], references: [uid])
+  role_id         String        @db.Uuid
+  role            roles         @relation(fields: [role_id], references: [uid])
+  score           Int?
+  shortlist       Boolean?      @default(false)
+  relevancy_score Int?
+  rated_by        String?
+  summary         String?
+  tokens_used     Int?
+  tokens_cost     Int?
+  filter_id       String?       @db.Uuid
+  role_filter     role_filters? @relation(fields: [filter_id], references: [uid])
+}

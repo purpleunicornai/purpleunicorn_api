@@ -1,0 +1,13 @@
+model roles {
+  uid          String         @id @unique @default(uuid()) @db.Uuid
+  created      DateTime       @default(now())
+  updated      DateTime       @updatedAt
+  project_id   String         @db.Uuid
+  project      projects       @relation(fields: [project_id], references: [uid])
+  name         String
+  description  String?
+  summary      String?
+  created_by   String?
+  role_filters role_filters[]
+  role_result  role_result[]
+}

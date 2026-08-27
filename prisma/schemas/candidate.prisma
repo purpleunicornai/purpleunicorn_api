@@ -1,0 +1,47 @@
+model candidate {
+  uid                               String                 @id @unique @default(uuid()) @db.Uuid
+  created                           DateTime               @default(now())
+  updated                           DateTime               @updatedAt
+  main_source                       String
+  // Personal Information
+  first_name                        String?
+  last_name                         String?
+  email                             String?
+  phone                             String?
+  country_calling_code              String?
+  contact_info_last_updated         DateTime?
+  rocketreach_profile_id            String?
+  // Location
+  current_location_city             String?
+  current_location_country_code     String?
+  current_location_postal_code      String?
+  open_to_relocation                Boolean?
+  open_to_remote_work               Boolean?
+  current_work_authorization_status String?
+  // Experience
+  experience_years                  Int?
+  experience_roles                  String[]
+  current_title                     String?
+  current_company                   String?
+  previous_companies                String[]
+  previous_titles                   String[]
+  current_salary                    Float?
+  current_salary_currency           String?
+  current_role_start_date           DateTime?
+  // Skills
+  skills                            String[]
+  languages                         String[]
+  diversity                         String[]
+  // Education
+  education_levels                  String[]
+  education_universities            String[]
+  graduation_years                  DateTime[]
+  // other
+  summary                           String?
+  image_url                         String?
+  original_source_url               String?
+  sources                           String[] // list of sources where the candidate was found, e.g. LinkedIn, Indeed, Google X-Ray, etc.
+  experience                        candidate_experience[]
+  // Relationships
+  role_results                      role_result[]
+}

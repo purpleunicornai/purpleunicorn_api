@@ -1,0 +1,44 @@
+model role_filters {
+  uid                         String   @id @unique @default(uuid()) @db.Uuid
+  created                     DateTime @default(now())
+  updated                     DateTime @updatedAt
+  role_id                     String   @db.Uuid
+  role                        roles    @relation(fields: [role_id], references: [uid])
+  // location
+  country_code                String?
+  remote_work                 Boolean? @default(false)
+  work_authorization_required Boolean? @default(false)
+
+  // Experience
+  experience_min_yrs              Int?
+  experience_max_yrs              Int?
+  // Titles
+  title                           String
+  alternative_titles              String[]
+  title_levels                    String[] // e.g. "junior", "mid-level", "senior", "lead", "principal"
+  roles                           String[] // e.g. "software engineer", "data scientist", "product manager", "designer"
+  current_role_min_yrs            Int
+  current_role_max_yrs            Int
+  current_role_tenure_yrs         Int
+  // Skills
+  required_skills                 String[]
+  optional_skills                 String[]
+  // Education
+  education_levels                String[] // e.g. "bachelor's", "master's",
+  education_universities          String[] // e.g. "MIT", "Stanford", "Harvard"
+  education_excluded_universities String[] // e.g. "MIT", "Stanford", "Harvard"
+  education_graduation_min_yr     DateTime?
+  education_graduation_max_yr     DateTime?
+  // languages
+  required_languages              String[]
+  optional_languages              String[]
+  career_growth                   String[]
+  security_clearance_required     String[]
+  diversity                       String[]
+  other_experience                String[]
+  sites                           String[] // e.g. "LinkedIn", "Indeed", "Google X-Ray", "Docs", "GitHub"
+  metadata                        Json?                    @db.JsonB // any additional metadata that may be needed for the search service, e.g. LinkedIn search filters, Indeed search filters, etc.
+  filter_companies                filter_companies[]
+  filter_location_cities          filter_location_cities[]
+  role_results                    role_result[]
+}
