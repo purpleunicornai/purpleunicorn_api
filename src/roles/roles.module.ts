@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
-import { ServicesModule } from '../services/services.module';
 import { DatabaseModule } from '../common/database/database.module';
+import { SearchModule } from './search/search.module';
+import { ProjectsModule } from '../projects/projects.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [ServicesModule, DatabaseModule],
+  imports: [DatabaseModule, SearchModule, ProjectsModule, AuthModule],
   controllers: [RolesController],
   providers: [RolesService],
 })

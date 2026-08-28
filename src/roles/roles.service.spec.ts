@@ -1,16 +1,63 @@
 import { RolesService } from './roles.service';
-import { RoleFilterDto } from '../common/dto/search.dto';
-import { GoogleSearchService } from '../services/google-search/google-search.service';
-import { GeminiService } from '../services/gemini/gemini.service';
+import { ProjectsService } from '../projects/projects.service';
 import { PrismaService } from '../common/database/prisma.service';
+import { RequestException } from '../common/exception/core/ExceptionBase';
+import { RoleFilterDto } from '../common/dto/search.dto';
 
-function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
+async function captureError(promise: Promise<unknown>): Promise<RequestException> {
+  try {
+    await promise;
+  } catch (error) {
+    return error as RequestException;
+  }
+  throw new Error('Expected promise to reject');
+}
+
+function buildProject(overrides: Record<string, unknown> = {}) {
   return {
-    uid: 'search-1',
-    created: '2026-08-23T07:56:51.913Z',
-    updated: '2026-08-23T07:56:51.913Z',
-    role_id: 'role-1',
-    title: 'Software Engineer',
+    uid: 'project-1',
+    user_id: 'user-1',
+    organization_id: 'org-1',
+    ...overrides,
+  };
+}
+
+function buildRole(overrides: Record<string, unknown> = {}) {
+  return {
+    uid: 'role-1',
+    created: new Date('2026-08-23T00:00:00.000Z'),
+    updated: new Date('2026-08-23T00:00:00.000Z'),
+    project_id: 'project-1',
+    name: 'Fullstack Developer',
+    description: null,
+    summary: null,
+    created_by: 'user-1',
+    ...overrides,
+  };
+}
+
+function buildPrisma() {
+  return {
+    roles: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    role_filters: {
+      create: jest.fn(),
+    },
+  };
+}
+
+function buildRoleFilterDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
+  return {
+    uid: 'ignored',
+    created: '2026-08-23T00:00:00.000Z',
+    updated: '2026-08-23T00:00:00.000Z',
+    role_id: 'ignored',
+    title: 'Fullstack Developer',
     alternative_titles: [],
     title_levels: [],
     roles: [],
@@ -23,7 +70,7 @@ function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
     filter_location_cities: [],
     experience_min_yrs: 0,
     experience_max_yrs: 0,
-    required_skills: [],
+    required_skills: ['React', 'Node.js'],
     optional_skills: [],
     education_levels: [],
     education_universities: [],
@@ -43,57 +90,23 @@ function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
   };
 }
 
-function buildGoogleSearchService(): jest.Mocked<GoogleSearchService> {
-  return { search: jest.fn().mockResolvedValue([]) } as unknown as jest.Mocked<GoogleSearchService>;
-}
-
-function buildGeminiService(): jest.Mocked<GeminiService> {
+function buildProjectsService(): jest.Mocked<ProjectsService> {
   return {
-    formatCandidates: jest.fn().mockResolvedValue({ matches: [], tokensUsed: 0 }),
-  } as unknown as jest.Mocked<GeminiService>;
-}
-
-function buildPrisma() {
-  return {
-    candidate: {
-      findFirst: jest.fn().mockResolvedValue(null),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    role_result: {
-      findFirst: jest.fn().mockResolvedValue(null),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-  };
-}
-
-function buildCandidateFields(overrides: Record<string, unknown> = {}) {
-  return {
-    main_source: 'LinkedIn',
-    original_source_url: 'https://www.linkedin.com/in/janedoe',
-    sources: ['LinkedIn'],
-    first_name: 'Jane',
-    last_name: 'Doe',
-    skills: ['TypeScript'],
-    ...overrides,
-  };
+    findOneForUser: jest.fn().mockResolvedValue(buildProject()),
+  } as unknown as jest.Mocked<ProjectsService>;
 }
 
 describe('RolesService', () => {
-  let googleSearchService: jest.Mocked<GoogleSearchService>;
-  let geminiService: jest.Mocked<GeminiService>;
   let prisma: ReturnType<typeof buildPrisma>;
+  let projectsService: jest.Mocked<ProjectsService>;
   let service: RolesService;
 
   beforeEach(() => {
-    googleSearchService = buildGoogleSearchService();
-    geminiService = buildGeminiService();
     prisma = buildPrisma();
+    projectsService = buildProjectsService();
     service = new RolesService(
-      googleSearchService,
-      geminiService,
       prisma as unknown as PrismaService,
+      projectsService,
     );
   });
 
@@ -101,303 +114,309 @@ describe('RolesService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('buildSiteFilter', () => {
-    it('defaults to LinkedIn, Indeed, and the XRAY_SITES list when dto.sites is empty', () => {
-      const dto = buildDto({ sites: [] });
+  describe('findAllForProject', () => {
+    it('checks the project is visible to the caller, then lists its roles', async () => {
+      const roles = [buildRole()];
+      prisma.roles.findMany.mockResolvedValue(roles);
 
-      const filter = (service as any).buildSiteFilter(dto);
-
-      expect(filter).toBe(
-        '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
-          'site:stackoverflow.com/users OR site:researchgate.net OR site:about.me OR ' +
-          'site:behance.net OR site:dribbble.com OR site:angel.co OR site:wellfound.com OR ' +
-          'site:kaggle.com OR site:medium.com OR site:dev.to)',
+      const result = await service.findAllForProject(
+        'project-1',
+        'org-1',
+        'user-1',
       );
+
+      expect(projectsService.findOneForUser).toHaveBeenCalledWith(
+        'project-1',
+        'org-1',
+        'user-1',
+      );
+      expect(prisma.roles.findMany).toHaveBeenCalledWith({
+        where: { project_id: 'project-1' },
+      });
+      expect(result).toBe(roles);
     });
 
-    it('uses dto.sites instead of the defaults when provided', () => {
-      const dto = buildDto({ sites: ['github.com', 'gitlab.com'] });
+    it('propagates the 404 when the project is not visible to the caller', async () => {
+      projectsService.findOneForUser.mockRejectedValue(
+        new RequestException('Project not found', 404, 'PROJECT_NOT_FOUND'),
+      );
 
-      const filter = (service as any).buildSiteFilter(dto);
+      const error = await captureError(
+        service.findAllForProject('project-1', 'org-1', 'user-1'),
+      );
 
-      expect(filter).toBe('(site:github.com OR site:gitlab.com)');
-    });
-
-    it('does not wrap a single site in parentheses', () => {
-      // Google's Custom Search API returns zero results for a
-      // parenthesized single-term path-scoped site: filter, e.g.
-      // "(site:linkedin.com/in)" — confirmed against the live API.
-      const dto = buildDto({ sites: ['linkedin.com/in'] });
-
-      const filter = (service as any).buildSiteFilter(dto);
-
-      expect(filter).toBe('site:linkedin.com/in');
+      expect(error.getStatus()).toBe(404);
+      expect(prisma.roles.findMany).not.toHaveBeenCalled();
     });
   });
 
-  describe('buildXrayQueries', () => {
-    it('builds a primary query with the site filter, quoted title, required skills, and location', () => {
-      const dto = buildDto({
-        sites: ['linkedin.com'],
-        title: 'Software Engineer',
-        required_skills: ['TypeScript', 'AWS'],
+  describe('findOne', () => {
+    it('returns the role with its latest filter and results when visible to the caller', async () => {
+      const role = buildRole();
+      prisma.roles.findFirst.mockResolvedValue(role);
+
+      const result = await service.findOne('role-1', 'org-1', 'user-1');
+
+      expect(prisma.roles.findFirst).toHaveBeenCalledWith({
+        where: { uid: 'role-1' },
+        include: {
+          role_filters: { orderBy: { created: 'desc' }, take: 1 },
+          role_result: { include: { candidate: true } },
+        },
+      });
+      expect(projectsService.findOneForUser).toHaveBeenCalledWith(
+        'project-1',
+        'org-1',
+        'user-1',
+      );
+      expect(result).toBe(role);
+    });
+
+    it('throws a 404 RequestException when the role does not exist', async () => {
+      prisma.roles.findFirst.mockResolvedValue(null);
+
+      const error = await captureError(
+        service.findOne('role-1', 'org-1', 'user-1'),
+      );
+
+      expect(error).toBeInstanceOf(RequestException);
+      expect(error.message).toBe('Role not found');
+      expect(error.getStatus()).toBe(404);
+      expect(projectsService.findOneForUser).not.toHaveBeenCalled();
+    });
+
+    it('propagates the 404 when the parent project is not visible to the caller', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      projectsService.findOneForUser.mockRejectedValue(
+        new RequestException('Project not found', 404, 'PROJECT_NOT_FOUND'),
+      );
+
+      const error = await captureError(
+        service.findOne('role-1', 'org-1', 'user-1'),
+      );
+
+      expect(error.getStatus()).toBe(404);
+    });
+  });
+
+  describe('getRole', () => {
+    it('returns the role when its project is visible to the caller', async () => {
+      const role = buildRole();
+      prisma.roles.findFirst.mockResolvedValue(role);
+
+      const result = await service.getRole('role-1', 'org-1', 'user-1');
+
+      expect(projectsService.findOneForUser).toHaveBeenCalledWith(
+        'project-1',
+        'org-1',
+        'user-1',
+      );
+      expect(result).toBe(role);
+    });
+  });
+
+  describe('create', () => {
+    it('checks the project is visible to the caller, then creates the role', async () => {
+      const created = buildRole();
+      prisma.roles.create.mockResolvedValue(created);
+
+      const result = await service.create(
+        { project_id: 'project-1', name: 'Fullstack Developer' },
+        'user-1',
+        'org-1',
+      );
+
+      expect(projectsService.findOneForUser).toHaveBeenCalledWith(
+        'project-1',
+        'org-1',
+        'user-1',
+      );
+      expect(prisma.roles.create).toHaveBeenCalledWith({
+        data: {
+          project_id: 'project-1',
+          name: 'Fullstack Developer',
+          description: undefined,
+          created_by: 'user-1',
+        },
+      });
+      expect(result).toBe(created);
+    });
+  });
+
+  describe('createFilter', () => {
+    it('checks the role is visible to the caller, then saves the filter criteria', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      const created = { uid: 'filter-1' };
+      prisma.role_filters.create.mockResolvedValue(created);
+      const dto = buildRoleFilterDto({ title: 'Fullstack Developer' });
+
+      const result = await service.createFilter(
+        'role-1',
+        dto,
+        'org-1',
+        'user-1',
+      );
+
+      expect(projectsService.findOneForUser).toHaveBeenCalledWith(
+        'project-1',
+        'org-1',
+        'user-1',
+      );
+      expect(prisma.role_filters.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          role_id: 'role-1',
+          title: 'Fullstack Developer',
+          required_skills: ['React', 'Node.js'],
+        }),
+      });
+      expect(result).toBe(created);
+    });
+
+    it('nests filter_location_cities as a create', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
+      const dto = buildRoleFilterDto({
         filter_location_cities: [
           {
-            uid: '1',
-            created: '2026-08-23T07:56:51.913Z',
-            updated: '2026-08-23T07:56:51.913Z',
-            role_filters_id: 'search-1',
-            name: 'New York',
-            state: 'NY',
+            uid: 'city-1',
+            created: '2026-08-23T00:00:00.000Z',
+            updated: '2026-08-23T00:00:00.000Z',
+            role_filters_id: 'filter-1',
+            name: 'London',
+            state: '',
             postcode: '',
-            distance_unit: 'MILES',
-            distance_value: 0,
+            distance_unit: 'KILOMETERS',
+            distance_value: 10,
           },
         ],
       });
 
-      const queries = (service as any).buildXrayQueries(dto);
+      await service.createFilter('role-1', dto, 'org-1', 'user-1');
 
-      expect(queries).toContain(
-        'site:linkedin.com "Software Engineer" TypeScript AWS "New York"',
-      );
-    });
-
-    it('OR-groups optional skills', () => {
-      const dto = buildDto({
-        sites: ['linkedin.com'],
-        title: 'Software Engineer',
-        optional_skills: ['GraphQL', 'Docker'],
-      });
-
-      const queries = (service as any).buildXrayQueries(dto);
-
-      expect(queries).toContain(
-        'site:linkedin.com "Software Engineer" (GraphQL OR Docker)',
-      );
-    });
-
-    it('adds a query variant for up to three alternative titles', () => {
-      const dto = buildDto({
-        sites: ['linkedin.com'],
-        title: 'Software Engineer',
-        alternative_titles: [
-          'Backend Engineer',
-          'Platform Engineer',
-          'Systems Engineer',
-          'Infra Engineer',
+      const data = prisma.role_filters.create.mock.calls[0][0].data;
+      expect(data.filter_location_cities).toEqual({
+        create: [
+          {
+            name: 'London',
+            state: '',
+            postcode: '',
+            distance_unit: 'KILOMETERS',
+            distance_value: 10,
+          },
         ],
       });
-
-      const queries = (service as any).buildXrayQueries(dto);
-
-      expect(queries).toContain('site:linkedin.com "Backend Engineer"');
-      expect(queries).toContain('site:linkedin.com "Platform Engineer"');
-      expect(queries).toContain('site:linkedin.com "Systems Engineer"');
-      expect(queries).not.toContain('site:linkedin.com "Infra Engineer"');
     });
 
-    it('drops queries that are empty beyond the site filter', () => {
-      const dto = buildDto({ sites: ['linkedin.com'], title: '' });
+    it('converts graduation years into January 1st UTC dates, and passes through null', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
+      const dto = buildRoleFilterDto({
+        education_graduation_min_yr: 2020,
+        education_graduation_max_yr: null,
+      });
 
-      const queries = (service as any).buildXrayQueries(dto);
+      await service.createFilter('role-1', dto, 'org-1', 'user-1');
 
-      expect(queries).toEqual([]);
+      const data = prisma.role_filters.create.mock.calls[0][0].data;
+      expect(data.education_graduation_min_yr).toEqual(
+        new Date(Date.UTC(2020, 0, 1)),
+      );
+      expect(data.education_graduation_max_yr).toBeNull();
+    });
+
+    it('throws a 404 RequestException when the role does not exist', async () => {
+      prisma.roles.findFirst.mockResolvedValue(null);
+
+      const error = await captureError(
+        service.createFilter('role-1', buildRoleFilterDto(), 'org-1', 'user-1'),
+      );
+
+      expect(error).toBeInstanceOf(RequestException);
+      expect(error.message).toBe('Role not found');
+      expect(error.getStatus()).toBe(404);
+      expect(prisma.role_filters.create).not.toHaveBeenCalled();
     });
   });
 
-  describe('searchGoogle', () => {
-    it('runs every built query against GoogleSearchService and returns the combined results', async () => {
-      const dto = buildDto({
-        sites: ['linkedin.com'],
-        title: 'Software Engineer',
-        alternative_titles: ['Backend Engineer'],
-      });
-      const primaryResults = [{ title: 'Jane Doe', link: 'https://linkedin.com/in/jane' }];
-      const altResults = [{ title: 'John Roe', link: 'https://linkedin.com/in/john' }];
-      googleSearchService.search
-        .mockResolvedValueOnce(primaryResults)
-        .mockResolvedValueOnce(altResults);
-
-      const results = await (service as any).searchGoogle(dto);
-
-      expect(googleSearchService.search).toHaveBeenCalledWith(
-        'site:linkedin.com "Software Engineer"',
+  describe('update', () => {
+    it('updates only the provided fields when the caller owns the parent project', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      projectsService.findOneForUser.mockResolvedValue(
+        buildProject({ user_id: 'user-1' }) as any,
       );
-      expect(googleSearchService.search).toHaveBeenCalledWith(
-        'site:linkedin.com "Backend Engineer"',
+      const updated = buildRole({ name: 'Renamed' });
+      prisma.roles.update.mockResolvedValue(updated);
+
+      const result = await service.update(
+        'role-1',
+        { name: 'Renamed' },
+        'user-1',
+        'org-1',
       );
-      expect(results).toEqual([...primaryResults, ...altResults]);
-    });
-  });
 
-  describe('upsertCandidate', () => {
-    it('creates a new candidate when no existing candidate has a matching original_source_url', async () => {
-      const created = { uid: 'candidate-1', ...buildCandidateFields() };
-      prisma.candidate.create.mockResolvedValue(created);
-
-      const result = await (service as any).upsertCandidate(buildCandidateFields());
-
-      expect(prisma.candidate.findFirst).toHaveBeenCalledWith({
-        where: { original_source_url: 'https://www.linkedin.com/in/janedoe' },
-      });
-      expect(prisma.candidate.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          main_source: 'LinkedIn',
-          first_name: 'Jane',
-        }),
-      });
-      expect(result).toBe(created);
-    });
-
-    it('updates the existing candidate when the extracted fields differ', async () => {
-      const existing = {
-        uid: 'candidate-1',
-        main_source: 'LinkedIn',
-        original_source_url: 'https://www.linkedin.com/in/janedoe',
-        sources: ['LinkedIn'],
-        first_name: 'Jane',
-        last_name: 'Doe',
-        skills: ['JavaScript'],
-      };
-      prisma.candidate.findFirst.mockResolvedValue(existing);
-      const updated = { ...existing, skills: ['TypeScript'] };
-      prisma.candidate.update.mockResolvedValue(updated);
-
-      const result = await (service as any).upsertCandidate(buildCandidateFields());
-
-      expect(prisma.candidate.update).toHaveBeenCalledWith({
-        where: { uid: 'candidate-1' },
-        data: expect.objectContaining({ skills: ['TypeScript'] }),
+      expect(prisma.roles.update).toHaveBeenCalledWith({
+        where: { uid: 'role-1' },
+        data: { name: 'Renamed' },
       });
       expect(result).toBe(updated);
     });
 
-    it('returns the existing candidate without updating when nothing has changed', async () => {
-      const existing = {
-        uid: 'candidate-1',
-        ...buildCandidateFields(),
-      };
-      prisma.candidate.findFirst.mockResolvedValue(existing);
-
-      const result = await (service as any).upsertCandidate(buildCandidateFields());
-
-      expect(prisma.candidate.update).not.toHaveBeenCalled();
-      expect(result).toBe(existing);
-    });
-
-    it('creates a new candidate without a dedup lookup when original_source_url is missing', async () => {
-      const fields = buildCandidateFields({ original_source_url: undefined });
-      const created = { uid: 'candidate-2', ...fields };
-      prisma.candidate.create.mockResolvedValue(created);
-
-      const result = await (service as any).upsertCandidate(fields);
-
-      expect(prisma.candidate.findFirst).not.toHaveBeenCalled();
-      expect(prisma.candidate.create).toHaveBeenCalled();
-      expect(result).toBe(created);
-    });
-
-    it('converts current_role_start_date and graduation_years into Date objects', async () => {
-      prisma.candidate.create.mockResolvedValue({ uid: 'candidate-3' });
-
-      await (service as any).upsertCandidate(
-        buildCandidateFields({
-          current_role_start_date: '2024-01-15T00:00:00.000Z',
-          graduation_years: ['2020-06-18T00:00:00.000Z'],
-        }),
+    it('throws a 403 RequestException when the caller does not own the parent project', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      projectsService.findOneForUser.mockResolvedValue(
+        buildProject({ user_id: 'someone-else' }) as any,
       );
 
-      const data = prisma.candidate.create.mock.calls[0][0].data;
-      expect(data.current_role_start_date).toEqual(new Date('2024-01-15T00:00:00.000Z'));
-      expect(data.graduation_years).toEqual([new Date('2020-06-18T00:00:00.000Z')]);
+      const error = await captureError(
+        service.update('role-1', { name: 'x' }, 'user-1', 'org-1'),
+      );
+
+      expect(error).toBeInstanceOf(RequestException);
+      expect(error.message).toBe('Only the project owner can update this role');
+      expect(error.getStatus()).toBe(403);
+      expect(prisma.roles.update).not.toHaveBeenCalled();
+    });
+
+    it('throws a 404 RequestException when the role does not exist', async () => {
+      prisma.roles.findFirst.mockResolvedValue(null);
+
+      const error = await captureError(
+        service.update('role-1', { name: 'x' }, 'user-1', 'org-1'),
+      );
+
+      expect(error.message).toBe('Role not found');
+      expect(error.getStatus()).toBe(404);
     });
   });
 
-  describe('upsertRoleResult', () => {
-    const match = { candidate: buildCandidateFields(), summary: 'Strong match', score: 85 };
-
-    it('creates a role_result linking the candidate to the role when none exists', async () => {
-      const created = { uid: 'result-1' };
-      prisma.role_result.create.mockResolvedValue(created);
-
-      const result = await (service as any).upsertRoleResult(
-        'role-1',
-        'candidate-1',
-        match,
-        123,
+  describe('remove', () => {
+    it('deletes the role when the caller owns the parent project', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      projectsService.findOneForUser.mockResolvedValue(
+        buildProject({ user_id: 'user-1' }) as any,
       );
 
-      expect(prisma.role_result.findFirst).toHaveBeenCalledWith({
-        where: { role_id: 'role-1', candidate_uid: 'candidate-1' },
+      await service.remove('role-1', 'user-1', 'org-1');
+
+      expect(prisma.roles.delete).toHaveBeenCalledWith({
+        where: { uid: 'role-1' },
       });
-      expect(prisma.role_result.create).toHaveBeenCalledWith({
-        data: {
-          role_id: 'role-1',
-          candidate_uid: 'candidate-1',
-          summary: 'Strong match',
-          score: 85,
-          tokens_used: 123,
-        },
-      });
-      expect(result).toBe(created);
     });
 
-    it('updates the existing role_result when one already exists for that role and candidate', async () => {
-      const existing = { uid: 'result-1' };
-      prisma.role_result.findFirst.mockResolvedValue(existing);
-      const updated = { uid: 'result-1', score: 85 };
-      prisma.role_result.update.mockResolvedValue(updated);
-
-      const result = await (service as any).upsertRoleResult(
-        'role-1',
-        'candidate-1',
-        match,
-        123,
+    it('throws a 403 RequestException when the caller does not own the parent project', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      projectsService.findOneForUser.mockResolvedValue(
+        buildProject({ user_id: 'someone-else' }) as any,
       );
 
-      expect(prisma.role_result.update).toHaveBeenCalledWith({
-        where: { uid: 'result-1' },
-        data: {
-          role_id: 'role-1',
-          candidate_uid: 'candidate-1',
-          summary: 'Strong match',
-          score: 85,
-          tokens_used: 123,
-        },
-      });
-      expect(result).toBe(updated);
-    });
-  });
+      const error = await captureError(
+        service.remove('role-1', 'user-1', 'org-1'),
+      );
 
-  describe('search', () => {
-    it('runs the Google search, formats results with Gemini, and saves each match as a candidate + role_result', async () => {
-      const dto = buildDto({ role_id: 'role-1', sites: ['linkedin.com'] });
-      const items = [{ title: 'Jane Doe', link: 'https://linkedin.com/in/jane' }];
-      googleSearchService.search.mockResolvedValue(items);
-
-      const match = { candidate: buildCandidateFields(), summary: 'Strong match', score: 85 };
-      geminiService.formatCandidates.mockResolvedValue({ matches: [match], tokensUsed: 100 });
-
-      const candidate = { uid: 'candidate-1' };
-      prisma.candidate.create.mockResolvedValue(candidate);
-      const roleResult = { uid: 'result-1' };
-      prisma.role_result.create.mockResolvedValue(roleResult);
-
-      const results = await service.search(dto);
-
-      expect(geminiService.formatCandidates).toHaveBeenCalledWith(items, dto);
-      expect(prisma.candidate.create).toHaveBeenCalled();
-      expect(prisma.role_result.create).toHaveBeenCalledWith({
-        data: {
-          role_id: 'role-1',
-          candidate_uid: 'candidate-1',
-          summary: 'Strong match',
-          score: 85,
-          tokens_used: 100,
-        },
-      });
-      expect(results).toEqual([roleResult]);
+      expect(error).toBeInstanceOf(RequestException);
+      expect(error.message).toBe('Only the project owner can delete this role');
+      expect(error.getStatus()).toBe(403);
+      expect(prisma.roles.delete).not.toHaveBeenCalled();
     });
   });
 });

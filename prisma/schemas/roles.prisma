@@ -3,7 +3,7 @@ model roles {
   created      DateTime       @default(now())
   updated      DateTime       @updatedAt
   project_id   String         @db.Uuid
-  project      projects       @relation(fields: [project_id], references: [uid])
+  project      projects       @relation(fields: [project_id], references: [uid], onDelete: Cascade)
   name         String
   description  String?
   summary      String?

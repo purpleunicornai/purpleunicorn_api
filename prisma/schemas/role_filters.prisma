@@ -3,7 +3,7 @@ model role_filters {
   created                     DateTime @default(now())
   updated                     DateTime @updatedAt
   role_id                     String   @db.Uuid
-  role                        roles    @relation(fields: [role_id], references: [uid])
+  role                        roles    @relation(fields: [role_id], references: [uid], onDelete: Cascade)
   // location
   country_code                String?
   remote_work                 Boolean? @default(false)
