@@ -18,6 +18,12 @@ async function bootstrap() {
     }),
   );
 
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['content-type', 'origin', 'authorization'],
+  });
+
   app.useGlobalFilters(new RequestExceptionFilter());
   app.useGlobalInterceptors(new TimeoutInterceptor(120000)); // 2 minute timeout — the AI-backed candidate search can run long
 

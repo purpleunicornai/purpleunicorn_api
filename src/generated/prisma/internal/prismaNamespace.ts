@@ -1189,7 +1189,8 @@ export const Role_filtersScalarFieldEnum = {
   diversity: 'diversity',
   other_experience: 'other_experience',
   sites: 'sites',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  archived: 'archived'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]

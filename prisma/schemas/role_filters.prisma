@@ -37,8 +37,10 @@ model role_filters {
   diversity                       String[]
   other_experience                String[]
   sites                           String[] // e.g. "LinkedIn", "Indeed", "Google X-Ray", "Docs", "GitHub"
-  metadata                        Json?                    @db.JsonB // any additional metadata that may be needed for the search service, e.g. LinkedIn search filters, Indeed search filters, etc.
-  filter_companies                filter_companies[]
-  filter_location_cities          filter_location_cities[]
-  role_results                    role_result[]
+  metadata                        Json?     @db.JsonB // any additional metadata that may be needed for the search service, e.g. LinkedIn search filters, Indeed search filters, etc.
+  archived                        Boolean   @default(false)
+
+  filter_companies       filter_companies[]
+  filter_location_cities filter_location_cities[]
+  role_results           role_result[]
 }

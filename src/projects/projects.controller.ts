@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Post,
@@ -27,6 +28,7 @@ import { Serialize } from '../common/interceptors/serialize.interceptor';
 @UseGuards(ClerkAuthGuard)
 @Controller('projects')
 export class ProjectsController {
+  logger = new Logger(ProjectsController.name);
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Get()

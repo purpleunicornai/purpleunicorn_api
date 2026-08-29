@@ -47,6 +47,7 @@ function buildPrisma() {
     },
     role_filters: {
       create: jest.fn(),
+      updateMany: jest.fn(),
     },
   };
 }
@@ -160,7 +161,14 @@ describe('RolesService', () => {
       expect(prisma.roles.findFirst).toHaveBeenCalledWith({
         where: { uid: 'role-1' },
         include: {
-          role_filters: { orderBy: { created: 'desc' }, take: 1 },
+          project: { select: { name: true } },
+          role_filters: {
+            where: { archived: false },
+            include: {
+              filter_companies: true,
+              filter_location_cities: true,
+            },
+          },
           role_result: { include: { candidate: true } },
         },
       });
@@ -262,6 +270,10 @@ describe('RolesService', () => {
         'org-1',
         'user-1',
       );
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1' },
+        data: { archived: true },
+      });
       expect(prisma.role_filters.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           role_id: 'role-1',

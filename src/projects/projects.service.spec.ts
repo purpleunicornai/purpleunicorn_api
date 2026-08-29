@@ -101,6 +101,21 @@ describe('ProjectsService', () => {
             },
           ],
         },
+        include: {
+          roles: {
+            include: {
+              _count: {
+                select: {
+                  role_result: {
+                    where: {
+                      role_filter: { archived: false },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       });
       expect(result).toBe(project);
     });

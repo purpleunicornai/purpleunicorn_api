@@ -1,12 +1,14 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 import { ProjectVisibility } from '../../generated/prisma/enums';
 
@@ -46,6 +48,36 @@ export class CreateProjectDto {
 }
 
 export class UpdateProjectDto extends PartialType(CreateProjectDto) {}
+
+export class ProjectRoleCountDto {
+  @ApiProperty({
+    description: 'Number of non-archived role_results for this role',
+  })
+  @Expose()
+  @IsInt()
+  role_result: number;
+}
+
+export class ProjectRoleSummaryDto {
+  @ApiProperty({ description: 'Unique identifier (UUID v4)' })
+  @Expose()
+  @IsUUID()
+  uid: string;
+
+  @ApiProperty({ description: 'Role name' })
+  @Expose()
+  @IsString()
+  name: string;
+
+  @ApiProperty({
+    description: 'Aggregate counts for this role',
+    type: () => ProjectRoleCountDto,
+  })
+  @Expose()
+  @ValidateNested()
+  @Type(() => ProjectRoleCountDto)
+  _count: ProjectRoleCountDto;
+}
 
 export class ProjectDto {
   @ApiProperty({ description: 'Unique identifier (UUID v4)' })
@@ -100,4 +132,17 @@ export class ProjectDto {
   @IsArray()
   @IsString({ each: true })
   users: string[];
+
+  @ApiProperty({
+    description:
+      'Roles belonging to this project, with result counts — only present when fetching a single project',
+    type: () => [ProjectRoleSummaryDto],
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProjectRoleSummaryDto)
+  roles?: ProjectRoleSummaryDto[];
 }

@@ -9,6 +9,7 @@ import { ServicesModule } from './services/services.module';
 import { RolesModule } from './roles/roles.module';
 import { DatabaseModule } from './common/database/database.module';
 import { ProjectsModule } from './projects/projects.module';
+import { MiddlewareModule } from './common/middleware/middleware.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ProjectsModule } from './projects/projects.module';
         },
       }),
     }),
+    MiddlewareModule,
     ConfigModule,
     AuthModule,
     ConfigModule,

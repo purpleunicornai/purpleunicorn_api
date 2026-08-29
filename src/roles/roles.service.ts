@@ -4,8 +4,39 @@ import { ProjectsService } from '../projects/projects.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
 import { RoleFilterDto } from '../common/dto/search.dto';
-import { DistanceUnit, role_filters, roles } from '../generated/prisma/client';
+import {
+  DistanceUnit,
+  Prisma,
+  role_filters,
+  roles,
+} from '../generated/prisma/client';
 import { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
+
+const ROLE_WITH_DETAILS_INCLUDE = {
+  project: {
+    select: {
+      name: true,
+    },
+  },
+  role_filters: {
+    where: {
+      archived: false,
+    },
+    include: {
+      filter_companies: true,
+      filter_location_cities: true,
+    },
+  },
+  role_result: {
+    include: {
+      candidate: true,
+    },
+  },
+} satisfies Prisma.rolesInclude;
+
+type RoleWithDetails = Prisma.rolesGetPayload<{
+  include: typeof ROLE_WITH_DETAILS_INCLUDE;
+}>;
 
 @Injectable()
 export class RolesService {
@@ -23,11 +54,24 @@ export class RolesService {
     return this.prisma.roles.findMany({ where: { project_id: projectId } });
   }
 
-  async findOne(id: string, orgId: string, userId: string): Promise<roles> {
-    const role = await this.findRoleOrThrow(id, {
-      role_filters: { orderBy: { created: 'desc' }, take: 1 },
-      role_result: { include: { candidate: true } },
+  async findOne(
+    id: string,
+    orgId: string,
+    userId: string,
+  ): Promise<RoleWithDetails> {
+    const role = await this.prisma.roles.findFirst({
+      where: { uid: id },
+      include: ROLE_WITH_DETAILS_INCLUDE,
     });
+
+    if (!role) {
+      throw new RequestException(
+        'Role not found',
+        HttpStatus.NOT_FOUND,
+        'ROLE_NOT_FOUND',
+      );
+    }
+
     await this.projectsService.findOneForUser(role.project_id, orgId, userId);
     return role;
   }
@@ -61,6 +105,16 @@ export class RolesService {
     userId: string,
   ): Promise<role_filters> {
     await this.getRole(roleId, orgId, userId);
+
+    // Archive previous filters to mark them as archived, so we can keep a history of filters for the role.
+    await this.prisma.role_filters.updateMany({
+      where: {
+        role_id: roleId,
+      },
+      data: {
+        archived: true,
+      },
+    });
 
     return this.prisma.role_filters.create({
       data: {
@@ -140,13 +194,9 @@ export class RolesService {
     await this.prisma.roles.delete({ where: { uid: id } });
   }
 
-  private async findRoleOrThrow(
-    id: string,
-    include?: Record<string, unknown>,
-  ): Promise<roles> {
+  private async findRoleOrThrow(id: string): Promise<roles> {
     const role = await this.prisma.roles.findFirst({
       where: { uid: id },
-      ...(include && { include }),
     });
 
     if (!role) {

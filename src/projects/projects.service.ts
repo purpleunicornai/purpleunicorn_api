@@ -3,7 +3,29 @@ import { PrismaService } from '../common/database/prisma.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { CreateProjectDto, UpdateProjectDto } from '../common/dto/project.dto';
 import { ProjectVisibility } from '../generated/prisma/enums';
-import { projects } from '../generated/prisma/client';
+import { Prisma, projects } from '../generated/prisma/client';
+
+const PROJECT_WITH_ROLES_INCLUDE = {
+  roles: {
+    include: {
+      _count: {
+        select: {
+          role_result: {
+            where: {
+              role_filter: {
+                archived: false,
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.projectsInclude;
+
+type ProjectWithRoles = Prisma.projectsGetPayload<{
+  include: typeof PROJECT_WITH_ROLES_INCLUDE;
+}>;
 
 @Injectable()
 export class ProjectsService {
@@ -22,13 +44,14 @@ export class ProjectsService {
     id: string,
     orgId: string,
     userId: string,
-  ): Promise<projects> {
+  ): Promise<ProjectWithRoles> {
     const project = await this.prisma.projects.findFirst({
       where: {
         uid: id,
         organization_id: orgId,
         ...this.visibleToUser(userId),
       },
+      include: PROJECT_WITH_ROLES_INCLUDE,
     });
 
     if (!project) {

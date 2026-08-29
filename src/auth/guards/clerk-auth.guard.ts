@@ -33,12 +33,19 @@ export class ClerkAuthGuard implements CanActivate {
         throw new UnauthorizedException('Token is missing a subject claim');
       }
 
+      const organization = payload.o as {
+        id: string;
+        rol: string;
+        slg: string;
+      };
+
       const auth: ClerkAuthContext = {
         userId: sub,
         sessionId: typeof payload.sid === 'string' ? payload.sid : undefined,
-        orgId: typeof payload.org_id === 'string' ? payload.org_id : undefined,
+        orgId:
+          typeof organization.id === 'string' ? organization.id : undefined,
         orgRole:
-          typeof payload.org_role === 'string' ? payload.org_role : undefined,
+          typeof organization.rol === 'string' ? organization.rol : undefined,
         claims: payload,
       };
       req.auth = auth;
