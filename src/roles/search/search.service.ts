@@ -1,8 +1,5 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import {
-  RoleFilterDto,
-  RoleFilterMetadataDto,
-} from '../../common/dto/search.dto';
+import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
+import { RoleFilterDto, RoleFilterMetadataDto } from '../dto/role_filter.dto';
 import { GoogleSearchService } from '../../services/google-search/google-search.service';
 import {
   GeminiCandidateFields,
@@ -19,6 +16,7 @@ import {
   roles,
 } from '../../generated/prisma/client.js';
 import { RequestException } from '../../common/exception/core/ExceptionBase';
+import { Observable } from 'rxjs';
 
 type StoredFilter = role_filters & {
   filter_location_cities: filter_location_cities[];
@@ -42,9 +40,117 @@ export class SearchService {
     return this.saveCandidateMatches(role.uid, filter.uid, formatted);
   }
 
-  private async getRoleFilter(filterId: string): Promise<StoredFilter> {
+  streamSearch(roleId: string): Observable<MessageEvent> {
+    return new Observable((subscriber) => {
+      this.logger.debug(`Starting search for roleId=${roleId}`);
+      const run = async () => {
+        try {
+          subscriber.next({
+            type: 'stage',
+            data: { stage: 'fetching filters', status: 'started' },
+          });
+          this.logger.debug(`Fetching role filter for roleId=${roleId}`);
+          const filter = await this.getRoleFilter(roleId);
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'fetching filters',
+              status: 'done',
+            },
+          });
+
+          subscriber.next({
+            type: 'stage',
+            data: { stage: 'parsing filters', status: 'started' },
+          });
+          this.logger.debug('Parsing role filter into DTO');
+          const dto = this.toRoleFilterDto(filter);
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'parsing filters',
+              status: 'done',
+            },
+          });
+
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'searching candidates',
+              status: 'started',
+            },
+          });
+          const items = await this.googleSearchService.search(dto);
+          this.logger.debug(
+            `Finished searching candidates for roleId=${roleId}, found ${items?.length} items`,
+          );
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'searching candidates',
+              status: 'done',
+              result: items?.length,
+            },
+          });
+
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'formating candidates',
+              status: 'started',
+            },
+          });
+          this.logger.debug(`Formatting candidates for roleId=${roleId}`);
+          const formatted = await this.geminiService.formatCandidates(
+            items,
+            dto,
+          );
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'formating candidates',
+              status: 'done',
+            },
+          });
+
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'saving candidates',
+              status: 'started',
+            },
+          });
+          this.logger.debug(`Saving candidates for roleId=${roleId}`);
+          const saved = await this.saveCandidateMatches(
+            filter.role_id,
+            filter.uid,
+            formatted,
+          );
+          subscriber.next({
+            type: 'done',
+            data: {
+              result: saved,
+            },
+          });
+
+          this.logger.debug('Completed search stream for roleId=' + roleId);
+
+          subscriber.complete();
+        } catch (e) {
+          subscriber.next({
+            type: 'error',
+            data: { message: e instanceof Error ? e.message : String(e) },
+          });
+          subscriber.complete();
+        }
+      };
+      void run();
+    });
+  }
+
+  private async getRoleFilter(roleId: string): Promise<StoredFilter> {
     const filter = await this.prisma.role_filters.findFirst({
-      where: { uid: filterId },
+      where: { role_id: roleId, archived: false },
       include: { filter_location_cities: true },
     });
 
@@ -64,10 +170,6 @@ export class SearchService {
   // with, so those services don't need to know about the Prisma entity.
   private toRoleFilterDto(filter: StoredFilter): RoleFilterDto {
     return {
-      uid: filter.uid,
-      created: filter.created.toISOString(),
-      updated: filter.updated.toISOString(),
-      role_id: filter.role_id,
       country_code: filter.country_code ?? '',
       remote_work: filter.remote_work ?? false,
       work_authorization_required: filter.work_authorization_required ?? false,
@@ -109,10 +211,6 @@ export class SearchService {
       // left empty here rather than guessing a mapping.
       filter_companies: [],
       filter_location_cities: filter.filter_location_cities.map((city) => ({
-        uid: city.uid,
-        created: city.created.toISOString(),
-        updated: city.updated.toISOString(),
-        role_filters_id: city.role_filters_id,
         name: city.name,
         state: city.state ?? '',
         postcode: city.postcode ?? '',

@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import AiConfig from '../../config/ai.config';
 import { type ConfigType } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { RoleFilterDto } from '../../common/dto/search.dto';
+import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { DEFAULT_XRAY_SITES } from '../../common/constants/google';
 
 export interface GoogleSearchItem {
@@ -11,6 +11,12 @@ export interface GoogleSearchItem {
   snippet?: string;
   [key: string]: unknown;
 }
+
+// Google's Custom Search JSON API caps a single request at 10 results (`num`)
+// and paginates via `start`; `start` + `num` - 1 cannot exceed 100, so 100
+// results per query is a hard ceiling the API enforces, not a choice made here.
+const RESULTS_PER_PAGE = 10;
+const MAX_RESULTS_PER_QUERY = 100;
 
 @Injectable()
 export class GoogleSearchService {
@@ -32,21 +38,48 @@ export class GoogleSearchService {
     this.logger.debug(`Running ${queries.length} Google x-ray query(s)`);
 
     const results = await Promise.all(
-      queries.map((query) => this.searchQuery(query)),
+      queries.map((query) => this.searchQueryPaginated(query)),
     );
 
     return results.flat();
   }
 
-  private async searchQuery(query: string): Promise<GoogleSearchItem[]> {
+  // Walks pages sequentially (rather than firing all of them at once) so we
+  // can stop as soon as a page comes back short — that means no more results
+  // exist for the query, and paging further would just waste API quota.
+  private async searchQueryPaginated(
+    query: string,
+  ): Promise<GoogleSearchItem[]> {
+    const items: GoogleSearchItem[] = [];
+
+    for (
+      let start = 1;
+      start <= MAX_RESULTS_PER_QUERY;
+      start += RESULTS_PER_PAGE
+    ) {
+      const page = await this.searchQuery(query, start);
+      items.push(...page);
+
+      if (page.length < RESULTS_PER_PAGE) break;
+    }
+
+    return items;
+  }
+
+  private async searchQuery(
+    query: string,
+    start = 1,
+  ): Promise<GoogleSearchItem[]> {
     const params = {
       key: this.aiConf.googleSearchApiKey,
       cx: this.aiConf.googleSearchEngineId,
       q: query,
+      num: String(RESULTS_PER_PAGE),
+      start: String(start),
     };
     const requestUrl = `https://www.googleapis.com/customsearch/v1?${new URLSearchParams(params).toString()}`;
 
-    this.logger.debug(`Running Google search: ${query}`);
+    this.logger.debug(`Running Google search: ${query} (start=${start})`);
     const response = await this.client.get(requestUrl);
     return response.data.items ?? [];
   }

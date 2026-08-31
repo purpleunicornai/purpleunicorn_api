@@ -26,7 +26,10 @@ function buildRolesService(): jest.Mocked<RolesService> {
 }
 
 function buildSearchService(): jest.Mocked<SearchService> {
-  return { search: jest.fn() } as unknown as jest.Mocked<SearchService>;
+  return {
+    search: jest.fn(),
+    streamSearch: jest.fn(),
+  } as unknown as jest.Mocked<SearchService>;
 }
 
 async function captureError(promise: Promise<unknown>): Promise<RequestException> {
@@ -168,14 +171,14 @@ describe('RolesController', () => {
     });
   });
 
-  describe('search', () => {
+  describe('fixedSearch', () => {
     it('resolves the role, then runs the search against the saved filter', async () => {
       const role = { uid: 'role-1' };
       rolesService.getRole.mockResolvedValue(role as any);
       const results = [{ uid: 'result-1' }];
       searchService.search.mockResolvedValue(results as any);
 
-      const result = await controller.search(
+      const result = await controller.fixedSearch(
         'role-1',
         { filterId: 'filter-1' },
         buildAuth(),
@@ -188,6 +191,18 @@ describe('RolesController', () => {
       );
       expect(searchService.search).toHaveBeenCalledWith('filter-1', role);
       expect(result).toBe(results);
+    });
+  });
+
+  describe('search (SSE)', () => {
+    it('delegates to SearchService.streamSearch for the given role', () => {
+      const stream = { subscribe: jest.fn() };
+      searchService.streamSearch.mockReturnValue(stream as any);
+
+      const result = controller.search('role-1');
+
+      expect(searchService.streamSearch).toHaveBeenCalledWith('role-1');
+      expect(result).toBe(stream);
     });
   });
 });

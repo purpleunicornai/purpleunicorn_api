@@ -2,9 +2,11 @@ import { RolesService } from './roles.service';
 import { ProjectsService } from '../projects/projects.service';
 import { PrismaService } from '../common/database/prisma.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
-import { RoleFilterDto } from '../common/dto/search.dto';
+import { RoleFilterDto } from './dto/role_filter.dto';
 
-async function captureError(promise: Promise<unknown>): Promise<RequestException> {
+async function captureError(
+  promise: Promise<unknown>,
+): Promise<RequestException> {
   try {
     await promise;
   } catch (error) {
@@ -52,12 +54,10 @@ function buildPrisma() {
   };
 }
 
-function buildRoleFilterDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
+function buildRoleFilterDto(
+  overrides: Partial<RoleFilterDto> = {},
+): RoleFilterDto {
   return {
-    uid: 'ignored',
-    created: '2026-08-23T00:00:00.000Z',
-    updated: '2026-08-23T00:00:00.000Z',
-    role_id: 'ignored',
     title: 'Fullstack Developer',
     alternative_titles: [],
     title_levels: [],
@@ -280,6 +280,10 @@ describe('RolesService', () => {
           title: 'Fullstack Developer',
           required_skills: ['React', 'Node.js'],
         }),
+        include: {
+          filter_companies: true,
+          filter_location_cities: true,
+        },
       });
       expect(result).toBe(created);
     });
@@ -290,10 +294,6 @@ describe('RolesService', () => {
       const dto = buildRoleFilterDto({
         filter_location_cities: [
           {
-            uid: 'city-1',
-            created: '2026-08-23T00:00:00.000Z',
-            updated: '2026-08-23T00:00:00.000Z',
-            role_filters_id: 'filter-1',
             name: 'London',
             state: '',
             postcode: '',

@@ -8,12 +8,13 @@ import {
   Patch,
   Post,
   Query,
+  Sse,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
-import { RoleFilterDto } from '../common/dto/search.dto';
+import { RoleFilterDto, RoleFilterResponseDto } from './dto/role_filter.dto';
 import {
   CreateRoleDto,
   RoleDto,
@@ -92,6 +93,7 @@ export class RolesController {
   }
 
   @Post('/:roleId/filters')
+  @Serialize(RoleFilterResponseDto)
   async createFilter(
     @Param('roleId') roleId: string,
     @Body() body: RoleFilterDto,
@@ -101,8 +103,8 @@ export class RolesController {
     return this.rolesService.createFilter(roleId, body, orgId, auth.userId);
   }
 
-  @Post('/:roleId/search')
-  async search(
+  @Post('/:roleId/fixed-search')
+  async fixedSearch(
     @Param('roleId') roleId: string,
     @Body() body: RunSearchDto,
     @CurrentAuth() auth: ClerkAuthContext,
@@ -110,6 +112,11 @@ export class RolesController {
     const orgId = this.requireOrgId(auth);
     const role = await this.rolesService.getRole(roleId, orgId, auth.userId);
     return this.searchService.search(body.filterId, role);
+  }
+
+  @Sse('/:roleId/search')
+  search(@Param('roleId') roleId: string) {
+    return this.searchService.streamSearch(roleId);
   }
 
   private requireOrgId(auth: ClerkAuthContext): string {

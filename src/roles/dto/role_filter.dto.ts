@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -11,6 +12,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
+import { CompanyFilterType } from '../../generated/prisma/enums';
+import { RoleFilterSummaryDto } from './role.dto';
 
 export class RoleFilterMetadataDto {
   @ApiProperty({
@@ -38,34 +41,6 @@ export class RoleFilterMetadataDto {
 }
 
 export class FilterLocationCityDto {
-  @ApiProperty({
-    description: 'Unique location identifier (UUID v4)',
-    example: 'ebc329c3-dbaa-4038-85b2-d1b634430997',
-  })
-  @IsUUID()
-  uid: string;
-
-  @ApiProperty({
-    description: 'Location entry creation timestamp',
-    example: '2026-08-23T07:56:51.913Z',
-  })
-  @IsDateString()
-  created: string;
-
-  @ApiProperty({
-    description: 'Location entry update timestamp',
-    example: '2026-08-23T07:56:51.913Z',
-  })
-  @IsDateString()
-  updated: string;
-
-  @ApiProperty({
-    description: 'Parent filter collection layout block foreign key link',
-    example: '0c9f9549-2f4c-4725-9be1-2b9a3b816347',
-  })
-  @IsUUID()
-  role_filters_id: string;
-
   @ApiProperty({
     description: 'Target boundary city parameter string',
     example: 'London',
@@ -111,42 +86,51 @@ export class FilterLocationCityDto {
   @Min(0)
   distance_value: number;
 }
+
+export class FilterCompanyDto {
+  @ApiProperty({
+    description:
+      'List of company names to filter candidates by. If empty, no company filtering will be applied.',
+    example: ['Google', 'Microsoft'],
+    type: [String],
+  })
+  @Expose()
+  @IsArray()
+  @IsString({ each: true })
+  company_names: string[];
+
+  @ApiProperty({
+    description:
+      'Type of company filter to apply. "INCLUDE" means only candidates from the specified companies will be included. "EXCLUDE" means candidates from the specified companies will be excluded.',
+    example: 'EXCLUDE',
+  })
+  @Expose()
+  @IsEnum(CompanyFilterType)
+  type: CompanyFilterType;
+
+  @ApiProperty({
+    description:
+      'Optional start date for filtering candidates based on their association with the specified companies. Format: YYYY-MM-DD',
+    example: '2020-01-01',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  start_date?: string;
+
+  @ApiProperty({
+    description:
+      'Optional end date for filtering candidates based on their association with the specified companies. Format: YYYY-MM-DD',
+    example: '2023-12-31',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  end_date?: string;
+}
 export class RoleFilterDto {
-  @ApiProperty({
-    description:
-      'Unique filter criteria group configuration block id (UUID v4)',
-    example: '0c9f9549-2f4c-4725-9be1-2b9a3b816347',
-  })
-  @Expose()
-  @IsUUID()
-  uid: string;
-
-  @ApiProperty({
-    description:
-      'Record initialization system metrics audit tracking timestamp',
-    example: '2026-08-23T07:56:51.913Z',
-  })
-  @Expose()
-  @IsDateString()
-  created: string;
-
-  @ApiProperty({
-    description: 'Record evaluation parameters adjustment tracking timestamp',
-    example: '2026-08-23T07:56:51.913Z',
-  })
-  @Expose()
-  @IsDateString()
-  updated: string;
-
-  @ApiProperty({
-    description:
-      'Target job role layout processing configuration profile reference mapping identity code link',
-    example: 'ba2032ee-2e31-49bc-9be6-fc59245a9306',
-  })
-  @Expose()
-  @IsUUID()
-  role_id: string;
-
   @ApiProperty({
     description:
       'ISO 2-letter operational tracking boundary country mapping context tag standard string codes',
@@ -441,12 +425,13 @@ export class RoleFilterDto {
     description:
       'Blacklisted companies excluded from pipeline automation evaluations data items profiles rules structural tracking configurations arrays maps listing logs elements processing parameters reference guidelines tracking identifiers',
     example: [],
-    type: [String],
+    type: () => [FilterCompanyDto],
   })
   @Expose()
   @IsArray()
-  @IsString({ each: true })
-  filter_companies: string[];
+  @ValidateNested({ each: true })
+  @Type(() => FilterCompanyDto)
+  filter_companies: FilterCompanyDto[];
 
   @ApiProperty({
     description:
@@ -458,4 +443,28 @@ export class RoleFilterDto {
   @ValidateNested({ each: true })
   @Type(() => FilterLocationCityDto)
   filter_location_cities: FilterLocationCityDto[];
+}
+
+// Represents a role_filters row as returned by the API once it's been saved —
+// unlike RoleFilterDto (the shape accepted when saving), this includes the
+// server-generated identifiers/timestamps and the raw metadata blob.
+export class RoleFilterResponseDto extends RoleFilterSummaryDto {
+  @ApiProperty({
+    description:
+      'Target job role layout processing configuration profile reference mapping identity code link',
+    example: 'ba2032ee-2e31-49bc-9be6-fc59245a9306',
+  })
+  @Expose()
+  @IsUUID()
+  role_id: string;
+
+  @ApiProperty({
+    description:
+      'Internal analytical text logging parser metadata processing indicators structural framework parameters records blocks mapping metrics data layouts configuration context settings',
+    type: () => RoleFilterMetadataDto,
+  })
+  @Expose()
+  @ValidateNested()
+  @Type(() => RoleFilterMetadataDto)
+  metadata: RoleFilterMetadataDto;
 }

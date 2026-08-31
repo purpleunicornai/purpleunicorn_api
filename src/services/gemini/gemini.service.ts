@@ -3,7 +3,7 @@ import AiConfig from '../../config/ai.config';
 import { type ConfigType } from '@nestjs/config';
 import { z } from 'zod';
 import type { LanguageModel } from 'ai';
-import { RoleFilterDto } from '../../common/dto/search.dto';
+import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { GoogleSearchItem } from '../google-search/google-search.service';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';

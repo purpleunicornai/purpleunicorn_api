@@ -3,7 +3,7 @@ import { PrismaService } from '../common/database/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
-import { RoleFilterDto } from '../common/dto/search.dto';
+import { RoleFilterDto } from './dto/role_filter.dto';
 import {
   DistanceUnit,
   Prisma,
@@ -103,7 +103,12 @@ export class RolesService {
     dto: RoleFilterDto,
     orgId: string,
     userId: string,
-  ): Promise<role_filters> {
+  ): Promise<
+    role_filters & {
+      filter_companies: Prisma.filter_companiesGetPayload<object>[];
+      filter_location_cities: Prisma.filter_location_citiesGetPayload<object>[];
+    }
+  > {
     await this.getRole(roleId, orgId, userId);
 
     // Archive previous filters to mark them as archived, so we can keep a history of filters for the role.
@@ -150,6 +155,14 @@ export class RolesService {
         other_experience: dto.other_experience,
         sites: dto.sites,
         metadata: dto.metadata as unknown as InputJsonValue,
+        filter_companies: {
+          create: dto.filter_companies.map((company) => ({
+            type: company.type,
+            company_names: company.company_names,
+            start_date: company.start_date,
+            end_date: company.end_date,
+          })),
+        },
         filter_location_cities: {
           create: dto.filter_location_cities.map((city) => ({
             name: city.name,
@@ -159,6 +172,10 @@ export class RolesService {
             distance_value: city.distance_value,
           })),
         },
+      },
+      include: {
+        filter_companies: true,
+        filter_location_cities: true,
       },
     });
   }

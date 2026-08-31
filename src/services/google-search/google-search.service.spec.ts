@@ -1,12 +1,8 @@
 import { GoogleSearchService } from './google-search.service';
-import { RoleFilterDto } from '../../common/dto/search.dto';
+import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 
 function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
   return {
-    uid: 'search-1',
-    created: '2026-08-23T07:56:51.913Z',
-    updated: '2026-08-23T07:56:51.913Z',
-    role_id: 'role-1',
     title: 'Software Engineer',
     alternative_titles: [],
     title_levels: [],
@@ -96,10 +92,6 @@ describe('GoogleSearchService', () => {
         required_skills: ['TypeScript', 'AWS'],
         filter_location_cities: [
           {
-            uid: '1',
-            created: '2026-08-23T07:56:51.913Z',
-            updated: '2026-08-23T07:56:51.913Z',
-            role_filters_id: 'search-1',
             name: 'New York',
             state: 'NY',
             postcode: '',
@@ -160,7 +152,7 @@ describe('GoogleSearchService', () => {
   });
 
   describe('search', () => {
-    it('requests the Custom Search API for each built query with the api key, engine id, and query', async () => {
+    it('requests the Custom Search API for each built query with the api key, engine id, query, and first page', async () => {
       const get = jest
         .spyOn(service.client, 'get')
         .mockResolvedValue({ data: { items: [] } });
@@ -168,15 +160,19 @@ describe('GoogleSearchService', () => {
       await service.search(buildDto({ sites: ['linkedin.com/in'] }));
 
       expect(get).toHaveBeenCalledWith(
-        'https://www.googleapis.com/customsearch/v1?key=test-api-key&cx=test-cx&q=site%3Alinkedin.com%2Fin+%22Software+Engineer%22',
+        'https://www.googleapis.com/customsearch/v1?key=test-api-key&cx=test-cx&q=site%3Alinkedin.com%2Fin+%22Software+Engineer%22&num=10&start=1',
       );
     });
 
     it('returns the combined items from every query', async () => {
-      const items = [{ title: 'Jane Doe', link: 'https://linkedin.com/in/janedoe' }];
+      const items = [
+        { title: 'Jane Doe', link: 'https://linkedin.com/in/janedoe' },
+      ];
       jest.spyOn(service.client, 'get').mockResolvedValue({ data: { items } });
 
-      const result = await service.search(buildDto({ sites: ['linkedin.com/in'] }));
+      const result = await service.search(
+        buildDto({ sites: ['linkedin.com/in'] }),
+      );
 
       expect(result).toEqual(items);
     });
@@ -184,9 +180,64 @@ describe('GoogleSearchService', () => {
     it('returns an empty array when the response has no items', async () => {
       jest.spyOn(service.client, 'get').mockResolvedValue({ data: {} });
 
-      const result = await service.search(buildDto({ sites: ['linkedin.com/in'] }));
+      const result = await service.search(
+        buildDto({ sites: ['linkedin.com/in'] }),
+      );
 
       expect(result).toEqual([]);
+    });
+
+    it('pages through results up to the 100-result API cap, stopping once a page is short', async () => {
+      const fullPage = Array.from({ length: 10 }, (_, i) => ({
+        title: `Candidate ${i}`,
+        link: `https://linkedin.com/in/candidate-${i}`,
+      }));
+      const lastPage = fullPage.slice(0, 4);
+      const get = jest
+        .spyOn(service.client, 'get')
+        .mockResolvedValueOnce({ data: { items: fullPage } })
+        .mockResolvedValueOnce({ data: { items: fullPage } })
+        .mockResolvedValueOnce({ data: { items: lastPage } });
+
+      const result = await service.search(
+        buildDto({ sites: ['linkedin.com/in'] }),
+      );
+
+      expect(get).toHaveBeenCalledTimes(3);
+      expect(get).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('start=1'),
+      );
+      expect(get).toHaveBeenNthCalledWith(
+        2,
+        expect.stringContaining('start=11'),
+      );
+      expect(get).toHaveBeenNthCalledWith(
+        3,
+        expect.stringContaining('start=21'),
+      );
+      expect(result).toHaveLength(24);
+    });
+
+    it('never requests past the 100-result API cap even if every page is full', async () => {
+      const fullPage = Array.from({ length: 10 }, (_, i) => ({
+        title: `Candidate ${i}`,
+        link: `https://linkedin.com/in/candidate-${i}`,
+      }));
+      const get = jest
+        .spyOn(service.client, 'get')
+        .mockResolvedValue({ data: { items: fullPage } });
+
+      const result = await service.search(
+        buildDto({ sites: ['linkedin.com/in'] }),
+      );
+
+      expect(get).toHaveBeenCalledTimes(10);
+      expect(get).toHaveBeenNthCalledWith(
+        10,
+        expect.stringContaining('start=91'),
+      );
+      expect(result).toHaveLength(100);
     });
   });
 });

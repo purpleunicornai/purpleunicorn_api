@@ -1,13 +1,9 @@
 import { GeminiService } from './gemini.service';
-import { RoleFilterDto } from '../../common/dto/search.dto';
+import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { GoogleSearchItem } from '../google-search/google-search.service';
 
 function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
   return {
-    uid: 'search-1',
-    created: '2026-08-23T07:56:51.913Z',
-    updated: '2026-08-23T07:56:51.913Z',
-    role_id: 'role-1',
     title: 'Software Engineer',
     alternative_titles: [],
     title_levels: [],
@@ -41,7 +37,9 @@ function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
   };
 }
 
-function buildItem(overrides: Partial<GoogleSearchItem> = {}): GoogleSearchItem {
+function buildItem(
+  overrides: Partial<GoogleSearchItem> = {},
+): GoogleSearchItem {
   return {
     title: 'Jane Doe - Software Engineer - LinkedIn',
     link: 'https://www.linkedin.com/in/janedoe',
@@ -57,9 +55,10 @@ describe('GeminiService', () => {
 
   beforeEach(() => {
     generateText = jest.fn();
-    createGoogleGenerativeAI = jest.fn(
-      () => (modelId: string) => ({ modelId, provider: 'google' }),
-    );
+    createGoogleGenerativeAI = jest.fn(() => (modelId: string) => ({
+      modelId,
+      provider: 'google',
+    }));
 
     service = new GeminiService({ geminiApiKey: 'test-gemini-key' });
     jest.spyOn(service as any, 'loadAi').mockResolvedValue({
@@ -112,7 +111,10 @@ describe('GeminiService', () => {
           score: 82,
         },
       ];
-      generateText.mockResolvedValue({ output: matches, usage: { totalTokens: 456 } });
+      generateText.mockResolvedValue({
+        output: matches,
+        usage: { totalTokens: 456 },
+      });
 
       const result = await service.formatCandidates([buildItem()], buildDto());
 
