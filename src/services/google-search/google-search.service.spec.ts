@@ -1,5 +1,49 @@
 import { GoogleSearchService } from './google-search.service';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
+import { candidate } from '../../generated/prisma/client';
+
+function buildCandidate(overrides: Partial<candidate> = {}): candidate {
+  return {
+    uid: 'candidate-1',
+    created: new Date('2026-08-23T00:00:00.000Z'),
+    updated: new Date('2026-08-23T00:00:00.000Z'),
+    main_source: 'LinkedIn',
+    first_name: 'Jane',
+    last_name: 'Doe',
+    email: null,
+    phone: null,
+    country_calling_code: null,
+    contact_info_last_updated: null,
+    rocketreach_profile_id: null,
+    current_location_city: null,
+    current_location_country_code: null,
+    current_location_postal_code: null,
+    open_to_relocation: null,
+    open_to_remote_work: null,
+    current_work_authorization_status: null,
+    experience_years: null,
+    experience_roles: [],
+    current_title: null,
+    current_company: null,
+    previous_companies: [],
+    previous_titles: [],
+    current_salary: null,
+    current_salary_currency: null,
+    current_role_start_date: null,
+    skills: [],
+    languages: [],
+    diversity: [],
+    education_levels: [],
+    education_universities: [],
+    graduation_years: [],
+    summary: null,
+    image_url: null,
+    original_source_url: null,
+    sources: [],
+    enriched_at: null,
+    ...overrides,
+  };
+}
 
 function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
   return {
@@ -51,10 +95,8 @@ describe('GoogleSearchService', () => {
   });
 
   describe('buildSiteFilter', () => {
-    it('defaults to LinkedIn, Indeed, and the XRAY_SITES list when dto.sites is empty', () => {
-      const dto = buildDto({ sites: [] });
-
-      const filter = (service as any).buildSiteFilter(dto);
+    it('defaults to LinkedIn, Indeed, and the XRAY_SITES list when no sites are given', () => {
+      const filter = (service as any).buildSiteFilter([]);
 
       expect(filter).toBe(
         '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
@@ -64,10 +106,11 @@ describe('GoogleSearchService', () => {
       );
     });
 
-    it('uses dto.sites instead of the defaults when provided', () => {
-      const dto = buildDto({ sites: ['github.com', 'gitlab.com'] });
-
-      const filter = (service as any).buildSiteFilter(dto);
+    it('uses the given sites instead of the defaults when provided', () => {
+      const filter = (service as any).buildSiteFilter([
+        'github.com',
+        'gitlab.com',
+      ]);
 
       expect(filter).toBe('(site:github.com OR site:gitlab.com)');
     });
@@ -76,9 +119,7 @@ describe('GoogleSearchService', () => {
       // Google's Custom Search API returns zero results for a
       // parenthesized single-term path-scoped site: filter, e.g.
       // "(site:linkedin.com/in)" — confirmed against the live API.
-      const dto = buildDto({ sites: ['linkedin.com/in'] });
-
-      const filter = (service as any).buildSiteFilter(dto);
+      const filter = (service as any).buildSiteFilter(['linkedin.com/in']);
 
       expect(filter).toBe('site:linkedin.com/in');
     });
@@ -148,6 +189,83 @@ describe('GoogleSearchService', () => {
       const queries = (service as any).buildXrayQueries(dto);
 
       expect(queries).toEqual([]);
+    });
+  });
+
+  describe('buildCandidateQueries', () => {
+    it('returns no queries when the candidate has no name', () => {
+      const candidate = buildCandidate({ first_name: null, last_name: null });
+
+      const queries = (service as any).buildCandidateQueries(candidate);
+
+      expect(queries).toEqual([]);
+    });
+
+    it('builds a query combining the quoted full name with the current company', () => {
+      const candidate = buildCandidate({
+        first_name: 'Jane',
+        last_name: 'Doe',
+        current_company: 'TechCorp',
+      });
+
+      const queries = (service as any).buildCandidateQueries(candidate);
+
+      expect(queries).toContain(
+        '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
+          'site:stackoverflow.com/users OR site:researchgate.net OR site:about.me OR ' +
+          'site:behance.net OR site:dribbble.com OR site:angel.co OR site:wellfound.com OR ' +
+          'site:kaggle.com OR site:medium.com OR site:dev.to) "Jane Doe" TechCorp',
+      );
+    });
+
+    it('falls back to a name-only query when there is no company on file', () => {
+      const candidate = buildCandidate({
+        first_name: 'Jane',
+        last_name: 'Doe',
+        current_company: null,
+        previous_companies: [],
+      });
+
+      const queries = (service as any).buildCandidateQueries(candidate);
+
+      expect(queries).toEqual([
+        '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
+          'site:stackoverflow.com/users OR site:researchgate.net OR site:about.me OR ' +
+          'site:behance.net OR site:dribbble.com OR site:angel.co OR site:wellfound.com OR ' +
+          'site:kaggle.com OR site:medium.com OR site:dev.to) "Jane Doe"',
+      ]);
+    });
+
+    it('adds a query variant for up to three previous companies', () => {
+      const candidate = buildCandidate({
+        first_name: 'Jane',
+        last_name: 'Doe',
+        current_company: null,
+        previous_companies: ['Alpha Inc', 'Beta LLC', 'Gamma Co', 'Delta Ltd'],
+      });
+
+      const queries = (service as any).buildCandidateQueries(candidate);
+
+      expect(
+        queries.some((query: string) =>
+          query.endsWith('"Jane Doe" "Alpha Inc"'),
+        ),
+      ).toBe(true);
+      expect(
+        queries.some((query: string) =>
+          query.endsWith('"Jane Doe" "Beta LLC"'),
+        ),
+      ).toBe(true);
+      expect(
+        queries.some((query: string) =>
+          query.endsWith('"Jane Doe" "Gamma Co"'),
+        ),
+      ).toBe(true);
+      expect(
+        queries.some((query: string) =>
+          query.endsWith('"Jane Doe" "Delta Ltd"'),
+        ),
+      ).toBe(false);
     });
   });
 
@@ -238,6 +356,41 @@ describe('GoogleSearchService', () => {
         expect.stringContaining('start=91'),
       );
       expect(result).toHaveLength(100);
+    });
+  });
+
+  describe('searchCandidate', () => {
+    it('makes no request and returns no items when the candidate has no name', async () => {
+      const get = jest.spyOn(service.client, 'get');
+
+      const result = await service.searchCandidate(
+        buildCandidate({ first_name: null, last_name: null }),
+      );
+
+      expect(get).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('caps pagination at 20 results per query rather than the 100-result role-search cap', async () => {
+      const fullPage = Array.from({ length: 10 }, (_, i) => ({
+        title: `Result ${i}`,
+        link: `https://linkedin.com/in/result-${i}`,
+      }));
+      const get = jest
+        .spyOn(service.client, 'get')
+        .mockResolvedValue({ data: { items: fullPage } });
+
+      const result = await service.searchCandidate(
+        buildCandidate({
+          first_name: 'Jane',
+          last_name: 'Doe',
+          current_company: null,
+          previous_companies: [],
+        }),
+      );
+
+      expect(get).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(20);
     });
   });
 });

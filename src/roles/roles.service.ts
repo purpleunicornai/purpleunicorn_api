@@ -211,6 +211,35 @@ export class RolesService {
     await this.prisma.roles.delete({ where: { uid: id } });
   }
 
+  async getRoleResult(resultId: string, organization_id: string) {
+    const result = await this.prisma.role_result.findFirst({
+      where: {
+        uid: resultId,
+        role: {
+          project: {
+            organization_id: organization_id,
+          },
+        },
+      },
+      include: {
+        candidate: {
+          include: {
+            experience: true,
+          },
+        },
+      },
+    });
+
+    if (!result) {
+      throw new RequestException(
+        'Role result not found',
+        HttpStatus.NOT_FOUND,
+        'ROLE_RESULT_NOT_FOUND',
+      );
+    }
+
+    return result;
+  }
   private async findRoleOrThrow(id: string): Promise<roles> {
     const role = await this.prisma.roles.findFirst({
       where: { uid: id },

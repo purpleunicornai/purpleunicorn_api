@@ -1091,7 +1091,8 @@ export const CandidateScalarFieldEnum = {
   summary: 'summary',
   image_url: 'image_url',
   original_source_url: 'original_source_url',
-  sources: 'sources'
+  sources: 'sources',
+  enriched_at: 'enriched_at'
 } as const
 
 export type CandidateScalarFieldEnum = (typeof CandidateScalarFieldEnum)[keyof typeof CandidateScalarFieldEnum]

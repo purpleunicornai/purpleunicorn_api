@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Post,
@@ -18,6 +19,7 @@ import { RoleFilterDto, RoleFilterResponseDto } from './dto/role_filter.dto';
 import {
   CreateRoleDto,
   RoleDto,
+  RoleResultSummaryDto,
   RunSearchDto,
   UpdateRoleDto,
 } from './dto/role.dto';
@@ -32,6 +34,8 @@ import { Serialize } from '../common/interceptors/serialize.interceptor';
 @UseGuards(ClerkAuthGuard)
 @Controller('roles')
 export class RolesController {
+  private readonly logger = new Logger(RolesController.name);
+
   constructor(
     private readonly rolesService: RolesService,
     private readonly searchService: SearchService,
@@ -117,6 +121,37 @@ export class RolesController {
   @Sse('/:roleId/search')
   search(@Param('roleId') roleId: string) {
     return this.searchService.streamSearch(roleId);
+  }
+
+  @Get('/:roleId/result/:resultId')
+  @Serialize(RoleResultSummaryDto)
+  async getRoleResult(
+    @Param('roleId') roleId: string,
+    @Param('resultId') resultId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+    @Query('refresh') refresh?: string,
+  ) {
+    const orgId = this.requireOrgId(auth);
+    // check if the user can access the role first
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    const result = await this.rolesService.getRoleResult(resultId, orgId);
+
+    const force = refresh === 'true';
+    const candidate = result?.candidate;
+    if (candidate && (!candidate.enriched_at || force)) {
+      try {
+        result.candidate = await this.searchService.deepSearchCandidate(
+          candidate.uid,
+          force,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `Deep candidate search failed for candidate=${candidate.uid}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    return result;
   }
 
   private requireOrgId(auth: ClerkAuthContext): string {

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -10,7 +10,75 @@ import {
   IsInt,
   IsNumber,
   Min,
+  ValidateNested,
 } from 'class-validator';
+
+export class CandidateExperienceDto {
+  @ApiProperty({
+    description: 'Unique identifier (UUID v4)',
+    example: 'd3b07384-d113-4956-a5cc-484b99861e28',
+  })
+  @Expose()
+  @IsUUID()
+  uid: string;
+
+  @ApiProperty({ description: 'Employer name', example: 'TechCorp UK' })
+  @Expose()
+  @IsString()
+  comapany_name: string;
+
+  @ApiProperty({
+    description: 'Employer location',
+    example: 'London, UK',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  company_location?: string;
+
+  @ApiProperty({ description: 'Job title held', example: 'Lead Engineer' })
+  @Expose()
+  @IsString()
+  role: string;
+
+  @ApiProperty({
+    description: 'Start date of this role',
+    example: '2021-01-01T00:00:00.000Z',
+  })
+  @Expose()
+  @IsDateString()
+  start_date: string;
+
+  @ApiProperty({
+    description: 'End date of this role, if it has ended',
+    example: '2023-06-01T00:00:00.000Z',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  end_date?: string;
+
+  @ApiProperty({
+    description: 'Responsibilities held in this role',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  responsibilities?: string;
+
+  @ApiProperty({
+    description: 'Skills used in this role',
+    example: ['TypeScript', 'NestJS'],
+    type: [String],
+  })
+  @Expose()
+  @IsArray()
+  @IsString({ each: true })
+  skills: string[];
+}
 
 export class CandidateDto {
   @ApiProperty({
@@ -387,4 +455,28 @@ export class CandidateDto {
   @IsArray()
   @IsString({ each: true })
   sources?: string[];
+
+  @ApiProperty({
+    description:
+      'When a deep candidate search last ran for this profile, if ever',
+    example: '2026-08-30T12:00:00.000Z',
+    required: false,
+    nullable: true,
+  })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  enriched_at?: string | null;
+
+  @ApiProperty({
+    description: 'Employment history built up from deep candidate searches',
+    type: () => [CandidateExperienceDto],
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CandidateExperienceDto)
+  experience?: CandidateExperienceDto[];
 }

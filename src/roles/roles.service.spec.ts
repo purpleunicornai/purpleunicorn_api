@@ -51,6 +51,9 @@ function buildPrisma() {
       create: jest.fn(),
       updateMany: jest.fn(),
     },
+    role_result: {
+      findFirst: jest.fn(),
+    },
   };
 }
 
@@ -347,6 +350,40 @@ describe('RolesService', () => {
       expect(error.message).toBe('Role not found');
       expect(error.getStatus()).toBe(404);
       expect(prisma.role_filters.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getRoleResult', () => {
+    it("fetches a role_result scoped to the caller's organization, including its candidate and their experience", async () => {
+      const result = {
+        uid: 'result-1',
+        role_id: 'role-1',
+        candidate: { uid: 'candidate-1' },
+      };
+      prisma.role_result.findFirst.mockResolvedValue(result);
+
+      const found = await service.getRoleResult('result-1', 'org-1');
+
+      expect(prisma.role_result.findFirst).toHaveBeenCalledWith({
+        where: {
+          uid: 'result-1',
+          role: { project: { organization_id: 'org-1' } },
+        },
+        include: { candidate: { include: { experience: true } } },
+      });
+      expect(found).toBe(result);
+    });
+
+    it('throws a 404 RequestException when no matching role_result exists in the organization', async () => {
+      prisma.role_result.findFirst.mockResolvedValue(null);
+
+      const error = await captureError(
+        service.getRoleResult('result-1', 'org-1'),
+      );
+
+      expect(error).toBeInstanceOf(RequestException);
+      expect(error.message).toBe('Role result not found');
+      expect(error.getStatus()).toBe(404);
     });
   });
 

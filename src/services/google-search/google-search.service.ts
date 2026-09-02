@@ -4,6 +4,7 @@ import { type ConfigType } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { DEFAULT_XRAY_SITES } from '../../common/constants/google';
+import { candidate } from '../../generated/prisma/client';
 
 export interface GoogleSearchItem {
   title: string;
@@ -17,6 +18,9 @@ export interface GoogleSearchItem {
 // results per query is a hard ceiling the API enforces, not a choice made here.
 const RESULTS_PER_PAGE = 10;
 const MAX_RESULTS_PER_QUERY = 100;
+// A candidate deep-search is about precisely finding one person, not casting
+// a wide net, so it doesn't need the role-search's full 100-result budget.
+const CANDIDATE_MAX_RESULTS_PER_QUERY = 20;
 
 @Injectable()
 export class GoogleSearchService {
@@ -44,19 +48,35 @@ export class GoogleSearchService {
     return results.flat();
   }
 
+  // Digs deeper on a single already-identified candidate to build out their
+  // profile, rather than casting a wide net for role matches.
+  async searchCandidate(candidate: candidate): Promise<GoogleSearchItem[]> {
+    const queries = this.buildCandidateQueries(candidate);
+    if (queries.length === 0) return [];
+
+    this.logger.debug(
+      `Running ${queries.length} candidate deep-search query(s)`,
+    );
+
+    const results = await Promise.all(
+      queries.map((query) =>
+        this.searchQueryPaginated(query, CANDIDATE_MAX_RESULTS_PER_QUERY),
+      ),
+    );
+
+    return results.flat();
+  }
+
   // Walks pages sequentially (rather than firing all of them at once) so we
   // can stop as soon as a page comes back short — that means no more results
   // exist for the query, and paging further would just waste API quota.
   private async searchQueryPaginated(
     query: string,
+    maxResults = MAX_RESULTS_PER_QUERY,
   ): Promise<GoogleSearchItem[]> {
     const items: GoogleSearchItem[] = [];
 
-    for (
-      let start = 1;
-      start <= MAX_RESULTS_PER_QUERY;
-      start += RESULTS_PER_PAGE
-    ) {
+    for (let start = 1; start <= maxResults; start += RESULTS_PER_PAGE) {
       const page = await this.searchQuery(query, start);
       items.push(...page);
 
@@ -84,18 +104,18 @@ export class GoogleSearchService {
     return response.data.items ?? [];
   }
 
-  private buildSiteFilter(dto: RoleFilterDto): string {
-    const sites = dto.sites?.length
-      ? dto.sites.map((site) => `site:${site}`)
+  private buildSiteFilter(sites?: string[]): string {
+    const siteList = sites?.length
+      ? sites.map((site) => `site:${site}`)
       : DEFAULT_XRAY_SITES;
     // A parenthesized single-term site: filter (e.g. "(site:linkedin.com/in)")
     // returns zero results from Google's Custom Search API — confirmed live.
-    if (sites.length === 1) return sites[0];
-    return `(${sites.join(' OR ')})`;
+    if (siteList.length === 1) return siteList[0];
+    return `(${siteList.join(' OR ')})`;
   }
 
   private buildXrayQueries(dto: RoleFilterDto): string[] {
-    const siteFilter = this.buildSiteFilter(dto);
+    const siteFilter = this.buildSiteFilter(dto.sites);
     const commonParts = [
       this.andClause(dto.required_skills),
       this.orClause(dto.optional_skills),
@@ -113,6 +133,39 @@ export class GoogleSearchService {
           siteFilter,
           this.quote(alternativeTitle),
           ...commonParts,
+        ]),
+      );
+    }
+
+    return [...queries].filter((query) => query.length > siteFilter.length);
+  }
+
+  // Identity-based queries for enriching one already-found person, rather
+  // than the criteria-based queries buildXrayQueries uses to find matches.
+  private buildCandidateQueries(candidate: candidate): string[] {
+    const fullName = [candidate.first_name, candidate.last_name]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join(' ')
+      .trim();
+    if (!fullName) return [];
+
+    const siteFilter = this.buildSiteFilter();
+    const queries = new Set<string>();
+
+    queries.add(
+      this.joinNonEmpty([
+        siteFilter,
+        this.quote(fullName),
+        this.quote(candidate.current_company ?? ''),
+      ]),
+    );
+
+    for (const company of candidate.previous_companies.slice(0, 3)) {
+      queries.add(
+        this.joinNonEmpty([
+          siteFilter,
+          this.quote(fullName),
+          this.quote(company),
         ]),
       );
     }

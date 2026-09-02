@@ -1,6 +1,50 @@
 import { GeminiService } from './gemini.service';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { GoogleSearchItem } from '../google-search/google-search.service';
+import { candidate } from '../../generated/prisma/client';
+
+function buildCandidate(overrides: Partial<candidate> = {}): candidate {
+  return {
+    uid: 'candidate-1',
+    created: new Date('2026-08-23T00:00:00.000Z'),
+    updated: new Date('2026-08-23T00:00:00.000Z'),
+    main_source: 'LinkedIn',
+    first_name: 'Jane',
+    last_name: 'Doe',
+    email: null,
+    phone: null,
+    country_calling_code: null,
+    contact_info_last_updated: null,
+    rocketreach_profile_id: null,
+    current_location_city: null,
+    current_location_country_code: null,
+    current_location_postal_code: null,
+    open_to_relocation: null,
+    open_to_remote_work: null,
+    current_work_authorization_status: null,
+    experience_years: null,
+    experience_roles: [],
+    current_title: null,
+    current_company: null,
+    previous_companies: [],
+    previous_titles: [],
+    current_salary: null,
+    current_salary_currency: null,
+    current_role_start_date: null,
+    skills: [],
+    languages: [],
+    diversity: [],
+    education_levels: [],
+    education_universities: [],
+    graduation_years: [],
+    summary: null,
+    image_url: null,
+    original_source_url: 'https://www.linkedin.com/in/janedoe',
+    sources: ['LinkedIn'],
+    enriched_at: null,
+    ...overrides,
+  };
+}
 
 function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
   return {
@@ -63,7 +107,10 @@ describe('GeminiService', () => {
     service = new GeminiService({ geminiApiKey: 'test-gemini-key' });
     jest.spyOn(service as any, 'loadAi').mockResolvedValue({
       generateText,
-      Output: { array: jest.fn((spec: unknown) => spec) },
+      Output: {
+        array: jest.fn((spec: unknown) => spec),
+        object: jest.fn((spec: unknown) => spec),
+      },
     });
     jest
       .spyOn(service as any, 'loadGoogleProvider')
@@ -93,6 +140,48 @@ describe('GeminiService', () => {
           model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
           prompt: expect.stringContaining('Fullstack Developer'),
           output: expect.anything(),
+        }),
+      );
+    });
+
+    it('includes an og:image URL from the result pagemap in the prompt, when present', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      const item = buildItem({
+        pagemap: {
+          metatags: [
+            { 'og:image': 'https://media.licdn.com/dms/image/jane-og.jpg' },
+          ],
+        },
+      } as any);
+      await service.formatCandidates([item], buildDto());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining(
+            'https://media.licdn.com/dms/image/jane-og.jpg',
+          ),
+        }),
+      );
+    });
+
+    it('falls back to the pagemap cse_image when there is no og:image metatag', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      const item = buildItem({
+        pagemap: {
+          cse_image: [
+            { src: 'https://media.licdn.com/dms/image/jane-cse.jpg' },
+          ],
+        },
+      } as any);
+      await service.formatCandidates([item], buildDto());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining(
+            'https://media.licdn.com/dms/image/jane-cse.jpg',
+          ),
         }),
       );
     });
@@ -139,6 +228,94 @@ describe('GeminiService', () => {
       await service.formatCandidates([buildItem()], buildDto());
 
       expect(createGoogleGenerativeAI).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('enrichCandidate', () => {
+    it('returns an empty enrichment without calling the model when there are no items', async () => {
+      const result = await service.enrichCandidate([], buildCandidate());
+
+      expect(generateText).not.toHaveBeenCalled();
+      expect(result).toEqual({ enrichment: {}, tokensUsed: 0 });
+    });
+
+    it('calls generateText with the configured model and a prompt describing the candidate identity and results', async () => {
+      generateText.mockResolvedValue({ output: {}, usage: { totalTokens: 0 } });
+
+      const candidate = buildCandidate({
+        first_name: 'Jane',
+        last_name: 'Doe',
+      });
+      await service.enrichCandidate([buildItem()], candidate);
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          prompt: expect.stringContaining('Jane Doe'),
+          output: expect.anything(),
+        }),
+      );
+    });
+
+    it('includes an image URL from the result pagemap in the prompt, when present', async () => {
+      generateText.mockResolvedValue({ output: {}, usage: { totalTokens: 0 } });
+
+      const item = buildItem({
+        pagemap: {
+          metatags: [
+            { 'og:image': 'https://media.licdn.com/dms/image/jane-og.jpg' },
+          ],
+        },
+      } as any);
+      await service.enrichCandidate([item], buildCandidate());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining(
+            'https://media.licdn.com/dms/image/jane-og.jpg',
+          ),
+        }),
+      );
+    });
+
+    it('parses the enrichment fields and token usage from the response', async () => {
+      const enrichment = {
+        email: 'jane.doe@example.com',
+        skills: ['TypeScript', 'NestJS'],
+        additional_sources: ['GitHub'],
+        experience: [
+          {
+            company_name: 'TechCorp',
+            role: 'Senior Engineer',
+            start_date: '2021-01-01',
+          },
+        ],
+      };
+      generateText.mockResolvedValue({
+        output: enrichment,
+        usage: { totalTokens: 321 },
+      });
+
+      const result = await service.enrichCandidate(
+        [buildItem()],
+        buildCandidate(),
+      );
+
+      expect(result).toEqual({ enrichment, tokensUsed: 321 });
+    });
+
+    it('defaults tokensUsed to 0 when usage.totalTokens is undefined', async () => {
+      generateText.mockResolvedValue({
+        output: {},
+        usage: { totalTokens: undefined },
+      });
+
+      const result = await service.enrichCandidate(
+        [buildItem()],
+        buildCandidate(),
+      );
+
+      expect(result.tokensUsed).toBe(0);
     });
   });
 });

@@ -2,6 +2,8 @@ import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
 import { RoleFilterDto, RoleFilterMetadataDto } from '../dto/role_filter.dto';
 import { GoogleSearchService } from '../../services/google-search/google-search.service';
 import {
+  GeminiCandidateEnrichment,
+  GeminiCandidateExperienceEnrichment,
   GeminiCandidateFields,
   GeminiCandidateMatch,
   GeminiService,
@@ -9,6 +11,7 @@ import {
 import { PrismaService } from '../../common/database/prisma.service';
 import {
   candidate,
+  candidate_experience,
   filter_location_cities,
   Prisma,
   role_filters,
@@ -38,6 +41,171 @@ export class SearchService {
     const items = await this.googleSearchService.search(dto);
     const formatted = await this.geminiService.formatCandidates(items, dto);
     return this.saveCandidateMatches(role.uid, filter.uid, formatted);
+  }
+
+  // Digs deeper on a single already-found candidate to build out their
+  // profile — a no-op if it's already been done (enriched_at is set) or
+  // there's no name on file to search on, unless `force` is set to bypass
+  // the already-enriched check and refetch from Google regardless. Always
+  // includes `experience` so every return path has the same shape.
+  async deepSearchCandidate(
+    candidateUid: string,
+    force = false,
+  ): Promise<candidate & { experience: candidate_experience[] }> {
+    const existing = await this.prisma.candidate.findUniqueOrThrow({
+      where: { uid: candidateUid },
+      include: { experience: true },
+    });
+    if (existing.enriched_at && !force) return existing;
+
+    const fullName = [existing.first_name, existing.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    if (!fullName) return existing;
+
+    const items = await this.googleSearchService.searchCandidate(existing);
+    if (items.length === 0) {
+      return this.prisma.candidate.update({
+        where: { uid: candidateUid },
+        data: { enriched_at: new Date() },
+        include: { experience: true },
+      });
+    }
+
+    const { enrichment } = await this.geminiService.enrichCandidate(
+      items,
+      existing,
+    );
+
+    // Create any new work-history rows before the final read so they're
+    // included in the `experience` this method returns.
+    await this.createCandidateExperience(candidateUid, enrichment.experience);
+
+    return this.prisma.candidate.update({
+      where: { uid: candidateUid },
+      data: {
+        ...this.buildEnrichmentCandidateData(enrichment, existing),
+        enriched_at: new Date(),
+      },
+      include: { experience: true },
+    });
+  }
+
+  // Scalar fields get overwritten by newly-found values (a targeted deep
+  // search is treated as more reliable than the original broad match);
+  // list fields get unioned with what's already known so a second pass
+  // doesn't erase previously-discovered facts.
+  private buildEnrichmentCandidateData(
+    enrichment: GeminiCandidateEnrichment,
+    existing: candidate,
+  ): Record<string, unknown> {
+    const data: Record<string, unknown> = {};
+
+    const scalarFields = [
+      'first_name',
+      'last_name',
+      'email',
+      'phone',
+      'country_calling_code',
+      'current_location_city',
+      'current_location_country_code',
+      'current_location_postal_code',
+      'open_to_relocation',
+      'open_to_remote_work',
+      'current_work_authorization_status',
+      'experience_years',
+      'current_title',
+      'current_company',
+      'current_salary',
+      'current_salary_currency',
+      'summary',
+      'image_url',
+    ] as const;
+    for (const field of scalarFields) {
+      const value = enrichment[field];
+      if (value !== undefined) data[field] = value;
+    }
+
+    if (enrichment.current_role_start_date !== undefined) {
+      data.current_role_start_date = new Date(
+        enrichment.current_role_start_date,
+      );
+    }
+
+    const listFields = [
+      'experience_roles',
+      'previous_companies',
+      'previous_titles',
+      'skills',
+      'languages',
+      'diversity',
+      'education_levels',
+      'education_universities',
+    ] as const;
+    for (const field of listFields) {
+      const incoming = enrichment[field];
+      if (incoming?.length) {
+        data[field] = this.unionStrings(existing[field], incoming);
+      }
+    }
+
+    if (enrichment.additional_sources?.length) {
+      data.sources = this.unionStrings(
+        existing.sources,
+        enrichment.additional_sources,
+      );
+    }
+
+    if (enrichment.graduation_years?.length) {
+      data.graduation_years = this.unionDates(
+        existing.graduation_years,
+        enrichment.graduation_years.map((year) => new Date(year)),
+      );
+    }
+
+    return data;
+  }
+
+  private unionStrings(existing: string[], incoming: string[]): string[] {
+    return [...new Set([...existing, ...incoming])];
+  }
+
+  private unionDates(existing: Date[], incoming: Date[]): Date[] {
+    const seen = new Set(existing.map((date) => date.getTime()));
+    const result = [...existing];
+    for (const date of incoming) {
+      if (!seen.has(date.getTime())) {
+        seen.add(date.getTime());
+        result.push(date);
+      }
+    }
+    return result;
+  }
+
+  // candidate_experience.start_date is a required column — an entry Gemini
+  // couldn't pin a start date on gets skipped rather than written with a
+  // fabricated date.
+  private async createCandidateExperience(
+    candidateUid: string,
+    experience?: GeminiCandidateExperienceEnrichment[],
+  ): Promise<void> {
+    const rows = (experience ?? [])
+      .filter((entry) => Boolean(entry.start_date))
+      .map((entry) => ({
+        candidate_id: candidateUid,
+        comapany_name: entry.company_name,
+        company_location: entry.company_location,
+        role: entry.role,
+        start_date: new Date(entry.start_date as string),
+        end_date: entry.end_date ? new Date(entry.end_date) : null,
+        responsibilities: entry.responsibilities,
+        skills: entry.skills ?? [],
+      }));
+
+    if (rows.length === 0) return;
+
+    await this.prisma.candidate_experience.createMany({ data: rows });
   }
 
   streamSearch(roleId: string): Observable<MessageEvent> {

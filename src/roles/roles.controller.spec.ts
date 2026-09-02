@@ -4,7 +4,9 @@ import { SearchService } from './search/search.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import type { ClerkAuthContext } from '../auth/auth.types';
 
-function buildAuth(overrides: Partial<ClerkAuthContext> = {}): ClerkAuthContext {
+function buildAuth(
+  overrides: Partial<ClerkAuthContext> = {},
+): ClerkAuthContext {
   return {
     userId: 'user-1',
     orgId: 'org-1',
@@ -22,6 +24,7 @@ function buildRolesService(): jest.Mocked<RolesService> {
     createFilter: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    getRoleResult: jest.fn(),
   } as unknown as jest.Mocked<RolesService>;
 }
 
@@ -29,10 +32,13 @@ function buildSearchService(): jest.Mocked<SearchService> {
   return {
     search: jest.fn(),
     streamSearch: jest.fn(),
+    deepSearchCandidate: jest.fn(),
   } as unknown as jest.Mocked<SearchService>;
 }
 
-async function captureError(promise: Promise<unknown>): Promise<RequestException> {
+async function captureError(
+  promise: Promise<unknown>,
+): Promise<RequestException> {
   try {
     await promise;
   } catch (error) {
@@ -57,7 +63,7 @@ describe('RolesController', () => {
   });
 
   describe('findAll', () => {
-    it('lists roles for the given project in the caller\'s active organization', async () => {
+    it("lists roles for the given project in the caller's active organization", async () => {
       const roles = [{ uid: 'role-1' }];
       rolesService.findAllForProject.mockResolvedValue(roles as any);
 
@@ -126,7 +132,11 @@ describe('RolesController', () => {
       rolesService.update.mockResolvedValue(updated as any);
       const body = { name: 'Renamed' };
 
-      const result = await controller.update('role-1', body as any, buildAuth());
+      const result = await controller.update(
+        'role-1',
+        body as any,
+        buildAuth(),
+      );
 
       expect(rolesService.update).toHaveBeenCalledWith(
         'role-1',
@@ -144,7 +154,11 @@ describe('RolesController', () => {
 
       const result = await controller.remove('role-1', buildAuth());
 
-      expect(rolesService.remove).toHaveBeenCalledWith('role-1', 'user-1', 'org-1');
+      expect(rolesService.remove).toHaveBeenCalledWith(
+        'role-1',
+        'user-1',
+        'org-1',
+      );
       expect(result).toEqual({ success: true });
     });
   });
@@ -191,6 +205,137 @@ describe('RolesController', () => {
       );
       expect(searchService.search).toHaveBeenCalledWith('filter-1', role);
       expect(result).toBe(results);
+    });
+  });
+
+  describe('getRoleResult', () => {
+    it('resolves the role for auth, then returns the result with a freshly deep-searched candidate', async () => {
+      const role = { uid: 'role-1' };
+      rolesService.getRole.mockResolvedValue(role as any);
+      const candidate = { uid: 'candidate-1', enriched_at: null };
+      const result = { uid: 'result-1', candidate };
+      rolesService.getRoleResult.mockResolvedValue(result as any);
+      const enrichedCandidate = { uid: 'candidate-1', enriched_at: new Date() };
+      searchService.deepSearchCandidate.mockResolvedValue(
+        enrichedCandidate as any,
+      );
+
+      const response = await controller.getRoleResult(
+        'role-1',
+        'result-1',
+        buildAuth(),
+      );
+
+      expect(rolesService.getRole).toHaveBeenCalledWith(
+        'role-1',
+        'org-1',
+        'user-1',
+      );
+      expect(rolesService.getRoleResult).toHaveBeenCalledWith(
+        'result-1',
+        'org-1',
+      );
+      expect(searchService.deepSearchCandidate).toHaveBeenCalledWith(
+        'candidate-1',
+        false,
+      );
+      expect(response).toEqual({
+        uid: 'result-1',
+        candidate: enrichedCandidate,
+      });
+    });
+
+    it('skips the deep search when the candidate has already been enriched', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const candidate = { uid: 'candidate-1', enriched_at: new Date() };
+      const result = { uid: 'result-1', candidate };
+      rolesService.getRoleResult.mockResolvedValue(result as any);
+
+      const response = await controller.getRoleResult(
+        'role-1',
+        'result-1',
+        buildAuth(),
+      );
+
+      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+      expect(response).toBe(result);
+    });
+
+    it('forces a fresh deep search even when already enriched when refresh=true is passed', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const candidate = { uid: 'candidate-1', enriched_at: new Date() };
+      const result = { uid: 'result-1', candidate };
+      rolesService.getRoleResult.mockResolvedValue(result as any);
+      const refreshedCandidate = {
+        uid: 'candidate-1',
+        enriched_at: new Date(),
+      };
+      searchService.deepSearchCandidate.mockResolvedValue(
+        refreshedCandidate as any,
+      );
+
+      const response = await controller.getRoleResult(
+        'role-1',
+        'result-1',
+        buildAuth(),
+        'true',
+      );
+
+      expect(searchService.deepSearchCandidate).toHaveBeenCalledWith(
+        'candidate-1',
+        true,
+      );
+      expect(response).toEqual({
+        uid: 'result-1',
+        candidate: refreshedCandidate,
+      });
+    });
+
+    it('does not force a refresh when refresh is anything other than the string "true"', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const candidate = { uid: 'candidate-1', enriched_at: new Date() };
+      const result = { uid: 'result-1', candidate };
+      rolesService.getRoleResult.mockResolvedValue(result as any);
+
+      await controller.getRoleResult(
+        'role-1',
+        'result-1',
+        buildAuth(),
+        'false',
+      );
+
+      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+    });
+
+    it('skips the deep search when the result has no matched candidate', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const result = { uid: 'result-1', candidate: null };
+      rolesService.getRoleResult.mockResolvedValue(result as any);
+
+      const response = await controller.getRoleResult(
+        'role-1',
+        'result-1',
+        buildAuth(),
+      );
+
+      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+      expect(response).toBe(result);
+    });
+
+    it('falls back to the un-enriched result when the deep search fails', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const candidate = { uid: 'candidate-1', enriched_at: null };
+      const result = { uid: 'result-1', candidate };
+      rolesService.getRoleResult.mockResolvedValue(result as any);
+      searchService.deepSearchCandidate.mockRejectedValue(new Error('boom'));
+
+      const response = await controller.getRoleResult(
+        'role-1',
+        'result-1',
+        buildAuth(),
+      );
+
+      expect(response).toBe(result);
     });
   });
 

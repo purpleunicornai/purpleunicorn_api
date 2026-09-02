@@ -41,6 +41,7 @@ model candidate {
   image_url                         String?
   original_source_url               String?
   sources                           String[] // list of sources where the candidate was found, e.g. LinkedIn, Indeed, Google X-Ray, etc.
+  enriched_at                       DateTime? // set once a deep candidate search has run, so it isn't repeated
   experience                        candidate_experience[]
   // Relationships
   role_results                      role_result[]
