@@ -7,11 +7,13 @@ import {
   IsDateString,
   IsArray,
   IsBoolean,
+  IsEnum,
   IsInt,
   IsNumber,
   Min,
   ValidateNested,
 } from 'class-validator';
+import { InstitutionType } from '../../generated/prisma/enums';
 
 export class CandidateExperienceDto {
   @ApiProperty({
@@ -78,6 +80,99 @@ export class CandidateExperienceDto {
   @IsArray()
   @IsString({ each: true })
   skills: string[];
+}
+
+export class CandidateEducationDto {
+  @ApiProperty({
+    description: 'Unique identifier (UUID v4)',
+    example: 'd3b07384-d113-4956-a5cc-484b99861e28',
+  })
+  @Expose()
+  @IsUUID()
+  uid: string;
+
+  @ApiProperty({
+    description: 'Institution name',
+    example: 'University of Oxford',
+  })
+  @Expose()
+  @IsString()
+  institution_name: string;
+
+  @ApiProperty({
+    description: 'Kind of institution',
+    enum: InstitutionType,
+    example: InstitutionType.UNIVERSITY,
+  })
+  @Expose()
+  @IsEnum(InstitutionType)
+  institution_type: InstitutionType;
+
+  @ApiProperty({
+    description: 'Institution location',
+    example: 'Oxford, UK',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  institution_location?: string;
+
+  @ApiProperty({
+    description: 'Degree obtained',
+    example: "Bachelor's Degree",
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  degree?: string;
+
+  @ApiProperty({
+    description: 'Field of study',
+    example: 'Computer Science',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  field_of_study?: string;
+
+  @ApiProperty({
+    description: 'Start date of study',
+    example: '2016-09-01T00:00:00.000Z',
+  })
+  @Expose()
+  @IsDateString()
+  start_date: string;
+
+  @ApiProperty({
+    description: 'End date of study, if it has ended',
+    example: '2020-06-18T00:00:00.000Z',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  end_date?: string;
+
+  @ApiProperty({
+    description: 'Short summary of this entry',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  summary?: string;
+
+  @ApiProperty({
+    description: 'Any other relevant information',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  additional_info?: string;
 }
 
 export class CandidateDto {
@@ -287,30 +382,6 @@ export class CandidateDto {
   current_company?: string;
 
   @ApiProperty({
-    description: 'List of past employing organisations',
-    example: ['Startup Ltd', 'Global Corp'],
-    type: [String],
-    required: false,
-  })
-  @Expose()
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  previous_companies?: string[];
-
-  @ApiProperty({
-    description: 'List of historical job titles held',
-    example: ['Junior Dev', 'Full Stack Engineer'],
-    type: [String],
-    required: false,
-  })
-  @Expose()
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  previous_titles?: string[];
-
-  @ApiProperty({
     description: 'Current annual base salary amount',
     example: 85000.0,
     required: false,
@@ -378,42 +449,6 @@ export class CandidateDto {
   diversity?: string[];
 
   @ApiProperty({
-    description: 'Completed levels of formal education',
-    example: ["Bachelor's Degree"],
-    type: [String],
-    required: false,
-  })
-  @Expose()
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  education_levels?: string[];
-
-  @ApiProperty({
-    description: 'Attended academic institutions',
-    example: ['University of Oxford'],
-    type: [String],
-    required: false,
-  })
-  @Expose()
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  education_universities?: string[];
-
-  @ApiProperty({
-    description: 'Graduation milestones or dates reached',
-    example: ['2020-06-18T00:00:00.000Z'],
-    type: [String],
-    required: false,
-  })
-  @Expose()
-  @IsOptional()
-  @IsArray()
-  @IsDateString({}, { each: true })
-  graduation_years?: string[];
-
-  @ApiProperty({
     description: 'Short professional biography summary',
     example:
       'Results-driven back-end developer specializing in high-performance cloud architectures.',
@@ -479,4 +514,16 @@ export class CandidateDto {
   @ValidateNested({ each: true })
   @Type(() => CandidateExperienceDto)
   experience?: CandidateExperienceDto[];
+
+  @ApiProperty({
+    description: 'Education history built up from deep candidate searches',
+    type: () => [CandidateEducationDto],
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CandidateEducationDto)
+  education?: CandidateEducationDto[];
 }

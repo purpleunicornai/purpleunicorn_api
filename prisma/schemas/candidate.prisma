@@ -23,8 +23,6 @@ model candidate {
   experience_roles                  String[]
   current_title                     String?
   current_company                   String?
-  previous_companies                String[]
-  previous_titles                   String[]
   current_salary                    Float?
   current_salary_currency           String?
   current_role_start_date           DateTime?
@@ -32,10 +30,6 @@ model candidate {
   skills                            String[]
   languages                         String[]
   diversity                         String[]
-  // Education
-  education_levels                  String[]
-  education_universities            String[]
-  graduation_years                  DateTime[]
   // other
   summary                           String?
   image_url                         String?
@@ -45,4 +39,5 @@ model candidate {
   experience                        candidate_experience[]
   // Relationships
   role_results                      role_result[]
+  education                         candidate_education[]
 }

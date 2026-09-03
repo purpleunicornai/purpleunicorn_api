@@ -1,8 +1,33 @@
 import { GoogleSearchService } from './google-search.service';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
-import { candidate } from '../../generated/prisma/client';
+import { candidate, candidate_experience } from '../../generated/prisma/client';
 
-function buildCandidate(overrides: Partial<candidate> = {}): candidate {
+type CandidateWithExperience = candidate & {
+  experience: candidate_experience[];
+};
+
+function buildExperience(
+  overrides: Partial<candidate_experience> = {},
+): candidate_experience {
+  return {
+    uid: 'experience-1',
+    created: new Date('2026-08-23T00:00:00.000Z'),
+    updated: new Date('2026-08-23T00:00:00.000Z'),
+    candidate_id: 'candidate-1',
+    comapany_name: 'Alpha Inc',
+    company_location: null,
+    role: 'Engineer',
+    start_date: new Date('2020-01-01T00:00:00.000Z'),
+    end_date: null,
+    responsibilities: null,
+    skills: [],
+    ...overrides,
+  };
+}
+
+function buildCandidate(
+  overrides: Partial<CandidateWithExperience> = {},
+): CandidateWithExperience {
   return {
     uid: 'candidate-1',
     created: new Date('2026-08-23T00:00:00.000Z'),
@@ -25,22 +50,18 @@ function buildCandidate(overrides: Partial<candidate> = {}): candidate {
     experience_roles: [],
     current_title: null,
     current_company: null,
-    previous_companies: [],
-    previous_titles: [],
     current_salary: null,
     current_salary_currency: null,
     current_role_start_date: null,
     skills: [],
     languages: [],
     diversity: [],
-    education_levels: [],
-    education_universities: [],
-    graduation_years: [],
     summary: null,
     image_url: null,
     original_source_url: null,
     sources: [],
     enriched_at: null,
+    experience: [],
     ...overrides,
   };
 }
@@ -135,9 +156,7 @@ describe('GoogleSearchService', () => {
           {
             name: 'New York',
             state: 'NY',
-            postcode: '',
-            distance_unit: 'MILES',
-            distance_value: 0,
+            country_code: 'US',
           },
         ],
       });
@@ -223,7 +242,7 @@ describe('GoogleSearchService', () => {
         first_name: 'Jane',
         last_name: 'Doe',
         current_company: null,
-        previous_companies: [],
+        experience: [],
       });
 
       const queries = (service as any).buildCandidateQueries(candidate);
@@ -236,12 +255,17 @@ describe('GoogleSearchService', () => {
       ]);
     });
 
-    it('adds a query variant for up to three previous companies', () => {
+    it('adds a query variant for up to three companies drawn from experience history', () => {
       const candidate = buildCandidate({
         first_name: 'Jane',
         last_name: 'Doe',
         current_company: null,
-        previous_companies: ['Alpha Inc', 'Beta LLC', 'Gamma Co', 'Delta Ltd'],
+        experience: [
+          buildExperience({ comapany_name: 'Alpha Inc' }),
+          buildExperience({ comapany_name: 'Beta LLC' }),
+          buildExperience({ comapany_name: 'Gamma Co' }),
+          buildExperience({ comapany_name: 'Delta Ltd' }),
+        ],
       });
 
       const queries = (service as any).buildCandidateQueries(candidate);
@@ -266,6 +290,24 @@ describe('GoogleSearchService', () => {
           query.endsWith('"Jane Doe" "Delta Ltd"'),
         ),
       ).toBe(false);
+    });
+
+    it('dedupes repeated employers among the experience-derived variants', () => {
+      const candidate = buildCandidate({
+        first_name: 'Jane',
+        last_name: 'Doe',
+        current_company: null,
+        experience: [
+          buildExperience({ comapany_name: 'Alpha Inc' }),
+          buildExperience({ comapany_name: 'Alpha Inc' }),
+        ],
+      });
+
+      const queries = (service as any).buildCandidateQueries(candidate);
+
+      expect(
+        queries.filter((query: string) => query.includes('Alpha Inc')),
+      ).toHaveLength(1);
     });
   });
 
@@ -385,7 +427,7 @@ describe('GoogleSearchService', () => {
           first_name: 'Jane',
           last_name: 'Doe',
           current_company: null,
-          previous_companies: [],
+          experience: [],
         }),
       );
 

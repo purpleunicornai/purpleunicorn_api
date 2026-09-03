@@ -12,7 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CandidateDto } from '../../common/dto/candidate.dto';
-import { CompanyFilterType, DistanceUnit } from '../../generated/prisma/enums';
+import { CompanyFilterType } from '../../generated/prisma/enums';
 
 export class CreateRoleDto {
   @ApiProperty({
@@ -124,19 +124,7 @@ export class RoleFilterLocationCityDto {
   @Expose()
   @IsOptional()
   @IsString()
-  postcode?: string;
-
-  @ApiProperty({ enum: DistanceUnit, required: false })
-  @Expose()
-  @IsOptional()
-  @IsEnum(DistanceUnit)
-  distance_unit?: DistanceUnit;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsInt()
-  distance_value?: number;
+  country_code?: string;
 }
 
 export class RoleFilterSummaryDto {
@@ -160,6 +148,12 @@ export class RoleFilterSummaryDto {
   @IsOptional()
   @IsString()
   country_code?: string;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  industry?: string;
 
   @ApiProperty({ required: false })
   @Expose()
@@ -351,11 +345,61 @@ export class RoleResultSummaryDto {
   @IsInt()
   score?: number;
 
+  @ApiProperty({
+    description: 'AI-generated explanation of the score',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  reasoning?: string;
+
+  @ApiProperty({
+    description: 'Skills that matched the role criteria',
+    type: [String],
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skills_matched?: string[];
+
   @ApiProperty({ required: false })
   @Expose()
   @IsOptional()
   @IsBoolean()
   shortlist?: boolean;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  shortlist_date?: string;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  marked_for_review?: boolean;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  marked_for_review_date?: string;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  not_suitable?: boolean;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  not_suitable_date?: string;
 
   @ApiProperty({ description: 'Set by a human reviewer', required: false })
   @Expose()

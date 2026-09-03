@@ -9,6 +9,17 @@
 * 🟢 You can import this file directly.
 */
 
+export const InstitutionType = {
+  HIGH_SCHOOL: 'HIGH_SCHOOL',
+  COLLEGE: 'COLLEGE',
+  UNIVERSITY: 'UNIVERSITY',
+  COURSE: 'COURSE',
+  OTHER: 'OTHER'
+} as const
+
+export type InstitutionType = (typeof InstitutionType)[keyof typeof InstitutionType]
+
+
 export const CompanyFilterType = {
   CURRENT: 'CURRENT',
   PAST: 'PAST',
@@ -16,14 +27,6 @@ export const CompanyFilterType = {
 } as const
 
 export type CompanyFilterType = (typeof CompanyFilterType)[keyof typeof CompanyFilterType]
-
-
-export const DistanceUnit = {
-  MILES: 'MILES',
-  KILOMETERS: 'KILOMETERS'
-} as const
-
-export type DistanceUnit = (typeof DistanceUnit)[keyof typeof DistanceUnit]
 
 
 export const ProjectVisibility = {

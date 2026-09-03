@@ -26,17 +26,12 @@ function buildCandidate(overrides: Partial<candidate> = {}): candidate {
     experience_roles: [],
     current_title: null,
     current_company: null,
-    previous_companies: [],
-    previous_titles: [],
     current_salary: null,
     current_salary_currency: null,
     current_role_start_date: null,
     skills: [],
     languages: [],
     diversity: [],
-    education_levels: [],
-    education_universities: [],
-    graduation_years: [],
     summary: null,
     image_url: null,
     original_source_url: 'https://www.linkedin.com/in/janedoe',
@@ -197,6 +192,9 @@ describe('GeminiService', () => {
             sources: ['LinkedIn'],
           },
           summary: 'Strong TypeScript background matching the role.',
+          reasoning:
+            'Matches on required TypeScript skill and location, missing one optional skill.',
+          skills_matched: ['TypeScript'],
           score: 82,
         },
       ];
@@ -208,6 +206,23 @@ describe('GeminiService', () => {
       const result = await service.formatCandidates([buildItem()], buildDto());
 
       expect(result).toEqual({ matches, tokensUsed: 456 });
+    });
+
+    it('asks the model for reasoning and skills_matched alongside the summary and score', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      await service.formatCandidates([buildItem()], buildDto());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringMatching(/reasoning/i),
+        }),
+      );
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringMatching(/skills_matched/i),
+        }),
+      );
     });
 
     it('defaults tokensUsed to 0 when usage.totalTokens is undefined', async () => {
@@ -290,6 +305,16 @@ describe('GeminiService', () => {
             start_date: '2021-01-01',
           },
         ],
+        education: [
+          {
+            institution_name: 'University of Oxford',
+            institution_type: 'UNIVERSITY',
+            degree: "Bachelor's Degree",
+            field_of_study: 'Computer Science',
+            start_date: '2016-09-01',
+            end_date: '2020-06-18',
+          },
+        ],
       };
       generateText.mockResolvedValue({
         output: enrichment,
@@ -302,6 +327,18 @@ describe('GeminiService', () => {
       );
 
       expect(result).toEqual({ enrichment, tokensUsed: 321 });
+    });
+
+    it('asks the model to extract education history alongside experience', async () => {
+      generateText.mockResolvedValue({ output: {}, usage: { totalTokens: 0 } });
+
+      await service.enrichCandidate([buildItem()], buildCandidate());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringMatching(/institution_name/i),
+        }),
+      );
     });
 
     it('defaults tokensUsed to 0 when usage.totalTokens is undefined', async () => {

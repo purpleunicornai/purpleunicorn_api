@@ -229,6 +229,23 @@ export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedFloatNullableFilter<$PrismaModel>
 }
 
+export type EnumInstitutionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstitutionType | Prisma.EnumInstitutionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstitutionTypeFilter<$PrismaModel> | $Enums.InstitutionType
+}
+
+export type EnumInstitutionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstitutionType | Prisma.EnumInstitutionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstitutionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstitutionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstitutionTypeFilter<$PrismaModel>
+}
+
 export type EnumCompanyFilterTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.CompanyFilterType | Prisma.EnumCompanyFilterTypeFieldRefInput<$PrismaModel>
   in?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
@@ -244,23 +261,6 @@ export type EnumCompanyFilterTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
-}
-
-export type EnumDistanceUnitNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.DistanceUnit | Prisma.EnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  in?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumDistanceUnitNullableFilter<$PrismaModel> | $Enums.DistanceUnit | null
-}
-
-export type EnumDistanceUnitNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.DistanceUnit | Prisma.EnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  in?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumDistanceUnitNullableWithAggregatesFilter<$PrismaModel> | $Enums.DistanceUnit | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumDistanceUnitNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumDistanceUnitNullableFilter<$PrismaModel>
 }
 
 export type EnumProjectVisibilityFilter<$PrismaModel = never> = {
@@ -613,6 +613,23 @@ export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedFloatNullableFilter<$PrismaModel>
 }
 
+export type NestedEnumInstitutionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstitutionType | Prisma.EnumInstitutionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstitutionTypeFilter<$PrismaModel> | $Enums.InstitutionType
+}
+
+export type NestedEnumInstitutionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InstitutionType | Prisma.EnumInstitutionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InstitutionType[] | Prisma.ListEnumInstitutionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInstitutionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InstitutionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInstitutionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInstitutionTypeFilter<$PrismaModel>
+}
+
 export type NestedEnumCompanyFilterTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.CompanyFilterType | Prisma.EnumCompanyFilterTypeFieldRefInput<$PrismaModel>
   in?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
@@ -628,23 +645,6 @@ export type NestedEnumCompanyFilterTypeWithAggregatesFilter<$PrismaModel = never
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
-}
-
-export type NestedEnumDistanceUnitNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.DistanceUnit | Prisma.EnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  in?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumDistanceUnitNullableFilter<$PrismaModel> | $Enums.DistanceUnit | null
-}
-
-export type NestedEnumDistanceUnitNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.DistanceUnit | Prisma.EnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  in?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.DistanceUnit[] | Prisma.ListEnumDistanceUnitFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumDistanceUnitNullableWithAggregatesFilter<$PrismaModel> | $Enums.DistanceUnit | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumDistanceUnitNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumDistanceUnitNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumProjectVisibilityFilter<$PrismaModel = never> = {

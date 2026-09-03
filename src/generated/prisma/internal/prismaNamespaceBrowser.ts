@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   candidate: 'candidate',
+  candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   filter_companies: 'filter_companies',
   filter_location_cities: 'filter_location_cities',
@@ -99,17 +100,12 @@ export const CandidateScalarFieldEnum = {
   experience_roles: 'experience_roles',
   current_title: 'current_title',
   current_company: 'current_company',
-  previous_companies: 'previous_companies',
-  previous_titles: 'previous_titles',
   current_salary: 'current_salary',
   current_salary_currency: 'current_salary_currency',
   current_role_start_date: 'current_role_start_date',
   skills: 'skills',
   languages: 'languages',
   diversity: 'diversity',
-  education_levels: 'education_levels',
-  education_universities: 'education_universities',
-  graduation_years: 'graduation_years',
   summary: 'summary',
   image_url: 'image_url',
   original_source_url: 'original_source_url',
@@ -118,6 +114,25 @@ export const CandidateScalarFieldEnum = {
 } as const
 
 export type CandidateScalarFieldEnum = (typeof CandidateScalarFieldEnum)[keyof typeof CandidateScalarFieldEnum]
+
+
+export const Candidate_educationScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  candidate_id: 'candidate_id',
+  institution_name: 'institution_name',
+  institution_type: 'institution_type',
+  institution_location: 'institution_location',
+  degree: 'degree',
+  field_of_study: 'field_of_study',
+  start_date: 'start_date',
+  end_date: 'end_date',
+  summary: 'summary',
+  additional_info: 'additional_info'
+} as const
+
+export type Candidate_educationScalarFieldEnum = (typeof Candidate_educationScalarFieldEnum)[keyof typeof Candidate_educationScalarFieldEnum]
 
 
 export const Candidate_experienceScalarFieldEnum = {
@@ -158,9 +173,7 @@ export const Filter_location_citiesScalarFieldEnum = {
   role_filters_id: 'role_filters_id',
   name: 'name',
   state: 'state',
-  postcode: 'postcode',
-  distance_unit: 'distance_unit',
-  distance_value: 'distance_value'
+  country_code: 'country_code'
 } as const
 
 export type Filter_location_citiesScalarFieldEnum = (typeof Filter_location_citiesScalarFieldEnum)[keyof typeof Filter_location_citiesScalarFieldEnum]
@@ -213,7 +226,8 @@ export const Role_filtersScalarFieldEnum = {
   other_experience: 'other_experience',
   sites: 'sites',
   metadata: 'metadata',
-  archived: 'archived'
+  archived: 'archived',
+  industry: 'industry'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -225,14 +239,21 @@ export const Role_resultScalarFieldEnum = {
   updated: 'updated',
   candidate_uid: 'candidate_uid',
   role_id: 'role_id',
+  filter_id: 'filter_id',
   score: 'score',
-  shortlist: 'shortlist',
+  reasoning: 'reasoning',
+  skills_matched: 'skills_matched',
+  summary: 'summary',
   relevancy_score: 'relevancy_score',
   rated_by: 'rated_by',
-  summary: 'summary',
+  shortlist: 'shortlist',
+  shortlist_date: 'shortlist_date',
+  marked_for_review: 'marked_for_review',
+  marked_for_review_date: 'marked_for_review_date',
+  not_suitable: 'not_suitable',
+  not_suitable_date: 'not_suitable_date',
   tokens_used: 'tokens_used',
-  tokens_cost: 'tokens_cost',
-  filter_id: 'filter_id'
+  tokens_cost: 'tokens_cost'
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]

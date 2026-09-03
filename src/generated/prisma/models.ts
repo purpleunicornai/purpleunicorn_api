@@ -9,6 +9,7 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/candidate.js'
+export type * from './models/candidate_education.js'
 export type * from './models/candidate_experience.js'
 export type * from './models/filter_companies.js'
 export type * from './models/filter_location_cities.js'

@@ -1,0 +1,24 @@
+enum InstitutionType {
+  HIGH_SCHOOL
+  COLLEGE
+  UNIVERSITY
+  COURSE
+  OTHER
+}
+
+model candidate_education {
+  uid                  String          @id @unique @default(uuid()) @db.Uuid
+  created              DateTime        @default(now())
+  updated              DateTime        @updatedAt
+  candidate_id         String          @db.Uuid
+  candidate            candidate       @relation(fields: [candidate_id], references: [uid], onDelete: Cascade)
+  institution_name     String
+  institution_type     InstitutionType
+  institution_location String?
+  degree               String?
+  field_of_study       String?
+  start_date           DateTime
+  end_date             DateTime?
+  summary              String?
+  additional_info      String?
+}

@@ -99,6 +99,9 @@ function buildPrisma() {
     candidate_experience: {
       createMany: jest.fn(),
     },
+    candidate_education: {
+      createMany: jest.fn(),
+    },
     role_result: {
       findFirst: jest.fn().mockResolvedValue(null),
       create: jest.fn(),
@@ -130,18 +133,14 @@ function buildCandidateRecord(overrides: Record<string, unknown> = {}) {
     email: null,
     phone: null,
     current_company: null,
-    previous_companies: [],
-    previous_titles: [],
     experience_roles: [],
     skills: [],
     languages: [],
     diversity: [],
-    education_levels: [],
-    education_universities: [],
-    graduation_years: [],
     sources: ['LinkedIn'],
     original_source_url: 'https://www.linkedin.com/in/janedoe',
     enriched_at: null,
+    experience: [],
     ...overrides,
   };
 }
@@ -199,6 +198,7 @@ describe('SearchService', () => {
       const filter = buildStoredFilter({
         title: 'Fullstack Developer',
         required_skills: ['React', 'Node.js'],
+        industry: 'Technology',
         filter_location_cities: [
           {
             uid: 'city-1',
@@ -207,9 +207,7 @@ describe('SearchService', () => {
             role_filters_id: 'filter-1',
             name: 'London',
             state: '',
-            postcode: '',
-            distance_unit: 'KILOMETERS',
-            distance_value: 10,
+            country_code: 'GB',
           },
         ],
       });
@@ -218,8 +216,9 @@ describe('SearchService', () => {
 
       expect(dto.title).toBe('Fullstack Developer');
       expect(dto.required_skills).toEqual(['React', 'Node.js']);
+      expect(dto.industry).toBe('Technology');
       expect(dto.filter_location_cities).toEqual([
-        expect.objectContaining({ name: 'London', distance_value: 10 }),
+        expect.objectContaining({ name: 'London', country_code: 'GB' }),
       ]);
     });
 
@@ -309,13 +308,12 @@ describe('SearchService', () => {
       expect(result).toBe(created);
     });
 
-    it('converts current_role_start_date and graduation_years into Date objects', async () => {
+    it('converts current_role_start_date into a Date object', async () => {
       prisma.candidate.create.mockResolvedValue({ uid: 'candidate-3' });
 
       await (service as any).upsertCandidate(
         buildCandidateFields({
           current_role_start_date: '2024-01-15T00:00:00.000Z',
-          graduation_years: ['2020-06-18T00:00:00.000Z'],
         }),
       );
 
@@ -323,9 +321,6 @@ describe('SearchService', () => {
       expect(data.current_role_start_date).toEqual(
         new Date('2024-01-15T00:00:00.000Z'),
       );
-      expect(data.graduation_years).toEqual([
-        new Date('2020-06-18T00:00:00.000Z'),
-      ]);
     });
   });
 
@@ -333,6 +328,8 @@ describe('SearchService', () => {
     const match = {
       candidate: buildCandidateFields(),
       summary: 'Strong match',
+      reasoning: 'Matches on required skills and location.',
+      skills_matched: ['TypeScript'],
       score: 85,
     };
 
@@ -357,6 +354,8 @@ describe('SearchService', () => {
           filter_id: 'filter-1',
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
+          reasoning: 'Matches on required skills and location.',
+          skills_matched: ['TypeScript'],
           score: 85,
           tokens_used: 123,
         },
@@ -385,6 +384,8 @@ describe('SearchService', () => {
           filter_id: 'filter-1',
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
+          reasoning: 'Matches on required skills and location.',
+          skills_matched: ['TypeScript'],
           score: 85,
           tokens_used: 123,
         },
@@ -408,6 +409,8 @@ describe('SearchService', () => {
       const match = {
         candidate: buildCandidateFields(),
         summary: 'Strong match',
+        reasoning: 'Matches on required skills and location.',
+        skills_matched: ['TypeScript'],
         score: 85,
       };
       geminiService.formatCandidates.mockResolvedValue({
@@ -439,6 +442,8 @@ describe('SearchService', () => {
           filter_id: 'filter-1',
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
+          reasoning: 'Matches on required skills and location.',
+          skills_matched: ['TypeScript'],
           score: 85,
           tokens_used: 100,
         },
@@ -533,7 +538,7 @@ describe('SearchService', () => {
       expect(prisma.candidate.update).toHaveBeenCalledWith({
         where: { uid: 'candidate-1' },
         data: { enriched_at: expect.any(Date) },
-        include: { experience: true },
+        include: { experience: true, education: true },
       });
       expect(geminiService.enrichCandidate).not.toHaveBeenCalled();
       expect(result).toBe(updated);
@@ -561,7 +566,7 @@ describe('SearchService', () => {
           current_company: 'NewCo',
           enriched_at: expect.any(Date),
         }),
-        include: { experience: true },
+        include: { experience: true, education: true },
       });
     });
 
@@ -583,7 +588,7 @@ describe('SearchService', () => {
       expect(prisma.candidate.update).toHaveBeenCalledWith({
         where: { uid: 'candidate-1' },
         data: expect.objectContaining({ skills: ['TypeScript', 'NestJS'] }),
-        include: { experience: true },
+        include: { experience: true, education: true },
       });
     });
 
@@ -605,7 +610,7 @@ describe('SearchService', () => {
       expect(prisma.candidate.update).toHaveBeenCalledWith({
         where: { uid: 'candidate-1' },
         data: expect.objectContaining({ sources: ['LinkedIn', 'GitHub'] }),
-        include: { experience: true },
+        include: { experience: true, education: true },
       });
     });
 
@@ -661,6 +666,63 @@ describe('SearchService', () => {
       await service.deepSearchCandidate('candidate-1');
 
       expect(prisma.candidate_experience.createMany).not.toHaveBeenCalled();
+    });
+
+    it('creates candidate_education rows only for entries with a start_date', async () => {
+      prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+        buildCandidateRecord(),
+      );
+      googleSearchService.searchCandidate.mockResolvedValue([
+        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
+      ]);
+      geminiService.enrichCandidate.mockResolvedValue({
+        enrichment: {
+          education: [
+            {
+              institution_name: 'University of Oxford',
+              institution_type: 'UNIVERSITY',
+              start_date: '2016-09-01',
+            },
+            {
+              institution_name: 'No Date University',
+              institution_type: 'UNIVERSITY',
+            },
+          ],
+        },
+        tokensUsed: 10,
+      });
+      prisma.candidate.update.mockResolvedValue({});
+
+      await service.deepSearchCandidate('candidate-1');
+
+      expect(prisma.candidate_education.createMany).toHaveBeenCalledWith({
+        data: [
+          expect.objectContaining({
+            candidate_id: 'candidate-1',
+            institution_name: 'University of Oxford',
+            institution_type: 'UNIVERSITY',
+            start_date: new Date('2016-09-01'),
+          }),
+        ],
+      });
+    });
+
+    it('does not call candidate_education.createMany when no education history is extracted', async () => {
+      prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+        buildCandidateRecord(),
+      );
+      googleSearchService.searchCandidate.mockResolvedValue([
+        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
+      ]);
+      geminiService.enrichCandidate.mockResolvedValue({
+        enrichment: {},
+        tokensUsed: 10,
+      });
+      prisma.candidate.update.mockResolvedValue({});
+
+      await service.deepSearchCandidate('candidate-1');
+
+      expect(prisma.candidate_education.createMany).not.toHaveBeenCalled();
     });
   });
 });

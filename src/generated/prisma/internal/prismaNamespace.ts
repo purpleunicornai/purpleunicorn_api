@@ -398,6 +398,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   candidate: 'candidate',
+  candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   filter_companies: 'filter_companies',
   filter_location_cities: 'filter_location_cities',
@@ -420,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "candidate" | "candidate_experience" | "filter_companies" | "filter_location_cities" | "projects" | "role_filters" | "role_result" | "roles"
+    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "filter_companies" | "filter_location_cities" | "projects" | "role_filters" | "role_result" | "roles"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -495,6 +496,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.candidateCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.CandidateCountAggregateOutputType> | number
+        }
+      }
+    }
+    candidate_education: {
+      payload: Prisma.$candidate_educationPayload<ExtArgs>
+      fields: Prisma.candidate_educationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.candidate_educationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.candidate_educationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>
+        }
+        findFirst: {
+          args: Prisma.candidate_educationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.candidate_educationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>
+        }
+        findMany: {
+          args: Prisma.candidate_educationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>[]
+        }
+        create: {
+          args: Prisma.candidate_educationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>
+        }
+        createMany: {
+          args: Prisma.candidate_educationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.candidate_educationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>[]
+        }
+        delete: {
+          args: Prisma.candidate_educationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>
+        }
+        update: {
+          args: Prisma.candidate_educationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>
+        }
+        deleteMany: {
+          args: Prisma.candidate_educationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.candidate_educationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.candidate_educationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>[]
+        }
+        upsert: {
+          args: Prisma.candidate_educationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$candidate_educationPayload>
+        }
+        aggregate: {
+          args: Prisma.Candidate_educationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCandidate_education>
+        }
+        groupBy: {
+          args: Prisma.candidate_educationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Candidate_educationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.candidate_educationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Candidate_educationCountAggregateOutputType> | number
         }
       }
     }
@@ -1077,17 +1152,12 @@ export const CandidateScalarFieldEnum = {
   experience_roles: 'experience_roles',
   current_title: 'current_title',
   current_company: 'current_company',
-  previous_companies: 'previous_companies',
-  previous_titles: 'previous_titles',
   current_salary: 'current_salary',
   current_salary_currency: 'current_salary_currency',
   current_role_start_date: 'current_role_start_date',
   skills: 'skills',
   languages: 'languages',
   diversity: 'diversity',
-  education_levels: 'education_levels',
-  education_universities: 'education_universities',
-  graduation_years: 'graduation_years',
   summary: 'summary',
   image_url: 'image_url',
   original_source_url: 'original_source_url',
@@ -1096,6 +1166,25 @@ export const CandidateScalarFieldEnum = {
 } as const
 
 export type CandidateScalarFieldEnum = (typeof CandidateScalarFieldEnum)[keyof typeof CandidateScalarFieldEnum]
+
+
+export const Candidate_educationScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  candidate_id: 'candidate_id',
+  institution_name: 'institution_name',
+  institution_type: 'institution_type',
+  institution_location: 'institution_location',
+  degree: 'degree',
+  field_of_study: 'field_of_study',
+  start_date: 'start_date',
+  end_date: 'end_date',
+  summary: 'summary',
+  additional_info: 'additional_info'
+} as const
+
+export type Candidate_educationScalarFieldEnum = (typeof Candidate_educationScalarFieldEnum)[keyof typeof Candidate_educationScalarFieldEnum]
 
 
 export const Candidate_experienceScalarFieldEnum = {
@@ -1136,9 +1225,7 @@ export const Filter_location_citiesScalarFieldEnum = {
   role_filters_id: 'role_filters_id',
   name: 'name',
   state: 'state',
-  postcode: 'postcode',
-  distance_unit: 'distance_unit',
-  distance_value: 'distance_value'
+  country_code: 'country_code'
 } as const
 
 export type Filter_location_citiesScalarFieldEnum = (typeof Filter_location_citiesScalarFieldEnum)[keyof typeof Filter_location_citiesScalarFieldEnum]
@@ -1191,7 +1278,8 @@ export const Role_filtersScalarFieldEnum = {
   other_experience: 'other_experience',
   sites: 'sites',
   metadata: 'metadata',
-  archived: 'archived'
+  archived: 'archived',
+  industry: 'industry'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -1203,14 +1291,21 @@ export const Role_resultScalarFieldEnum = {
   updated: 'updated',
   candidate_uid: 'candidate_uid',
   role_id: 'role_id',
+  filter_id: 'filter_id',
   score: 'score',
-  shortlist: 'shortlist',
+  reasoning: 'reasoning',
+  skills_matched: 'skills_matched',
+  summary: 'summary',
   relevancy_score: 'relevancy_score',
   rated_by: 'rated_by',
-  summary: 'summary',
+  shortlist: 'shortlist',
+  shortlist_date: 'shortlist_date',
+  marked_for_review: 'marked_for_review',
+  marked_for_review_date: 'marked_for_review_date',
+  not_suitable: 'not_suitable',
+  not_suitable_date: 'not_suitable_date',
   tokens_used: 'tokens_used',
-  tokens_cost: 'tokens_cost',
-  filter_id: 'filter_id'
+  tokens_cost: 'tokens_cost'
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]
@@ -1341,6 +1436,20 @@ export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMode
 
 
 /**
+ * Reference to a field of type 'InstitutionType'
+ */
+export type EnumInstitutionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionType'>
+    
+
+
+/**
+ * Reference to a field of type 'InstitutionType[]'
+ */
+export type ListEnumInstitutionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstitutionType[]'>
+    
+
+
+/**
  * Reference to a field of type 'CompanyFilterType'
  */
 export type EnumCompanyFilterTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CompanyFilterType'>
@@ -1351,20 +1460,6 @@ export type EnumCompanyFilterTypeFieldRefInput<$PrismaModel> = FieldRefInputType
  * Reference to a field of type 'CompanyFilterType[]'
  */
 export type ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CompanyFilterType[]'>
-    
-
-
-/**
- * Reference to a field of type 'DistanceUnit'
- */
-export type EnumDistanceUnitFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DistanceUnit'>
-    
-
-
-/**
- * Reference to a field of type 'DistanceUnit[]'
- */
-export type ListEnumDistanceUnitFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DistanceUnit[]'>
     
 
 
@@ -1547,6 +1642,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   candidate?: Prisma.candidateOmit
+  candidate_education?: Prisma.candidate_educationOmit
   candidate_experience?: Prisma.candidate_experienceOmit
   filter_companies?: Prisma.filter_companiesOmit
   filter_location_cities?: Prisma.filter_location_citiesOmit

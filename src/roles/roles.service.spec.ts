@@ -299,9 +299,7 @@ describe('RolesService', () => {
           {
             name: 'London',
             state: '',
-            postcode: '',
-            distance_unit: 'KILOMETERS',
-            distance_value: 10,
+            country_code: 'GB',
           },
         ],
       });
@@ -314,12 +312,21 @@ describe('RolesService', () => {
           {
             name: 'London',
             state: '',
-            postcode: '',
-            distance_unit: 'KILOMETERS',
-            distance_value: 10,
+            country_code: 'GB',
           },
         ],
       });
+    });
+
+    it('passes the industry field through to the saved filter', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
+      const dto = buildRoleFilterDto({ industry: 'Technology' });
+
+      await service.createFilter('role-1', dto, 'org-1', 'user-1');
+
+      const data = prisma.role_filters.create.mock.calls[0][0].data;
+      expect(data.industry).toBe('Technology');
     });
 
     it('converts graduation years into January 1st UTC dates, and passes through null', async () => {
@@ -354,7 +361,7 @@ describe('RolesService', () => {
   });
 
   describe('getRoleResult', () => {
-    it("fetches a role_result scoped to the caller's organization, including its candidate and their experience", async () => {
+    it("fetches a role_result scoped to the caller's organization, including its candidate and their experience/education", async () => {
       const result = {
         uid: 'result-1',
         role_id: 'role-1',
@@ -369,7 +376,9 @@ describe('RolesService', () => {
           uid: 'result-1',
           role: { project: { organization_id: 'org-1' } },
         },
-        include: { candidate: { include: { experience: true } } },
+        include: {
+          candidate: { include: { experience: true, education: true } },
+        },
       });
       expect(found).toBe(result);
     });

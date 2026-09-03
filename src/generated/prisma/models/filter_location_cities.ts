@@ -20,18 +20,8 @@ export type filter_location_citiesModel = runtime.Types.Result.DefaultSelection<
 
 export type AggregateFilter_location_cities = {
   _count: Filter_location_citiesCountAggregateOutputType | null
-  _avg: Filter_location_citiesAvgAggregateOutputType | null
-  _sum: Filter_location_citiesSumAggregateOutputType | null
   _min: Filter_location_citiesMinAggregateOutputType | null
   _max: Filter_location_citiesMaxAggregateOutputType | null
-}
-
-export type Filter_location_citiesAvgAggregateOutputType = {
-  distance_value: number | null
-}
-
-export type Filter_location_citiesSumAggregateOutputType = {
-  distance_value: number | null
 }
 
 export type Filter_location_citiesMinAggregateOutputType = {
@@ -41,9 +31,7 @@ export type Filter_location_citiesMinAggregateOutputType = {
   role_filters_id: string | null
   name: string | null
   state: string | null
-  postcode: string | null
-  distance_unit: $Enums.DistanceUnit | null
-  distance_value: number | null
+  country_code: string | null
 }
 
 export type Filter_location_citiesMaxAggregateOutputType = {
@@ -53,9 +41,7 @@ export type Filter_location_citiesMaxAggregateOutputType = {
   role_filters_id: string | null
   name: string | null
   state: string | null
-  postcode: string | null
-  distance_unit: $Enums.DistanceUnit | null
-  distance_value: number | null
+  country_code: string | null
 }
 
 export type Filter_location_citiesCountAggregateOutputType = {
@@ -65,20 +51,10 @@ export type Filter_location_citiesCountAggregateOutputType = {
   role_filters_id: number
   name: number
   state: number
-  postcode: number
-  distance_unit: number
-  distance_value: number
+  country_code: number
   _all: number
 }
 
-
-export type Filter_location_citiesAvgAggregateInputType = {
-  distance_value?: true
-}
-
-export type Filter_location_citiesSumAggregateInputType = {
-  distance_value?: true
-}
 
 export type Filter_location_citiesMinAggregateInputType = {
   uid?: true
@@ -87,9 +63,7 @@ export type Filter_location_citiesMinAggregateInputType = {
   role_filters_id?: true
   name?: true
   state?: true
-  postcode?: true
-  distance_unit?: true
-  distance_value?: true
+  country_code?: true
 }
 
 export type Filter_location_citiesMaxAggregateInputType = {
@@ -99,9 +73,7 @@ export type Filter_location_citiesMaxAggregateInputType = {
   role_filters_id?: true
   name?: true
   state?: true
-  postcode?: true
-  distance_unit?: true
-  distance_value?: true
+  country_code?: true
 }
 
 export type Filter_location_citiesCountAggregateInputType = {
@@ -111,9 +83,7 @@ export type Filter_location_citiesCountAggregateInputType = {
   role_filters_id?: true
   name?: true
   state?: true
-  postcode?: true
-  distance_unit?: true
-  distance_value?: true
+  country_code?: true
   _all?: true
 }
 
@@ -155,18 +125,6 @@ export type Filter_location_citiesAggregateArgs<ExtArgs extends runtime.Types.Ex
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: Filter_location_citiesAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: Filter_location_citiesSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: Filter_location_citiesMinAggregateInputType
@@ -197,8 +155,6 @@ export type filter_location_citiesGroupByArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   _count?: Filter_location_citiesCountAggregateInputType | true
-  _avg?: Filter_location_citiesAvgAggregateInputType
-  _sum?: Filter_location_citiesSumAggregateInputType
   _min?: Filter_location_citiesMinAggregateInputType
   _max?: Filter_location_citiesMaxAggregateInputType
 }
@@ -210,12 +166,8 @@ export type Filter_location_citiesGroupByOutputType = {
   role_filters_id: string
   name: string
   state: string | null
-  postcode: string | null
-  distance_unit: $Enums.DistanceUnit | null
-  distance_value: number | null
+  country_code: string | null
   _count: Filter_location_citiesCountAggregateOutputType | null
-  _avg: Filter_location_citiesAvgAggregateOutputType | null
-  _sum: Filter_location_citiesSumAggregateOutputType | null
   _min: Filter_location_citiesMinAggregateOutputType | null
   _max: Filter_location_citiesMaxAggregateOutputType | null
 }
@@ -245,9 +197,7 @@ export type filter_location_citiesWhereInput = {
   role_filters_id?: Prisma.UuidFilter<"filter_location_cities"> | string
   name?: Prisma.StringFilter<"filter_location_cities"> | string
   state?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
-  postcode?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
-  distance_unit?: Prisma.EnumDistanceUnitNullableFilter<"filter_location_cities"> | $Enums.DistanceUnit | null
-  distance_value?: Prisma.IntNullableFilter<"filter_location_cities"> | number | null
+  country_code?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
   role_filters?: Prisma.XOR<Prisma.Role_filtersScalarRelationFilter, Prisma.role_filtersWhereInput>
 }
 
@@ -258,9 +208,7 @@ export type filter_location_citiesOrderByWithRelationInput = {
   role_filters_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   state?: Prisma.SortOrderInput | Prisma.SortOrder
-  postcode?: Prisma.SortOrderInput | Prisma.SortOrder
-  distance_unit?: Prisma.SortOrderInput | Prisma.SortOrder
-  distance_value?: Prisma.SortOrderInput | Prisma.SortOrder
+  country_code?: Prisma.SortOrderInput | Prisma.SortOrder
   role_filters?: Prisma.role_filtersOrderByWithRelationInput
 }
 
@@ -274,9 +222,7 @@ export type filter_location_citiesWhereUniqueInput = Prisma.AtLeast<{
   role_filters_id?: Prisma.UuidFilter<"filter_location_cities"> | string
   name?: Prisma.StringFilter<"filter_location_cities"> | string
   state?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
-  postcode?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
-  distance_unit?: Prisma.EnumDistanceUnitNullableFilter<"filter_location_cities"> | $Enums.DistanceUnit | null
-  distance_value?: Prisma.IntNullableFilter<"filter_location_cities"> | number | null
+  country_code?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
   role_filters?: Prisma.XOR<Prisma.Role_filtersScalarRelationFilter, Prisma.role_filtersWhereInput>
 }, "uid" | "uid">
 
@@ -287,14 +233,10 @@ export type filter_location_citiesOrderByWithAggregationInput = {
   role_filters_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   state?: Prisma.SortOrderInput | Prisma.SortOrder
-  postcode?: Prisma.SortOrderInput | Prisma.SortOrder
-  distance_unit?: Prisma.SortOrderInput | Prisma.SortOrder
-  distance_value?: Prisma.SortOrderInput | Prisma.SortOrder
+  country_code?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.filter_location_citiesCountOrderByAggregateInput
-  _avg?: Prisma.filter_location_citiesAvgOrderByAggregateInput
   _max?: Prisma.filter_location_citiesMaxOrderByAggregateInput
   _min?: Prisma.filter_location_citiesMinOrderByAggregateInput
-  _sum?: Prisma.filter_location_citiesSumOrderByAggregateInput
 }
 
 export type filter_location_citiesScalarWhereWithAggregatesInput = {
@@ -307,9 +249,7 @@ export type filter_location_citiesScalarWhereWithAggregatesInput = {
   role_filters_id?: Prisma.UuidWithAggregatesFilter<"filter_location_cities"> | string
   name?: Prisma.StringWithAggregatesFilter<"filter_location_cities"> | string
   state?: Prisma.StringNullableWithAggregatesFilter<"filter_location_cities"> | string | null
-  postcode?: Prisma.StringNullableWithAggregatesFilter<"filter_location_cities"> | string | null
-  distance_unit?: Prisma.EnumDistanceUnitNullableWithAggregatesFilter<"filter_location_cities"> | $Enums.DistanceUnit | null
-  distance_value?: Prisma.IntNullableWithAggregatesFilter<"filter_location_cities"> | number | null
+  country_code?: Prisma.StringNullableWithAggregatesFilter<"filter_location_cities"> | string | null
 }
 
 export type filter_location_citiesCreateInput = {
@@ -318,9 +258,7 @@ export type filter_location_citiesCreateInput = {
   updated?: Date | string
   name: string
   state?: string | null
-  postcode?: string | null
-  distance_unit?: $Enums.DistanceUnit | null
-  distance_value?: number | null
+  country_code?: string | null
   role_filters: Prisma.role_filtersCreateNestedOneWithoutFilter_location_citiesInput
 }
 
@@ -331,9 +269,7 @@ export type filter_location_citiesUncheckedCreateInput = {
   role_filters_id: string
   name: string
   state?: string | null
-  postcode?: string | null
-  distance_unit?: $Enums.DistanceUnit | null
-  distance_value?: number | null
+  country_code?: string | null
 }
 
 export type filter_location_citiesUpdateInput = {
@@ -342,9 +278,7 @@ export type filter_location_citiesUpdateInput = {
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  postcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  distance_unit?: Prisma.NullableEnumDistanceUnitFieldUpdateOperationsInput | $Enums.DistanceUnit | null
-  distance_value?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUpdateOneRequiredWithoutFilter_location_citiesNestedInput
 }
 
@@ -355,9 +289,7 @@ export type filter_location_citiesUncheckedUpdateInput = {
   role_filters_id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  postcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  distance_unit?: Prisma.NullableEnumDistanceUnitFieldUpdateOperationsInput | $Enums.DistanceUnit | null
-  distance_value?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type filter_location_citiesCreateManyInput = {
@@ -367,9 +299,7 @@ export type filter_location_citiesCreateManyInput = {
   role_filters_id: string
   name: string
   state?: string | null
-  postcode?: string | null
-  distance_unit?: $Enums.DistanceUnit | null
-  distance_value?: number | null
+  country_code?: string | null
 }
 
 export type filter_location_citiesUpdateManyMutationInput = {
@@ -378,9 +308,7 @@ export type filter_location_citiesUpdateManyMutationInput = {
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  postcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  distance_unit?: Prisma.NullableEnumDistanceUnitFieldUpdateOperationsInput | $Enums.DistanceUnit | null
-  distance_value?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type filter_location_citiesUncheckedUpdateManyInput = {
@@ -390,9 +318,7 @@ export type filter_location_citiesUncheckedUpdateManyInput = {
   role_filters_id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  postcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  distance_unit?: Prisma.NullableEnumDistanceUnitFieldUpdateOperationsInput | $Enums.DistanceUnit | null
-  distance_value?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type filter_location_citiesCountOrderByAggregateInput = {
@@ -402,13 +328,7 @@ export type filter_location_citiesCountOrderByAggregateInput = {
   role_filters_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   state?: Prisma.SortOrder
-  postcode?: Prisma.SortOrder
-  distance_unit?: Prisma.SortOrder
-  distance_value?: Prisma.SortOrder
-}
-
-export type filter_location_citiesAvgOrderByAggregateInput = {
-  distance_value?: Prisma.SortOrder
+  country_code?: Prisma.SortOrder
 }
 
 export type filter_location_citiesMaxOrderByAggregateInput = {
@@ -418,9 +338,7 @@ export type filter_location_citiesMaxOrderByAggregateInput = {
   role_filters_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   state?: Prisma.SortOrder
-  postcode?: Prisma.SortOrder
-  distance_unit?: Prisma.SortOrder
-  distance_value?: Prisma.SortOrder
+  country_code?: Prisma.SortOrder
 }
 
 export type filter_location_citiesMinOrderByAggregateInput = {
@@ -430,13 +348,7 @@ export type filter_location_citiesMinOrderByAggregateInput = {
   role_filters_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   state?: Prisma.SortOrder
-  postcode?: Prisma.SortOrder
-  distance_unit?: Prisma.SortOrder
-  distance_value?: Prisma.SortOrder
-}
-
-export type filter_location_citiesSumOrderByAggregateInput = {
-  distance_value?: Prisma.SortOrder
+  country_code?: Prisma.SortOrder
 }
 
 export type Filter_location_citiesListRelationFilter = {
@@ -447,10 +359,6 @@ export type Filter_location_citiesListRelationFilter = {
 
 export type filter_location_citiesOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type NullableEnumDistanceUnitFieldUpdateOperationsInput = {
-  set?: $Enums.DistanceUnit | null
 }
 
 export type filter_location_citiesCreateNestedManyWithoutRole_filtersInput = {
@@ -501,9 +409,7 @@ export type filter_location_citiesCreateWithoutRole_filtersInput = {
   updated?: Date | string
   name: string
   state?: string | null
-  postcode?: string | null
-  distance_unit?: $Enums.DistanceUnit | null
-  distance_value?: number | null
+  country_code?: string | null
 }
 
 export type filter_location_citiesUncheckedCreateWithoutRole_filtersInput = {
@@ -512,9 +418,7 @@ export type filter_location_citiesUncheckedCreateWithoutRole_filtersInput = {
   updated?: Date | string
   name: string
   state?: string | null
-  postcode?: string | null
-  distance_unit?: $Enums.DistanceUnit | null
-  distance_value?: number | null
+  country_code?: string | null
 }
 
 export type filter_location_citiesCreateOrConnectWithoutRole_filtersInput = {
@@ -553,9 +457,7 @@ export type filter_location_citiesScalarWhereInput = {
   role_filters_id?: Prisma.UuidFilter<"filter_location_cities"> | string
   name?: Prisma.StringFilter<"filter_location_cities"> | string
   state?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
-  postcode?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
-  distance_unit?: Prisma.EnumDistanceUnitNullableFilter<"filter_location_cities"> | $Enums.DistanceUnit | null
-  distance_value?: Prisma.IntNullableFilter<"filter_location_cities"> | number | null
+  country_code?: Prisma.StringNullableFilter<"filter_location_cities"> | string | null
 }
 
 export type filter_location_citiesCreateManyRole_filtersInput = {
@@ -564,9 +466,7 @@ export type filter_location_citiesCreateManyRole_filtersInput = {
   updated?: Date | string
   name: string
   state?: string | null
-  postcode?: string | null
-  distance_unit?: $Enums.DistanceUnit | null
-  distance_value?: number | null
+  country_code?: string | null
 }
 
 export type filter_location_citiesUpdateWithoutRole_filtersInput = {
@@ -575,9 +475,7 @@ export type filter_location_citiesUpdateWithoutRole_filtersInput = {
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  postcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  distance_unit?: Prisma.NullableEnumDistanceUnitFieldUpdateOperationsInput | $Enums.DistanceUnit | null
-  distance_value?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type filter_location_citiesUncheckedUpdateWithoutRole_filtersInput = {
@@ -586,9 +484,7 @@ export type filter_location_citiesUncheckedUpdateWithoutRole_filtersInput = {
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  postcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  distance_unit?: Prisma.NullableEnumDistanceUnitFieldUpdateOperationsInput | $Enums.DistanceUnit | null
-  distance_value?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type filter_location_citiesUncheckedUpdateManyWithoutRole_filtersInput = {
@@ -597,9 +493,7 @@ export type filter_location_citiesUncheckedUpdateManyWithoutRole_filtersInput = 
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  postcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  distance_unit?: Prisma.NullableEnumDistanceUnitFieldUpdateOperationsInput | $Enums.DistanceUnit | null
-  distance_value?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -611,9 +505,7 @@ export type filter_location_citiesSelect<ExtArgs extends runtime.Types.Extension
   role_filters_id?: boolean
   name?: boolean
   state?: boolean
-  postcode?: boolean
-  distance_unit?: boolean
-  distance_value?: boolean
+  country_code?: boolean
   role_filters?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["filter_location_cities"]>
 
@@ -624,9 +516,7 @@ export type filter_location_citiesSelectCreateManyAndReturn<ExtArgs extends runt
   role_filters_id?: boolean
   name?: boolean
   state?: boolean
-  postcode?: boolean
-  distance_unit?: boolean
-  distance_value?: boolean
+  country_code?: boolean
   role_filters?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["filter_location_cities"]>
 
@@ -637,9 +527,7 @@ export type filter_location_citiesSelectUpdateManyAndReturn<ExtArgs extends runt
   role_filters_id?: boolean
   name?: boolean
   state?: boolean
-  postcode?: boolean
-  distance_unit?: boolean
-  distance_value?: boolean
+  country_code?: boolean
   role_filters?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["filter_location_cities"]>
 
@@ -650,12 +538,10 @@ export type filter_location_citiesSelectScalar = {
   role_filters_id?: boolean
   name?: boolean
   state?: boolean
-  postcode?: boolean
-  distance_unit?: boolean
-  distance_value?: boolean
+  country_code?: boolean
 }
 
-export type filter_location_citiesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_filters_id" | "name" | "state" | "postcode" | "distance_unit" | "distance_value", ExtArgs["result"]["filter_location_cities"]>
+export type filter_location_citiesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_filters_id" | "name" | "state" | "country_code", ExtArgs["result"]["filter_location_cities"]>
 export type filter_location_citiesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role_filters?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
 }
@@ -678,9 +564,7 @@ export type $filter_location_citiesPayload<ExtArgs extends runtime.Types.Extensi
     role_filters_id: string
     name: string
     state: string | null
-    postcode: string | null
-    distance_unit: $Enums.DistanceUnit | null
-    distance_value: number | null
+    country_code: string | null
   }, ExtArgs["result"]["filter_location_cities"]>
   composites: {}
 }
@@ -1111,9 +995,7 @@ export interface filter_location_citiesFieldRefs {
   readonly role_filters_id: Prisma.FieldRef<"filter_location_cities", 'String'>
   readonly name: Prisma.FieldRef<"filter_location_cities", 'String'>
   readonly state: Prisma.FieldRef<"filter_location_cities", 'String'>
-  readonly postcode: Prisma.FieldRef<"filter_location_cities", 'String'>
-  readonly distance_unit: Prisma.FieldRef<"filter_location_cities", 'DistanceUnit'>
-  readonly distance_value: Prisma.FieldRef<"filter_location_cities", 'Int'>
+  readonly country_code: Prisma.FieldRef<"filter_location_cities", 'String'>
 }
     
 

@@ -60,31 +60,12 @@ export class FilterLocationCityDto {
 
   @ApiProperty({
     description:
-      'Primary targeted central post code criteria validation format block rules',
-    example: '',
+      'ISO 2-letter operational tracking boundary country mapping context tag standard string codes',
+    example: 'GB',
   })
   @Expose()
   @IsString()
-  postcode: string;
-
-  @ApiProperty({
-    description:
-      'Radial search bounding distance metrics formatting descriptor systems',
-    example: 'KILOMETERS',
-  })
-  @Expose()
-  @IsString()
-  distance_unit: string;
-
-  @ApiProperty({
-    description:
-      'Geographic target scanning boundary radius calculation scope rules',
-    example: 0,
-  })
-  @Expose()
-  @IsInt()
-  @Min(0)
-  distance_value: number;
+  country_code: string;
 }
 
 export class FilterCompanyDto {
@@ -139,6 +120,16 @@ export class RoleFilterDto {
   @Expose()
   @IsString()
   country_code: string;
+
+  @ApiProperty({
+    description: 'Target industry sector for candidate sourcing',
+    example: 'Technology',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  industry?: string;
 
   @ApiProperty({
     description:

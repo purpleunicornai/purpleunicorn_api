@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
 import { RoleFilterDto, RoleFilterMetadataDto } from '../dto/role_filter.dto';
 import { GoogleSearchService } from '../../services/google-search/google-search.service';
 import {
+  GeminiCandidateEducationEnrichment,
   GeminiCandidateEnrichment,
   GeminiCandidateExperienceEnrichment,
   GeminiCandidateFields,
@@ -11,6 +12,7 @@ import {
 import { PrismaService } from '../../common/database/prisma.service';
 import {
   candidate,
+  candidate_education,
   candidate_experience,
   filter_location_cities,
   Prisma,
@@ -47,14 +49,19 @@ export class SearchService {
   // profile — a no-op if it's already been done (enriched_at is set) or
   // there's no name on file to search on, unless `force` is set to bypass
   // the already-enriched check and refetch from Google regardless. Always
-  // includes `experience` so every return path has the same shape.
+  // includes `experience`/`education` so every return path has the same shape.
   async deepSearchCandidate(
     candidateUid: string,
     force = false,
-  ): Promise<candidate & { experience: candidate_experience[] }> {
+  ): Promise<
+    candidate & {
+      experience: candidate_experience[];
+      education: candidate_education[];
+    }
+  > {
     const existing = await this.prisma.candidate.findUniqueOrThrow({
       where: { uid: candidateUid },
-      include: { experience: true },
+      include: { experience: true, education: true },
     });
     if (existing.enriched_at && !force) return existing;
 
@@ -69,7 +76,7 @@ export class SearchService {
       return this.prisma.candidate.update({
         where: { uid: candidateUid },
         data: { enriched_at: new Date() },
-        include: { experience: true },
+        include: { experience: true, education: true },
       });
     }
 
@@ -78,9 +85,10 @@ export class SearchService {
       existing,
     );
 
-    // Create any new work-history rows before the final read so they're
-    // included in the `experience` this method returns.
+    // Create any new work/education-history rows before the final read so
+    // they're included in the `experience`/`education` this method returns.
     await this.createCandidateExperience(candidateUid, enrichment.experience);
+    await this.createCandidateEducation(candidateUid, enrichment.education);
 
     return this.prisma.candidate.update({
       where: { uid: candidateUid },
@@ -88,7 +96,7 @@ export class SearchService {
         ...this.buildEnrichmentCandidateData(enrichment, existing),
         enriched_at: new Date(),
       },
-      include: { experience: true },
+      include: { experience: true, education: true },
     });
   }
 
@@ -135,13 +143,9 @@ export class SearchService {
 
     const listFields = [
       'experience_roles',
-      'previous_companies',
-      'previous_titles',
       'skills',
       'languages',
       'diversity',
-      'education_levels',
-      'education_universities',
     ] as const;
     for (const field of listFields) {
       const incoming = enrichment[field];
@@ -157,30 +161,11 @@ export class SearchService {
       );
     }
 
-    if (enrichment.graduation_years?.length) {
-      data.graduation_years = this.unionDates(
-        existing.graduation_years,
-        enrichment.graduation_years.map((year) => new Date(year)),
-      );
-    }
-
     return data;
   }
 
   private unionStrings(existing: string[], incoming: string[]): string[] {
     return [...new Set([...existing, ...incoming])];
-  }
-
-  private unionDates(existing: Date[], incoming: Date[]): Date[] {
-    const seen = new Set(existing.map((date) => date.getTime()));
-    const result = [...existing];
-    for (const date of incoming) {
-      if (!seen.has(date.getTime())) {
-        seen.add(date.getTime());
-        result.push(date);
-      }
-    }
-    return result;
   }
 
   // candidate_experience.start_date is a required column — an entry Gemini
@@ -206,6 +191,33 @@ export class SearchService {
     if (rows.length === 0) return;
 
     await this.prisma.candidate_experience.createMany({ data: rows });
+  }
+
+  // candidate_education.start_date is a required column — an entry Gemini
+  // couldn't pin a start date on gets skipped rather than written with a
+  // fabricated date.
+  private async createCandidateEducation(
+    candidateUid: string,
+    education?: GeminiCandidateEducationEnrichment[],
+  ): Promise<void> {
+    const rows = (education ?? [])
+      .filter((entry) => Boolean(entry.start_date))
+      .map((entry) => ({
+        candidate_id: candidateUid,
+        institution_name: entry.institution_name,
+        institution_type: entry.institution_type,
+        institution_location: entry.institution_location,
+        degree: entry.degree,
+        field_of_study: entry.field_of_study,
+        start_date: new Date(entry.start_date as string),
+        end_date: entry.end_date ? new Date(entry.end_date) : null,
+        summary: entry.summary,
+        additional_info: entry.additional_info,
+      }));
+
+    if (rows.length === 0) return;
+
+    await this.prisma.candidate_education.createMany({ data: rows });
   }
 
   streamSearch(roleId: string): Observable<MessageEvent> {
@@ -368,6 +380,7 @@ export class SearchService {
       diversity: filter.diversity,
       other_experience: filter.other_experience,
       sites: filter.sites,
+      industry: filter.industry ?? undefined,
       metadata: (filter.metadata as unknown as RoleFilterMetadataDto) ?? {
         complete: false,
         refined_prompt: '',
@@ -381,9 +394,7 @@ export class SearchService {
       filter_location_cities: filter.filter_location_cities.map((city) => ({
         name: city.name,
         state: city.state ?? '',
-        postcode: city.postcode ?? '',
-        distance_unit: city.distance_unit ?? '',
-        distance_value: city.distance_value ?? 0,
+        country_code: city.country_code ?? '',
       })),
     };
   }
@@ -460,6 +471,8 @@ export class SearchService {
       filter_id: filterId,
       candidate_uid: candidateUid,
       summary: match.summary,
+      reasoning: match.reasoning,
+      skills_matched: match.skills_matched,
       score: match.score,
       tokens_used: tokensUsed,
     };
@@ -488,8 +501,6 @@ export class SearchService {
       if (value === undefined) continue;
       if (key === 'current_role_start_date') {
         data[key] = new Date(value as string);
-      } else if (key === 'graduation_years') {
-        data[key] = (value as string[]).map((date) => new Date(date));
       } else {
         data[key] = value;
       }

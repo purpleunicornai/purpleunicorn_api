@@ -23,6 +23,11 @@ export * from './enums.js';
  */
 export type candidate = Prisma.candidateModel
 /**
+ * Model candidate_education
+ * 
+ */
+export type candidate_education = Prisma.candidate_educationModel
+/**
  * Model candidate_experience
  * 
  */

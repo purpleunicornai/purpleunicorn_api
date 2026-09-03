@@ -4,12 +4,7 @@ import { ProjectsService } from '../projects/projects.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
 import { RoleFilterDto } from './dto/role_filter.dto';
-import {
-  DistanceUnit,
-  Prisma,
-  role_filters,
-  roles,
-} from '../generated/prisma/client';
+import { Prisma, role_filters, roles } from '../generated/prisma/client';
 import { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
 
 const ROLE_WITH_DETAILS_INCLUDE = {
@@ -154,6 +149,7 @@ export class RolesService {
         diversity: dto.diversity,
         other_experience: dto.other_experience,
         sites: dto.sites,
+        industry: dto.industry,
         metadata: dto.metadata as unknown as InputJsonValue,
         filter_companies: {
           create: dto.filter_companies.map((company) => ({
@@ -167,9 +163,7 @@ export class RolesService {
           create: dto.filter_location_cities.map((city) => ({
             name: city.name,
             state: city.state,
-            postcode: city.postcode,
-            distance_unit: city.distance_unit as DistanceUnit,
-            distance_value: city.distance_value,
+            country_code: city.country_code,
           })),
         },
       },
@@ -225,6 +219,7 @@ export class RolesService {
         candidate: {
           include: {
             experience: true,
+            education: true,
           },
         },
       },

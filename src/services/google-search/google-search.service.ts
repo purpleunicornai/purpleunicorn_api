@@ -4,7 +4,11 @@ import { type ConfigType } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { DEFAULT_XRAY_SITES } from '../../common/constants/google';
-import { candidate } from '../../generated/prisma/client';
+import { candidate, candidate_experience } from '../../generated/prisma/client';
+
+type CandidateWithExperience = candidate & {
+  experience: candidate_experience[];
+};
 
 export interface GoogleSearchItem {
   title: string;
@@ -50,7 +54,9 @@ export class GoogleSearchService {
 
   // Digs deeper on a single already-identified candidate to build out their
   // profile, rather than casting a wide net for role matches.
-  async searchCandidate(candidate: candidate): Promise<GoogleSearchItem[]> {
+  async searchCandidate(
+    candidate: CandidateWithExperience,
+  ): Promise<GoogleSearchItem[]> {
     const queries = this.buildCandidateQueries(candidate);
     if (queries.length === 0) return [];
 
@@ -142,7 +148,10 @@ export class GoogleSearchService {
 
   // Identity-based queries for enriching one already-found person, rather
   // than the criteria-based queries buildXrayQueries uses to find matches.
-  private buildCandidateQueries(candidate: candidate): string[] {
+  // Past employers come from the candidate's own experience history rather
+  // than a flat "previous companies" guess, since that's the only place
+  // work history lives now.
+  private buildCandidateQueries(candidate: CandidateWithExperience): string[] {
     const fullName = [candidate.first_name, candidate.last_name]
       .filter((part): part is string => Boolean(part?.trim()))
       .join(' ')
@@ -160,7 +169,10 @@ export class GoogleSearchService {
       ]),
     );
 
-    for (const company of candidate.previous_companies.slice(0, 3)) {
+    const previousCompanies = [
+      ...new Set(candidate.experience.map((entry) => entry.comapany_name)),
+    ].slice(0, 3);
+    for (const company of previousCompanies) {
       queries.add(
         this.joinNonEmpty([
           siteFilter,

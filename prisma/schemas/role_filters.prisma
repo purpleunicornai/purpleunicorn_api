@@ -1,14 +1,13 @@
 model role_filters {
-  uid                         String   @id @unique @default(uuid()) @db.Uuid
-  created                     DateTime @default(now())
-  updated                     DateTime @updatedAt
-  role_id                     String   @db.Uuid
-  role                        roles    @relation(fields: [role_id], references: [uid], onDelete: Cascade)
+  uid                             String    @id @unique @default(uuid()) @db.Uuid
+  created                         DateTime  @default(now())
+  updated                         DateTime  @updatedAt
+  role_id                         String    @db.Uuid
+  role                            roles     @relation(fields: [role_id], references: [uid], onDelete: Cascade)
   // location
-  country_code                String?
-  remote_work                 Boolean? @default(false)
-  work_authorization_required Boolean? @default(false)
-
+  country_code                    String?
+  remote_work                     Boolean?  @default(false)
+  work_authorization_required     Boolean?  @default(false)
   // Experience
   experience_min_yrs              Int?
   experience_max_yrs              Int?
@@ -39,6 +38,7 @@ model role_filters {
   sites                           String[] // e.g. "LinkedIn", "Indeed", "Google X-Ray", "Docs", "GitHub"
   metadata                        Json?     @db.JsonB // any additional metadata that may be needed for the search service, e.g. LinkedIn search filters, Indeed search filters, etc.
   archived                        Boolean   @default(false)
+  industry                        String?
 
   filter_companies       filter_companies[]
   filter_location_cities filter_location_cities[]

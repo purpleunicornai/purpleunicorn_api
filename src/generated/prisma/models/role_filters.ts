@@ -59,6 +59,7 @@ export type Role_filtersMinAggregateOutputType = {
   education_graduation_min_yr: Date | null
   education_graduation_max_yr: Date | null
   archived: boolean | null
+  industry: string | null
 }
 
 export type Role_filtersMaxAggregateOutputType = {
@@ -78,6 +79,7 @@ export type Role_filtersMaxAggregateOutputType = {
   education_graduation_min_yr: Date | null
   education_graduation_max_yr: Date | null
   archived: boolean | null
+  industry: string | null
 }
 
 export type Role_filtersCountAggregateOutputType = {
@@ -113,6 +115,7 @@ export type Role_filtersCountAggregateOutputType = {
   sites: number
   metadata: number
   archived: number
+  industry: number
   _all: number
 }
 
@@ -150,6 +153,7 @@ export type Role_filtersMinAggregateInputType = {
   education_graduation_min_yr?: true
   education_graduation_max_yr?: true
   archived?: true
+  industry?: true
 }
 
 export type Role_filtersMaxAggregateInputType = {
@@ -169,6 +173,7 @@ export type Role_filtersMaxAggregateInputType = {
   education_graduation_min_yr?: true
   education_graduation_max_yr?: true
   archived?: true
+  industry?: true
 }
 
 export type Role_filtersCountAggregateInputType = {
@@ -204,6 +209,7 @@ export type Role_filtersCountAggregateInputType = {
   sites?: true
   metadata?: true
   archived?: true
+  industry?: true
   _all?: true
 }
 
@@ -326,6 +332,7 @@ export type Role_filtersGroupByOutputType = {
   sites: string[]
   metadata: runtime.JsonValue | null
   archived: boolean
+  industry: string | null
   _count: Role_filtersCountAggregateOutputType | null
   _avg: Role_filtersAvgAggregateOutputType | null
   _sum: Role_filtersSumAggregateOutputType | null
@@ -384,6 +391,7 @@ export type role_filtersWhereInput = {
   sites?: Prisma.StringNullableListFilter<"role_filters">
   metadata?: Prisma.JsonNullableFilter<"role_filters">
   archived?: Prisma.BoolFilter<"role_filters"> | boolean
+  industry?: Prisma.StringNullableFilter<"role_filters"> | string | null
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
   filter_companies?: Prisma.Filter_companiesListRelationFilter
   filter_location_cities?: Prisma.Filter_location_citiesListRelationFilter
@@ -423,6 +431,7 @@ export type role_filtersOrderByWithRelationInput = {
   sites?: Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   archived?: Prisma.SortOrder
+  industry?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.rolesOrderByWithRelationInput
   filter_companies?: Prisma.filter_companiesOrderByRelationAggregateInput
   filter_location_cities?: Prisma.filter_location_citiesOrderByRelationAggregateInput
@@ -465,6 +474,7 @@ export type role_filtersWhereUniqueInput = Prisma.AtLeast<{
   sites?: Prisma.StringNullableListFilter<"role_filters">
   metadata?: Prisma.JsonNullableFilter<"role_filters">
   archived?: Prisma.BoolFilter<"role_filters"> | boolean
+  industry?: Prisma.StringNullableFilter<"role_filters"> | string | null
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
   filter_companies?: Prisma.Filter_companiesListRelationFilter
   filter_location_cities?: Prisma.Filter_location_citiesListRelationFilter
@@ -504,6 +514,7 @@ export type role_filtersOrderByWithAggregationInput = {
   sites?: Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   archived?: Prisma.SortOrder
+  industry?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.role_filtersCountOrderByAggregateInput
   _avg?: Prisma.role_filtersAvgOrderByAggregateInput
   _max?: Prisma.role_filtersMaxOrderByAggregateInput
@@ -547,6 +558,7 @@ export type role_filtersScalarWhereWithAggregatesInput = {
   sites?: Prisma.StringNullableListFilter<"role_filters">
   metadata?: Prisma.JsonNullableWithAggregatesFilter<"role_filters">
   archived?: Prisma.BoolWithAggregatesFilter<"role_filters"> | boolean
+  industry?: Prisma.StringNullableWithAggregatesFilter<"role_filters"> | string | null
 }
 
 export type role_filtersCreateInput = {
@@ -581,6 +593,7 @@ export type role_filtersCreateInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
   filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
@@ -620,6 +633,7 @@ export type role_filtersUncheckedCreateInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
   filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
@@ -657,6 +671,7 @@ export type role_filtersUpdateInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
   filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
@@ -696,6 +711,7 @@ export type role_filtersUncheckedUpdateInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
   filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -734,6 +750,7 @@ export type role_filtersCreateManyInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
 }
 
 export type role_filtersUpdateManyMutationInput = {
@@ -768,6 +785,7 @@ export type role_filtersUpdateManyMutationInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type role_filtersUncheckedUpdateManyInput = {
@@ -803,6 +821,7 @@ export type role_filtersUncheckedUpdateManyInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type Role_filtersScalarRelationFilter = {
@@ -843,6 +862,7 @@ export type role_filtersCountOrderByAggregateInput = {
   sites?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
   archived?: Prisma.SortOrder
+  industry?: Prisma.SortOrder
 }
 
 export type role_filtersAvgOrderByAggregateInput = {
@@ -870,6 +890,7 @@ export type role_filtersMaxOrderByAggregateInput = {
   education_graduation_min_yr?: Prisma.SortOrder
   education_graduation_max_yr?: Prisma.SortOrder
   archived?: Prisma.SortOrder
+  industry?: Prisma.SortOrder
 }
 
 export type role_filtersMinOrderByAggregateInput = {
@@ -889,6 +910,7 @@ export type role_filtersMinOrderByAggregateInput = {
   education_graduation_min_yr?: Prisma.SortOrder
   education_graduation_max_yr?: Prisma.SortOrder
   archived?: Prisma.SortOrder
+  industry?: Prisma.SortOrder
 }
 
 export type role_filtersSumOrderByAggregateInput = {
@@ -1179,6 +1201,7 @@ export type role_filtersCreateWithoutFilter_companiesInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
@@ -1217,6 +1240,7 @@ export type role_filtersUncheckedCreateWithoutFilter_companiesInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
 }
@@ -1269,6 +1293,7 @@ export type role_filtersUpdateWithoutFilter_companiesInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
@@ -1307,6 +1332,7 @@ export type role_filtersUncheckedUpdateWithoutFilter_companiesInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
 }
@@ -1343,6 +1369,7 @@ export type role_filtersCreateWithoutFilter_location_citiesInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
@@ -1381,6 +1408,7 @@ export type role_filtersUncheckedCreateWithoutFilter_location_citiesInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
 }
@@ -1433,6 +1461,7 @@ export type role_filtersUpdateWithoutFilter_location_citiesInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
@@ -1471,6 +1500,7 @@ export type role_filtersUncheckedUpdateWithoutFilter_location_citiesInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
 }
@@ -1507,6 +1537,7 @@ export type role_filtersCreateWithoutRole_resultsInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
   filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
@@ -1545,6 +1576,7 @@ export type role_filtersUncheckedCreateWithoutRole_resultsInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
   filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
 }
@@ -1597,6 +1629,7 @@ export type role_filtersUpdateWithoutRole_resultsInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
   filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
@@ -1635,6 +1668,7 @@ export type role_filtersUncheckedUpdateWithoutRole_resultsInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
   filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
 }
@@ -1671,6 +1705,7 @@ export type role_filtersCreateWithoutRoleInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
   filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
@@ -1708,6 +1743,7 @@ export type role_filtersUncheckedCreateWithoutRoleInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
   filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
   filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
@@ -1775,6 +1811,7 @@ export type role_filtersScalarWhereInput = {
   sites?: Prisma.StringNullableListFilter<"role_filters">
   metadata?: Prisma.JsonNullableFilter<"role_filters">
   archived?: Prisma.BoolFilter<"role_filters"> | boolean
+  industry?: Prisma.StringNullableFilter<"role_filters"> | string | null
 }
 
 export type role_filtersCreateManyRoleInput = {
@@ -1809,6 +1846,7 @@ export type role_filtersCreateManyRoleInput = {
   sites?: Prisma.role_filtersCreatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: boolean
+  industry?: string | null
 }
 
 export type role_filtersUpdateWithoutRoleInput = {
@@ -1843,6 +1881,7 @@ export type role_filtersUpdateWithoutRoleInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
   filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
@@ -1880,6 +1919,7 @@ export type role_filtersUncheckedUpdateWithoutRoleInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
   filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -1917,6 +1957,7 @@ export type role_filtersUncheckedUpdateManyWithoutRoleInput = {
   sites?: Prisma.role_filtersUpdatesitesInput | string[]
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -2001,6 +2042,7 @@ export type role_filtersSelect<ExtArgs extends runtime.Types.Extensions.Internal
   sites?: boolean
   metadata?: boolean
   archived?: boolean
+  industry?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   filter_companies?: boolean | Prisma.role_filters$filter_companiesArgs<ExtArgs>
   filter_location_cities?: boolean | Prisma.role_filters$filter_location_citiesArgs<ExtArgs>
@@ -2041,6 +2083,7 @@ export type role_filtersSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   sites?: boolean
   metadata?: boolean
   archived?: boolean
+  industry?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filters"]>
 
@@ -2077,6 +2120,7 @@ export type role_filtersSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   sites?: boolean
   metadata?: boolean
   archived?: boolean
+  industry?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filters"]>
 
@@ -2113,9 +2157,10 @@ export type role_filtersSelectScalar = {
   sites?: boolean
   metadata?: boolean
   archived?: boolean
+  industry?: boolean
 }
 
-export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "country_code" | "remote_work" | "work_authorization_required" | "experience_min_yrs" | "experience_max_yrs" | "title" | "alternative_titles" | "title_levels" | "roles" | "current_role_min_yrs" | "current_role_max_yrs" | "current_role_tenure_yrs" | "required_skills" | "optional_skills" | "education_levels" | "education_universities" | "education_excluded_universities" | "education_graduation_min_yr" | "education_graduation_max_yr" | "required_languages" | "optional_languages" | "career_growth" | "security_clearance_required" | "diversity" | "other_experience" | "sites" | "metadata" | "archived", ExtArgs["result"]["role_filters"]>
+export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "country_code" | "remote_work" | "work_authorization_required" | "experience_min_yrs" | "experience_max_yrs" | "title" | "alternative_titles" | "title_levels" | "roles" | "current_role_min_yrs" | "current_role_max_yrs" | "current_role_tenure_yrs" | "required_skills" | "optional_skills" | "education_levels" | "education_universities" | "education_excluded_universities" | "education_graduation_min_yr" | "education_graduation_max_yr" | "required_languages" | "optional_languages" | "career_growth" | "security_clearance_required" | "diversity" | "other_experience" | "sites" | "metadata" | "archived" | "industry", ExtArgs["result"]["role_filters"]>
 export type role_filtersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   filter_companies?: boolean | Prisma.role_filters$filter_companiesArgs<ExtArgs>
@@ -2171,6 +2216,7 @@ export type $role_filtersPayload<ExtArgs extends runtime.Types.Extensions.Intern
     sites: string[]
     metadata: runtime.JsonValue | null
     archived: boolean
+    industry: string | null
   }, ExtArgs["result"]["role_filters"]>
   composites: {}
 }
@@ -2630,6 +2676,7 @@ export interface role_filtersFieldRefs {
   readonly sites: Prisma.FieldRef<"role_filters", 'String[]'>
   readonly metadata: Prisma.FieldRef<"role_filters", 'Json'>
   readonly archived: Prisma.FieldRef<"role_filters", 'Boolean'>
+  readonly industry: Prisma.FieldRef<"role_filters", 'String'>
 }
     
 

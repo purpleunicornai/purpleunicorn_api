@@ -6,6 +6,7 @@ import type { LanguageModel } from 'ai';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { GoogleSearchItem } from '../google-search/google-search.service';
 import { candidate } from '../../generated/prisma/client';
+import { InstitutionType } from '../../generated/prisma/enums';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -26,17 +27,12 @@ const candidateSchema = z.object({
   experience_roles: z.array(z.string()).optional(),
   current_title: z.string().optional(),
   current_company: z.string().optional(),
-  previous_companies: z.array(z.string()).optional(),
-  previous_titles: z.array(z.string()).optional(),
   current_salary: z.number().optional(),
   current_salary_currency: z.string().optional(),
   current_role_start_date: z.string().optional(),
   skills: z.array(z.string()).optional(),
   languages: z.array(z.string()).optional(),
   diversity: z.array(z.string()).optional(),
-  education_levels: z.array(z.string()).optional(),
-  education_universities: z.array(z.string()).optional(),
-  graduation_years: z.array(z.string()).optional(),
   summary: z.string().optional(),
   image_url: z.string().optional(),
   original_source_url: z.string(),
@@ -46,6 +42,8 @@ const candidateSchema = z.object({
 const matchSchema = z.object({
   candidate: candidateSchema,
   summary: z.string(),
+  reasoning: z.string(),
+  skills_matched: z.array(z.string()),
   score: z.number().int().min(0).max(100),
 });
 
@@ -65,6 +63,18 @@ const candidateExperienceEnrichmentSchema = z.object({
   end_date: z.string().optional(),
   responsibilities: z.string().optional(),
   skills: z.array(z.string()).optional(),
+});
+
+const candidateEducationEnrichmentSchema = z.object({
+  institution_name: z.string(),
+  institution_type: z.enum(InstitutionType),
+  institution_location: z.string().optional(),
+  degree: z.string().optional(),
+  field_of_study: z.string().optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  summary: z.string().optional(),
+  additional_info: z.string().optional(),
 });
 
 // Unlike candidateSchema (used when creating a brand new candidate record
@@ -87,25 +97,24 @@ const candidateEnrichmentSchema = z.object({
   experience_roles: z.array(z.string()).optional(),
   current_title: z.string().optional(),
   current_company: z.string().optional(),
-  previous_companies: z.array(z.string()).optional(),
-  previous_titles: z.array(z.string()).optional(),
   current_salary: z.number().optional(),
   current_salary_currency: z.string().optional(),
   current_role_start_date: z.string().optional(),
   skills: z.array(z.string()).optional(),
   languages: z.array(z.string()).optional(),
   diversity: z.array(z.string()).optional(),
-  education_levels: z.array(z.string()).optional(),
-  education_universities: z.array(z.string()).optional(),
-  graduation_years: z.array(z.string()).optional(),
   summary: z.string().optional(),
   image_url: z.string().optional(),
   additional_sources: z.array(z.string()).optional(),
   experience: z.array(candidateExperienceEnrichmentSchema).optional(),
+  education: z.array(candidateEducationEnrichmentSchema).optional(),
 });
 
 export type GeminiCandidateExperienceEnrichment = z.infer<
   typeof candidateExperienceEnrichmentSchema
+>;
+export type GeminiCandidateEducationEnrichment = z.infer<
+  typeof candidateEducationEnrichmentSchema
 >;
 export type GeminiCandidateEnrichment = z.infer<
   typeof candidateEnrichmentSchema
@@ -253,7 +262,7 @@ export class GeminiService {
       'Set "main_source" to the platform the result came from (e.g. "LinkedIn"), "original_source_url" to the result\'s link, and "sources" to an array containing the main_source.',
       'When a result includes an "image" URL, copy it verbatim into "image_url" — do not fabricate one when it is absent.',
       'Do not guess contact details (email, phone) unless they literally appear in the text.',
-      'Then compare the candidate against the role criteria below: write a short "summary" explaining how well they match, and a "score" from 0-100 rating the overall match quality.',
+      'Then compare the candidate against the role criteria below: write a short "summary" explaining how well they match, a more detailed "reasoning" for that assessment, a "skills_matched" array listing which required/optional skills they actually have evidence of, and a "score" from 0-100 rating the overall match quality.',
       '',
       `Role criteria: ${JSON.stringify(criteria)}`,
       '',
@@ -292,6 +301,7 @@ export class GeminiService {
       'When a result includes an "image" URL, copy it verbatim into "image_url" — do not fabricate one when it is absent.',
       'Do not guess contact details (email, phone) unless they literally appear in the text.',
       'Also extract every distinct employment history entry you can find into "experience": company_name and role are required for each entry; include start_date/end_date (ISO dates, approximate if only a year is known) and responsibilities/skills when available.',
+      `Also extract every distinct education history entry you can find into "education": institution_name and institution_type (one of ${Object.values(InstitutionType).join(', ')}) are required for each entry; include institution_location/degree/field_of_study/start_date/end_date (ISO dates, approximate if only a year is known) when available.`,
       'List any newly-found platform names (e.g. "GitHub", "Stack Overflow") in "additional_sources" — do not repeat sources already known.',
       'Only include a field when you have real evidence for it in the text below — omit anything you are not confident about.',
       '',
