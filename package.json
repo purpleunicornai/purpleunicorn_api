@@ -25,6 +25,7 @@
     "@ai-sdk/google": "^4.0.51",
     "@clerk/backend": "^3.11.4",
     "@clerk/clerk-sdk-node": "^4.13.23",
+    "@countrystatecity/countries": "^1.0.9",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",

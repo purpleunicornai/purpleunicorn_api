@@ -365,8 +365,8 @@ export class SearchService {
       required_skills: filter.required_skills,
       optional_skills: filter.optional_skills,
       education_levels: filter.education_levels,
-      education_universities: filter.education_universities,
-      education_excluded_universities: filter.education_excluded_universities,
+      education_institution: filter.education_institution,
+      education_excluded_institutions: filter.education_excluded_institutions,
       education_graduation_min_yr: this.dateToYear(
         filter.education_graduation_min_yr,
       ),

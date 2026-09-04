@@ -288,7 +288,7 @@ export class RoleFilterDto {
   @Expose()
   @IsArray()
   @IsString({ each: true })
-  education_universities: string[];
+  education_institution: string[];
 
   @ApiProperty({
     description:
@@ -299,7 +299,7 @@ export class RoleFilterDto {
   @Expose()
   @IsArray()
   @IsString({ each: true })
-  education_excluded_universities: string[];
+  education_excluded_institutions: string[];
 
   @ApiProperty({
     description:

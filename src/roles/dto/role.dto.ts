@@ -239,13 +239,13 @@ export class RoleFilterSummaryDto {
   @Expose()
   @IsArray()
   @IsString({ each: true })
-  education_universities: string[];
+  education_institution: string[];
 
   @ApiProperty({ type: [String] })
   @Expose()
   @IsArray()
   @IsString({ each: true })
-  education_excluded_universities: string[];
+  education_excluded_institutions: string[];
 
   @ApiProperty({ required: false, nullable: true })
   @Expose()

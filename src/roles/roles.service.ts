@@ -134,8 +134,8 @@ export class RolesService {
         required_skills: dto.required_skills,
         optional_skills: dto.optional_skills,
         education_levels: dto.education_levels,
-        education_universities: dto.education_universities,
-        education_excluded_universities: dto.education_excluded_universities,
+        education_institution: dto.education_institution,
+        education_excluded_institutions: dto.education_excluded_institutions,
         education_graduation_min_yr: this.yearToDate(
           dto.education_graduation_min_yr,
         ),

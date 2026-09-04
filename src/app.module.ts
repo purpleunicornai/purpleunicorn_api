@@ -10,6 +10,7 @@ import { RolesModule } from './roles/roles.module';
 import { DatabaseModule } from './common/database/database.module';
 import { ProjectsModule } from './projects/projects.module';
 import { MiddlewareModule } from './common/middleware/middleware.module';
+import { CountriesModule } from './system/config/countries/countries.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MiddlewareModule } from './common/middleware/middleware.module';
     RolesModule,
     DatabaseModule,
     ProjectsModule,
+    CountriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

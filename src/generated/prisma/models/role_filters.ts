@@ -102,8 +102,8 @@ export type Role_filtersCountAggregateOutputType = {
   required_skills: number
   optional_skills: number
   education_levels: number
-  education_universities: number
-  education_excluded_universities: number
+  education_institution: number
+  education_excluded_institutions: number
   education_graduation_min_yr: number
   education_graduation_max_yr: number
   required_languages: number
@@ -196,8 +196,8 @@ export type Role_filtersCountAggregateInputType = {
   required_skills?: true
   optional_skills?: true
   education_levels?: true
-  education_universities?: true
-  education_excluded_universities?: true
+  education_institution?: true
+  education_excluded_institutions?: true
   education_graduation_min_yr?: true
   education_graduation_max_yr?: true
   required_languages?: true
@@ -319,8 +319,8 @@ export type Role_filtersGroupByOutputType = {
   required_skills: string[]
   optional_skills: string[]
   education_levels: string[]
-  education_universities: string[]
-  education_excluded_universities: string[]
+  education_institution: string[]
+  education_excluded_institutions: string[]
   education_graduation_min_yr: Date | null
   education_graduation_max_yr: Date | null
   required_languages: string[]
@@ -378,8 +378,8 @@ export type role_filtersWhereInput = {
   required_skills?: Prisma.StringNullableListFilter<"role_filters">
   optional_skills?: Prisma.StringNullableListFilter<"role_filters">
   education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_universities?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_universities?: Prisma.StringNullableListFilter<"role_filters">
+  education_institution?: Prisma.StringNullableListFilter<"role_filters">
+  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
   education_graduation_min_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   education_graduation_max_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   required_languages?: Prisma.StringNullableListFilter<"role_filters">
@@ -418,8 +418,8 @@ export type role_filtersOrderByWithRelationInput = {
   required_skills?: Prisma.SortOrder
   optional_skills?: Prisma.SortOrder
   education_levels?: Prisma.SortOrder
-  education_universities?: Prisma.SortOrder
-  education_excluded_universities?: Prisma.SortOrder
+  education_institution?: Prisma.SortOrder
+  education_excluded_institutions?: Prisma.SortOrder
   education_graduation_min_yr?: Prisma.SortOrderInput | Prisma.SortOrder
   education_graduation_max_yr?: Prisma.SortOrderInput | Prisma.SortOrder
   required_languages?: Prisma.SortOrder
@@ -461,8 +461,8 @@ export type role_filtersWhereUniqueInput = Prisma.AtLeast<{
   required_skills?: Prisma.StringNullableListFilter<"role_filters">
   optional_skills?: Prisma.StringNullableListFilter<"role_filters">
   education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_universities?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_universities?: Prisma.StringNullableListFilter<"role_filters">
+  education_institution?: Prisma.StringNullableListFilter<"role_filters">
+  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
   education_graduation_min_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   education_graduation_max_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   required_languages?: Prisma.StringNullableListFilter<"role_filters">
@@ -501,8 +501,8 @@ export type role_filtersOrderByWithAggregationInput = {
   required_skills?: Prisma.SortOrder
   optional_skills?: Prisma.SortOrder
   education_levels?: Prisma.SortOrder
-  education_universities?: Prisma.SortOrder
-  education_excluded_universities?: Prisma.SortOrder
+  education_institution?: Prisma.SortOrder
+  education_excluded_institutions?: Prisma.SortOrder
   education_graduation_min_yr?: Prisma.SortOrderInput | Prisma.SortOrder
   education_graduation_max_yr?: Prisma.SortOrderInput | Prisma.SortOrder
   required_languages?: Prisma.SortOrder
@@ -545,8 +545,8 @@ export type role_filtersScalarWhereWithAggregatesInput = {
   required_skills?: Prisma.StringNullableListFilter<"role_filters">
   optional_skills?: Prisma.StringNullableListFilter<"role_filters">
   education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_universities?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_universities?: Prisma.StringNullableListFilter<"role_filters">
+  education_institution?: Prisma.StringNullableListFilter<"role_filters">
+  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
   education_graduation_min_yr?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
   education_graduation_max_yr?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
   required_languages?: Prisma.StringNullableListFilter<"role_filters">
@@ -580,8 +580,8 @@ export type role_filtersCreateInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -620,8 +620,8 @@ export type role_filtersUncheckedCreateInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -658,8 +658,8 @@ export type role_filtersUpdateInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -698,8 +698,8 @@ export type role_filtersUncheckedUpdateInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -737,8 +737,8 @@ export type role_filtersCreateManyInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -772,8 +772,8 @@ export type role_filtersUpdateManyMutationInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -808,8 +808,8 @@ export type role_filtersUncheckedUpdateManyInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -849,8 +849,8 @@ export type role_filtersCountOrderByAggregateInput = {
   required_skills?: Prisma.SortOrder
   optional_skills?: Prisma.SortOrder
   education_levels?: Prisma.SortOrder
-  education_universities?: Prisma.SortOrder
-  education_excluded_universities?: Prisma.SortOrder
+  education_institution?: Prisma.SortOrder
+  education_excluded_institutions?: Prisma.SortOrder
   education_graduation_min_yr?: Prisma.SortOrder
   education_graduation_max_yr?: Prisma.SortOrder
   required_languages?: Prisma.SortOrder
@@ -988,11 +988,11 @@ export type role_filtersCreateeducation_levelsInput = {
   set: string[]
 }
 
-export type role_filtersCreateeducation_universitiesInput = {
+export type role_filtersCreateeducation_institutionInput = {
   set: string[]
 }
 
-export type role_filtersCreateeducation_excluded_universitiesInput = {
+export type role_filtersCreateeducation_excluded_institutionsInput = {
   set: string[]
 }
 
@@ -1062,12 +1062,12 @@ export type role_filtersUpdateeducation_levelsInput = {
   push?: string | string[]
 }
 
-export type role_filtersUpdateeducation_universitiesInput = {
+export type role_filtersUpdateeducation_institutionInput = {
   set?: string[]
   push?: string | string[]
 }
 
-export type role_filtersUpdateeducation_excluded_universitiesInput = {
+export type role_filtersUpdateeducation_excluded_institutionsInput = {
   set?: string[]
   push?: string | string[]
 }
@@ -1188,8 +1188,8 @@ export type role_filtersCreateWithoutFilter_companiesInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1227,8 +1227,8 @@ export type role_filtersUncheckedCreateWithoutFilter_companiesInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1280,8 +1280,8 @@ export type role_filtersUpdateWithoutFilter_companiesInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1319,8 +1319,8 @@ export type role_filtersUncheckedUpdateWithoutFilter_companiesInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1356,8 +1356,8 @@ export type role_filtersCreateWithoutFilter_location_citiesInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1395,8 +1395,8 @@ export type role_filtersUncheckedCreateWithoutFilter_location_citiesInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1448,8 +1448,8 @@ export type role_filtersUpdateWithoutFilter_location_citiesInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1487,8 +1487,8 @@ export type role_filtersUncheckedUpdateWithoutFilter_location_citiesInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1524,8 +1524,8 @@ export type role_filtersCreateWithoutRole_resultsInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1563,8 +1563,8 @@ export type role_filtersUncheckedCreateWithoutRole_resultsInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1616,8 +1616,8 @@ export type role_filtersUpdateWithoutRole_resultsInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1655,8 +1655,8 @@ export type role_filtersUncheckedUpdateWithoutRole_resultsInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1692,8 +1692,8 @@ export type role_filtersCreateWithoutRoleInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1730,8 +1730,8 @@ export type role_filtersUncheckedCreateWithoutRoleInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1798,8 +1798,8 @@ export type role_filtersScalarWhereInput = {
   required_skills?: Prisma.StringNullableListFilter<"role_filters">
   optional_skills?: Prisma.StringNullableListFilter<"role_filters">
   education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_universities?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_universities?: Prisma.StringNullableListFilter<"role_filters">
+  education_institution?: Prisma.StringNullableListFilter<"role_filters">
+  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
   education_graduation_min_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   education_graduation_max_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   required_languages?: Prisma.StringNullableListFilter<"role_filters">
@@ -1833,8 +1833,8 @@ export type role_filtersCreateManyRoleInput = {
   required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersCreateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersCreateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Date | string | null
   education_graduation_max_yr?: Date | string | null
   required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
@@ -1868,8 +1868,8 @@ export type role_filtersUpdateWithoutRoleInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1906,8 +1906,8 @@ export type role_filtersUncheckedUpdateWithoutRoleInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -1944,8 +1944,8 @@ export type role_filtersUncheckedUpdateManyWithoutRoleInput = {
   required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
   optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
   education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_universities?: Prisma.role_filtersUpdateeducation_universitiesInput | string[]
-  education_excluded_universities?: Prisma.role_filtersUpdateeducation_excluded_universitiesInput | string[]
+  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
+  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
   education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
@@ -2029,8 +2029,8 @@ export type role_filtersSelect<ExtArgs extends runtime.Types.Extensions.Internal
   required_skills?: boolean
   optional_skills?: boolean
   education_levels?: boolean
-  education_universities?: boolean
-  education_excluded_universities?: boolean
+  education_institution?: boolean
+  education_excluded_institutions?: boolean
   education_graduation_min_yr?: boolean
   education_graduation_max_yr?: boolean
   required_languages?: boolean
@@ -2070,8 +2070,8 @@ export type role_filtersSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   required_skills?: boolean
   optional_skills?: boolean
   education_levels?: boolean
-  education_universities?: boolean
-  education_excluded_universities?: boolean
+  education_institution?: boolean
+  education_excluded_institutions?: boolean
   education_graduation_min_yr?: boolean
   education_graduation_max_yr?: boolean
   required_languages?: boolean
@@ -2107,8 +2107,8 @@ export type role_filtersSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   required_skills?: boolean
   optional_skills?: boolean
   education_levels?: boolean
-  education_universities?: boolean
-  education_excluded_universities?: boolean
+  education_institution?: boolean
+  education_excluded_institutions?: boolean
   education_graduation_min_yr?: boolean
   education_graduation_max_yr?: boolean
   required_languages?: boolean
@@ -2144,8 +2144,8 @@ export type role_filtersSelectScalar = {
   required_skills?: boolean
   optional_skills?: boolean
   education_levels?: boolean
-  education_universities?: boolean
-  education_excluded_universities?: boolean
+  education_institution?: boolean
+  education_excluded_institutions?: boolean
   education_graduation_min_yr?: boolean
   education_graduation_max_yr?: boolean
   required_languages?: boolean
@@ -2160,7 +2160,7 @@ export type role_filtersSelectScalar = {
   industry?: boolean
 }
 
-export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "country_code" | "remote_work" | "work_authorization_required" | "experience_min_yrs" | "experience_max_yrs" | "title" | "alternative_titles" | "title_levels" | "roles" | "current_role_min_yrs" | "current_role_max_yrs" | "current_role_tenure_yrs" | "required_skills" | "optional_skills" | "education_levels" | "education_universities" | "education_excluded_universities" | "education_graduation_min_yr" | "education_graduation_max_yr" | "required_languages" | "optional_languages" | "career_growth" | "security_clearance_required" | "diversity" | "other_experience" | "sites" | "metadata" | "archived" | "industry", ExtArgs["result"]["role_filters"]>
+export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "country_code" | "remote_work" | "work_authorization_required" | "experience_min_yrs" | "experience_max_yrs" | "title" | "alternative_titles" | "title_levels" | "roles" | "current_role_min_yrs" | "current_role_max_yrs" | "current_role_tenure_yrs" | "required_skills" | "optional_skills" | "education_levels" | "education_institution" | "education_excluded_institutions" | "education_graduation_min_yr" | "education_graduation_max_yr" | "required_languages" | "optional_languages" | "career_growth" | "security_clearance_required" | "diversity" | "other_experience" | "sites" | "metadata" | "archived" | "industry", ExtArgs["result"]["role_filters"]>
 export type role_filtersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   filter_companies?: boolean | Prisma.role_filters$filter_companiesArgs<ExtArgs>
@@ -2203,8 +2203,8 @@ export type $role_filtersPayload<ExtArgs extends runtime.Types.Extensions.Intern
     required_skills: string[]
     optional_skills: string[]
     education_levels: string[]
-    education_universities: string[]
-    education_excluded_universities: string[]
+    education_institution: string[]
+    education_excluded_institutions: string[]
     education_graduation_min_yr: Date | null
     education_graduation_max_yr: Date | null
     required_languages: string[]
@@ -2663,8 +2663,8 @@ export interface role_filtersFieldRefs {
   readonly required_skills: Prisma.FieldRef<"role_filters", 'String[]'>
   readonly optional_skills: Prisma.FieldRef<"role_filters", 'String[]'>
   readonly education_levels: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly education_universities: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly education_excluded_universities: Prisma.FieldRef<"role_filters", 'String[]'>
+  readonly education_institution: Prisma.FieldRef<"role_filters", 'String[]'>
+  readonly education_excluded_institutions: Prisma.FieldRef<"role_filters", 'String[]'>
   readonly education_graduation_min_yr: Prisma.FieldRef<"role_filters", 'DateTime'>
   readonly education_graduation_max_yr: Prisma.FieldRef<"role_filters", 'DateTime'>
   readonly required_languages: Prisma.FieldRef<"role_filters", 'String[]'>

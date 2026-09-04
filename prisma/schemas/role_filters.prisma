@@ -24,8 +24,8 @@ model role_filters {
   optional_skills                 String[]
   // Education
   education_levels                String[] // e.g. "bachelor's", "master's",
-  education_universities          String[] // e.g. "MIT", "Stanford", "Harvard"
-  education_excluded_universities String[] // e.g. "MIT", "Stanford", "Harvard"
+  education_institution           String[] // e.g. "MIT", "Stanford", "Harvard"
+  education_excluded_institutions String[] // e.g. "MIT", "Stanford", "Harvard"
   education_graduation_min_yr     DateTime?
   education_graduation_max_yr     DateTime?
   // languages
