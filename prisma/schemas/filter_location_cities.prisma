@@ -7,4 +7,6 @@ model filter_location_cities {
   name            String
   state           String?
   country_code    String?
+
+  @@index([role_filters_id])
 }

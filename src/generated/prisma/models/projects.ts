@@ -211,6 +211,7 @@ export type projectsWhereInput = {
   visibility?: Prisma.EnumProjectVisibilityFilter<"projects"> | $Enums.ProjectVisibility
   users?: Prisma.StringNullableListFilter<"projects">
   roles?: Prisma.RolesListRelationFilter
+  logs?: Prisma.Organization_logListRelationFilter
 }
 
 export type projectsOrderByWithRelationInput = {
@@ -224,6 +225,7 @@ export type projectsOrderByWithRelationInput = {
   visibility?: Prisma.SortOrder
   users?: Prisma.SortOrder
   roles?: Prisma.rolesOrderByRelationAggregateInput
+  logs?: Prisma.organization_logOrderByRelationAggregateInput
 }
 
 export type projectsWhereUniqueInput = Prisma.AtLeast<{
@@ -240,6 +242,7 @@ export type projectsWhereUniqueInput = Prisma.AtLeast<{
   visibility?: Prisma.EnumProjectVisibilityFilter<"projects"> | $Enums.ProjectVisibility
   users?: Prisma.StringNullableListFilter<"projects">
   roles?: Prisma.RolesListRelationFilter
+  logs?: Prisma.Organization_logListRelationFilter
 }, "uid" | "uid">
 
 export type projectsOrderByWithAggregationInput = {
@@ -283,6 +286,7 @@ export type projectsCreateInput = {
   visibility?: $Enums.ProjectVisibility
   users?: Prisma.projectsCreateusersInput | string[]
   roles?: Prisma.rolesCreateNestedManyWithoutProjectInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutProjectInput
 }
 
 export type projectsUncheckedCreateInput = {
@@ -296,6 +300,7 @@ export type projectsUncheckedCreateInput = {
   visibility?: $Enums.ProjectVisibility
   users?: Prisma.projectsCreateusersInput | string[]
   roles?: Prisma.rolesUncheckedCreateNestedManyWithoutProjectInput
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type projectsUpdateInput = {
@@ -309,6 +314,7 @@ export type projectsUpdateInput = {
   visibility?: Prisma.EnumProjectVisibilityFieldUpdateOperationsInput | $Enums.ProjectVisibility
   users?: Prisma.projectsUpdateusersInput | string[]
   roles?: Prisma.rolesUpdateManyWithoutProjectNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutProjectNestedInput
 }
 
 export type projectsUncheckedUpdateInput = {
@@ -322,6 +328,7 @@ export type projectsUncheckedUpdateInput = {
   visibility?: Prisma.EnumProjectVisibilityFieldUpdateOperationsInput | $Enums.ProjectVisibility
   users?: Prisma.projectsUpdateusersInput | string[]
   roles?: Prisma.rolesUncheckedUpdateManyWithoutProjectNestedInput
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type projectsCreateManyInput = {
@@ -358,6 +365,11 @@ export type projectsUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.EnumProjectVisibilityFieldUpdateOperationsInput | $Enums.ProjectVisibility
   users?: Prisma.projectsUpdateusersInput | string[]
+}
+
+export type ProjectsNullableScalarRelationFilter = {
+  is?: Prisma.projectsWhereInput | null
+  isNot?: Prisma.projectsWhereInput | null
 }
 
 export type projectsCountOrderByAggregateInput = {
@@ -399,6 +411,22 @@ export type ProjectsScalarRelationFilter = {
   isNot?: Prisma.projectsWhereInput
 }
 
+export type projectsCreateNestedOneWithoutLogsInput = {
+  create?: Prisma.XOR<Prisma.projectsCreateWithoutLogsInput, Prisma.projectsUncheckedCreateWithoutLogsInput>
+  connectOrCreate?: Prisma.projectsCreateOrConnectWithoutLogsInput
+  connect?: Prisma.projectsWhereUniqueInput
+}
+
+export type projectsUpdateOneWithoutLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.projectsCreateWithoutLogsInput, Prisma.projectsUncheckedCreateWithoutLogsInput>
+  connectOrCreate?: Prisma.projectsCreateOrConnectWithoutLogsInput
+  upsert?: Prisma.projectsUpsertWithoutLogsInput
+  disconnect?: Prisma.projectsWhereInput | boolean
+  delete?: Prisma.projectsWhereInput | boolean
+  connect?: Prisma.projectsWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.projectsUpdateToOneWithWhereWithoutLogsInput, Prisma.projectsUpdateWithoutLogsInput>, Prisma.projectsUncheckedUpdateWithoutLogsInput>
+}
+
 export type projectsCreateusersInput = {
   set: string[]
 }
@@ -426,6 +454,74 @@ export type projectsUpdateOneRequiredWithoutRolesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.projectsUpdateToOneWithWhereWithoutRolesInput, Prisma.projectsUpdateWithoutRolesInput>, Prisma.projectsUncheckedUpdateWithoutRolesInput>
 }
 
+export type projectsCreateWithoutLogsInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  user_id: string
+  organization_id: string
+  name: string
+  description?: string | null
+  visibility?: $Enums.ProjectVisibility
+  users?: Prisma.projectsCreateusersInput | string[]
+  roles?: Prisma.rolesCreateNestedManyWithoutProjectInput
+}
+
+export type projectsUncheckedCreateWithoutLogsInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  user_id: string
+  organization_id: string
+  name: string
+  description?: string | null
+  visibility?: $Enums.ProjectVisibility
+  users?: Prisma.projectsCreateusersInput | string[]
+  roles?: Prisma.rolesUncheckedCreateNestedManyWithoutProjectInput
+}
+
+export type projectsCreateOrConnectWithoutLogsInput = {
+  where: Prisma.projectsWhereUniqueInput
+  create: Prisma.XOR<Prisma.projectsCreateWithoutLogsInput, Prisma.projectsUncheckedCreateWithoutLogsInput>
+}
+
+export type projectsUpsertWithoutLogsInput = {
+  update: Prisma.XOR<Prisma.projectsUpdateWithoutLogsInput, Prisma.projectsUncheckedUpdateWithoutLogsInput>
+  create: Prisma.XOR<Prisma.projectsCreateWithoutLogsInput, Prisma.projectsUncheckedCreateWithoutLogsInput>
+  where?: Prisma.projectsWhereInput
+}
+
+export type projectsUpdateToOneWithWhereWithoutLogsInput = {
+  where?: Prisma.projectsWhereInput
+  data: Prisma.XOR<Prisma.projectsUpdateWithoutLogsInput, Prisma.projectsUncheckedUpdateWithoutLogsInput>
+}
+
+export type projectsUpdateWithoutLogsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user_id?: Prisma.StringFieldUpdateOperationsInput | string
+  organization_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibility?: Prisma.EnumProjectVisibilityFieldUpdateOperationsInput | $Enums.ProjectVisibility
+  users?: Prisma.projectsUpdateusersInput | string[]
+  roles?: Prisma.rolesUpdateManyWithoutProjectNestedInput
+}
+
+export type projectsUncheckedUpdateWithoutLogsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user_id?: Prisma.StringFieldUpdateOperationsInput | string
+  organization_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  visibility?: Prisma.EnumProjectVisibilityFieldUpdateOperationsInput | $Enums.ProjectVisibility
+  users?: Prisma.projectsUpdateusersInput | string[]
+  roles?: Prisma.rolesUncheckedUpdateManyWithoutProjectNestedInput
+}
+
 export type projectsCreateWithoutRolesInput = {
   uid?: string
   created?: Date | string
@@ -436,6 +532,7 @@ export type projectsCreateWithoutRolesInput = {
   description?: string | null
   visibility?: $Enums.ProjectVisibility
   users?: Prisma.projectsCreateusersInput | string[]
+  logs?: Prisma.organization_logCreateNestedManyWithoutProjectInput
 }
 
 export type projectsUncheckedCreateWithoutRolesInput = {
@@ -448,6 +545,7 @@ export type projectsUncheckedCreateWithoutRolesInput = {
   description?: string | null
   visibility?: $Enums.ProjectVisibility
   users?: Prisma.projectsCreateusersInput | string[]
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type projectsCreateOrConnectWithoutRolesInput = {
@@ -476,6 +574,7 @@ export type projectsUpdateWithoutRolesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.EnumProjectVisibilityFieldUpdateOperationsInput | $Enums.ProjectVisibility
   users?: Prisma.projectsUpdateusersInput | string[]
+  logs?: Prisma.organization_logUpdateManyWithoutProjectNestedInput
 }
 
 export type projectsUncheckedUpdateWithoutRolesInput = {
@@ -488,6 +587,7 @@ export type projectsUncheckedUpdateWithoutRolesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visibility?: Prisma.EnumProjectVisibilityFieldUpdateOperationsInput | $Enums.ProjectVisibility
   users?: Prisma.projectsUpdateusersInput | string[]
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 
@@ -497,10 +597,12 @@ export type projectsUncheckedUpdateWithoutRolesInput = {
 
 export type ProjectsCountOutputType = {
   roles: number
+  logs: number
 }
 
 export type ProjectsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   roles?: boolean | ProjectsCountOutputTypeCountRolesArgs
+  logs?: boolean | ProjectsCountOutputTypeCountLogsArgs
 }
 
 /**
@@ -520,6 +622,13 @@ export type ProjectsCountOutputTypeCountRolesArgs<ExtArgs extends runtime.Types.
   where?: Prisma.rolesWhereInput
 }
 
+/**
+ * ProjectsCountOutputType without action
+ */
+export type ProjectsCountOutputTypeCountLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.organization_logWhereInput
+}
+
 
 export type projectsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   uid?: boolean
@@ -532,6 +641,7 @@ export type projectsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   visibility?: boolean
   users?: boolean
   roles?: boolean | Prisma.projects$rolesArgs<ExtArgs>
+  logs?: boolean | Prisma.projects$logsArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["projects"]>
 
@@ -574,6 +684,7 @@ export type projectsSelectScalar = {
 export type projectsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "user_id" | "organization_id" | "name" | "description" | "visibility" | "users", ExtArgs["result"]["projects"]>
 export type projectsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   roles?: boolean | Prisma.projects$rolesArgs<ExtArgs>
+  logs?: boolean | Prisma.projects$logsArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectsCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type projectsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -583,6 +694,7 @@ export type $projectsPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "projects"
   objects: {
     roles: Prisma.$rolesPayload<ExtArgs>[]
+    logs: Prisma.$organization_logPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
@@ -989,6 +1101,7 @@ readonly fields: projectsFieldRefs;
 export interface Prisma__projectsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   roles<T extends Prisma.projects$rolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.projects$rolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$rolesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  logs<T extends Prisma.projects$logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.projects$logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$organization_logPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1441,6 +1554,30 @@ export type projects$rolesArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.RolesScalarFieldEnum | Prisma.RolesScalarFieldEnum[]
+}
+
+/**
+ * projects.logs
+ */
+export type projects$logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the organization_log
+   */
+  select?: Prisma.organization_logSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the organization_log
+   */
+  omit?: Prisma.organization_logOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.organization_logInclude<ExtArgs> | null
+  where?: Prisma.organization_logWhereInput
+  orderBy?: Prisma.organization_logOrderByWithRelationInput | Prisma.organization_logOrderByWithRelationInput[]
+  cursor?: Prisma.organization_logWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Organization_logScalarFieldEnum | Prisma.Organization_logScalarFieldEnum[]
 }
 
 /**

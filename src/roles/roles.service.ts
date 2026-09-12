@@ -220,6 +220,7 @@ export class RolesService {
           include: {
             experience: true,
             education: true,
+            sources: true,
           },
         },
       },

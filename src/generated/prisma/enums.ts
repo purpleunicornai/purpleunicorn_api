@@ -20,6 +20,16 @@ export const InstitutionType = {
 export type InstitutionType = (typeof InstitutionType)[keyof typeof InstitutionType]
 
 
+export const SourceType = {
+  SEARCH: 'SEARCH',
+  IMPORT: 'IMPORT',
+  PLUGIN: 'PLUGIN',
+  OTHER: 'OTHER'
+} as const
+
+export type SourceType = (typeof SourceType)[keyof typeof SourceType]
+
+
 export const CompanyFilterType = {
   CURRENT: 'CURRENT',
   PAST: 'PAST',
@@ -27,6 +37,52 @@ export const CompanyFilterType = {
 } as const
 
 export type CompanyFilterType = (typeof CompanyFilterType)[keyof typeof CompanyFilterType]
+
+
+export const OrganizationCreditsType = {
+  AI_TOKENS: 'AI_TOKENS',
+  ROCKET_REACH: 'ROCKET_REACH',
+  EMAILS: 'EMAILS',
+  SMS: 'SMS'
+} as const
+
+export type OrganizationCreditsType = (typeof OrganizationCreditsType)[keyof typeof OrganizationCreditsType]
+
+
+export const OrganizationCreditsTransactionType = {
+  ADD: 'ADD',
+  SUBTRACT: 'SUBTRACT'
+} as const
+
+export type OrganizationCreditsTransactionType = (typeof OrganizationCreditsTransactionType)[keyof typeof OrganizationCreditsTransactionType]
+
+
+export const OrganizationLogType = {
+  CREATED: 'CREATED',
+  UPDATED: 'UPDATED',
+  PROJECT_CREATED: 'PROJECT_CREATED',
+  PROJECT_UPDATED: 'PROJECT_UPDATED',
+  PROJECT_DELETED: 'PROJECT_DELETED',
+  PROJECT_USERS_ADDED: 'PROJECT_USERS_ADDED',
+  PROJECT_USERS_REMOVED: 'PROJECT_USERS_REMOVED',
+  ROLE_CREATED: 'ROLE_CREATED',
+  ROLE_UPDATED: 'ROLE_UPDATED',
+  ROLE_DELETED: 'ROLE_DELETED',
+  ROLE_FILTERS_CREATED: 'ROLE_FILTERS_CREATED',
+  ROLE_FILTERS_UPDATED: 'ROLE_FILTERS_UPDATED',
+  ROLE_SEARCH: 'ROLE_SEARCH',
+  CANDIDATE_DEEP_SEARCH: 'CANDIDATE_DEEP_SEARCH',
+  CANDIDATE_ROCKET_REACH_SEARCH: 'CANDIDATE_ROCKET_REACH_SEARCH',
+  SUBSCRIPTION_PURCHASED: 'SUBSCRIPTION_PURCHASED',
+  SUBSCRIPTION_RENUED: 'SUBSCRIPTION_RENUED',
+  SUBSCRIPTION_CANCELLED: 'SUBSCRIPTION_CANCELLED',
+  SUBSCRIPTION_UPGRADED: 'SUBSCRIPTION_UPGRADED',
+  SUBSCRIPTION_DOWNGRADED: 'SUBSCRIPTION_DOWNGRADED',
+  TOKENS_PURCHASED: 'TOKENS_PURCHASED',
+  TOKENS_USED: 'TOKENS_USED'
+} as const
+
+export type OrganizationLogType = (typeof OrganizationLogType)[keyof typeof OrganizationLogType]
 
 
 export const ProjectVisibility = {

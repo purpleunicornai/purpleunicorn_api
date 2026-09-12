@@ -13,7 +13,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { InstitutionType } from '../../generated/prisma/enums';
+import { InstitutionType, SourceType } from '../../generated/prisma/enums';
 
 export class CandidateExperienceDto {
   @ApiProperty({
@@ -175,6 +175,61 @@ export class CandidateEducationDto {
   additional_info?: string;
 }
 
+export class CandidateSourceDto {
+  @ApiProperty({
+    description: 'Unique identifier (UUID v4)',
+    example: 'd3b07384-d113-4956-a5cc-484b99861e28',
+  })
+  @Expose()
+  @IsUUID()
+  uid: string;
+
+  @ApiProperty({
+    description: 'Title of the source, e.g. the search result title',
+    example: 'Jane Doe - Software Engineer - LinkedIn',
+  })
+  @Expose()
+  @IsString()
+  title: string;
+
+  @ApiProperty({
+    description: 'Name of the platform this source came from',
+    example: 'LinkedIn',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  source?: string;
+
+  @ApiProperty({
+    description: 'Link to the source, if one exists',
+    example: 'https://www.linkedin.com/in/janedoe',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  url?: string;
+
+  @ApiProperty({
+    description: "Whether this is the candidate's primary source",
+    example: true,
+  })
+  @Expose()
+  @IsBoolean()
+  main: boolean;
+
+  @ApiProperty({
+    description: 'How this source was found',
+    enum: SourceType,
+    example: SourceType.SEARCH,
+  })
+  @Expose()
+  @IsEnum(SourceType)
+  type: SourceType;
+}
+
 export class CandidateDto {
   @ApiProperty({
     description: 'Unique identifier (UUID v4)',
@@ -199,14 +254,6 @@ export class CandidateDto {
   @Expose()
   @IsDateString()
   updated: string;
-
-  @ApiProperty({
-    description: 'Primary platform where the profile was discovered',
-    example: 'LinkedIn',
-  })
-  @Expose()
-  @IsString()
-  main_source: string;
 
   @ApiProperty({
     description: 'First name of the candidate',
@@ -470,26 +517,16 @@ export class CandidateDto {
   image_url?: string;
 
   @ApiProperty({
-    description: 'Direct link to the root raw candidate profile data mapping',
-    example: 'https://linkedin.com',
-    required: false,
-  })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  original_source_url?: string;
-
-  @ApiProperty({
-    description: 'Every distinct platform discovery location history log trace',
-    example: ['LinkedIn', 'GitHub X-Ray Search'],
-    type: [String],
+    description: 'Platforms and links where this candidate was discovered',
+    type: () => [CandidateSourceDto],
     required: false,
   })
   @Expose()
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  sources?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => CandidateSourceDto)
+  sources?: CandidateSourceDto[];
 
   @ApiProperty({
     description:

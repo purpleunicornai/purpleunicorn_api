@@ -2,7 +2,6 @@ model candidate {
   uid                               String                 @id @unique @default(uuid()) @db.Uuid
   created                           DateTime               @default(now())
   updated                           DateTime               @updatedAt
-  main_source                       String
   // Personal Information
   first_name                        String?
   last_name                         String?
@@ -33,11 +32,10 @@ model candidate {
   // other
   summary                           String?
   image_url                         String?
-  original_source_url               String?
-  sources                           String[] // list of sources where the candidate was found, e.g. LinkedIn, Indeed, Google X-Ray, etc.
   enriched_at                       DateTime? // set once a deep candidate search has run, so it isn't repeated
   experience                        candidate_experience[]
   // Relationships
   role_results                      role_result[]
   education                         candidate_education[]
+  sources                           candidate_source[]
 }

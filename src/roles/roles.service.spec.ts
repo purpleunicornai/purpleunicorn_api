@@ -361,7 +361,7 @@ describe('RolesService', () => {
   });
 
   describe('getRoleResult', () => {
-    it("fetches a role_result scoped to the caller's organization, including its candidate and their experience/education", async () => {
+    it("fetches a role_result scoped to the caller's organization, including its candidate and their experience/education/sources", async () => {
       const result = {
         uid: 'result-1',
         role_id: 'role-1',
@@ -377,7 +377,9 @@ describe('RolesService', () => {
           role: { project: { organization_id: 'org-1' } },
         },
         include: {
-          candidate: { include: { experience: true, education: true } },
+          candidate: {
+            include: { experience: true, education: true, sources: true },
+          },
         },
       });
       expect(found).toBe(result);

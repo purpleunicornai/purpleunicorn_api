@@ -5,13 +5,17 @@ import { z } from 'zod';
 import type { LanguageModel } from 'ai';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { GoogleSearchItem } from '../google-search/google-search.service';
-import { candidate } from '../../generated/prisma/client';
+import { candidate, candidate_source } from '../../generated/prisma/client';
 import { InstitutionType } from '../../generated/prisma/enums';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
 const candidateSchema = z.object({
-  main_source: z.string(),
+  // These three map directly onto a candidate_source row created alongside
+  // the candidate (main: true) — see SearchService.upsertCandidate.
+  source_title: z.string(),
+  source_name: z.string(),
+  source_url: z.string().optional(),
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   email: z.string().optional(),
@@ -35,8 +39,6 @@ const candidateSchema = z.object({
   diversity: z.array(z.string()).optional(),
   summary: z.string().optional(),
   image_url: z.string().optional(),
-  original_source_url: z.string(),
-  sources: z.array(z.string()),
 });
 
 const matchSchema = z.object({
@@ -77,10 +79,16 @@ const candidateEducationEnrichmentSchema = z.object({
   additional_info: z.string().optional(),
 });
 
+const candidateSourceEnrichmentSchema = z.object({
+  title: z.string(),
+  name: z.string(),
+  url: z.string().optional(),
+});
+
 // Unlike candidateSchema (used when creating a brand new candidate record
 // from a role search), this describes new facts to merge onto an already-
-// known candidate, so it omits the identity fields (main_source,
-// original_source_url, sources) that only make sense for a fresh record.
+// known candidate, so it omits the source_title/source_name/source_url
+// fields that only make sense for a fresh record's initial source.
 const candidateEnrichmentSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
@@ -105,7 +113,7 @@ const candidateEnrichmentSchema = z.object({
   diversity: z.array(z.string()).optional(),
   summary: z.string().optional(),
   image_url: z.string().optional(),
-  additional_sources: z.array(z.string()).optional(),
+  additional_sources: z.array(candidateSourceEnrichmentSchema).optional(),
   experience: z.array(candidateExperienceEnrichmentSchema).optional(),
   education: z.array(candidateEducationEnrichmentSchema).optional(),
 });
@@ -115,6 +123,9 @@ export type GeminiCandidateExperienceEnrichment = z.infer<
 >;
 export type GeminiCandidateEducationEnrichment = z.infer<
   typeof candidateEducationEnrichmentSchema
+>;
+export type GeminiCandidateSourceEnrichment = z.infer<
+  typeof candidateSourceEnrichmentSchema
 >;
 export type GeminiCandidateEnrichment = z.infer<
   typeof candidateEnrichmentSchema
@@ -165,7 +176,7 @@ export class GeminiService {
   // role, just extracting whatever new facts the search results contain.
   async enrichCandidate(
     items: GoogleSearchItem[],
-    candidate: candidate,
+    candidate: candidate & { sources: candidate_source[] },
   ): Promise<EnrichCandidateResult> {
     if (items.length === 0) {
       return { enrichment: {}, tokensUsed: 0 };
@@ -259,7 +270,7 @@ export class GeminiService {
     return [
       'You are extracting structured candidate profile data from Google search results for a recruiting pipeline.',
       'For each search result below, extract as much candidate information as you can infer from its title, link, snippet, and description.',
-      'Set "main_source" to the platform the result came from (e.g. "LinkedIn"), "original_source_url" to the result\'s link, and "sources" to an array containing the main_source.',
+      'Set "source_title" to the search result\'s title verbatim, "source_name" to the platform the result came from (e.g. "LinkedIn"), and "source_url" to the result\'s link — include "source_url" only if one is actually present.',
       'When a result includes an "image" URL, copy it verbatim into "image_url" — do not fabricate one when it is absent.',
       'Do not guess contact details (email, phone) unless they literally appear in the text.',
       'Then compare the candidate against the role criteria below: write a short "summary" explaining how well they match, a more detailed "reasoning" for that assessment, a "skills_matched" array listing which required/optional skills they actually have evidence of, and a "score" from 0-100 rating the overall match quality.',
@@ -272,7 +283,7 @@ export class GeminiService {
 
   private buildEnrichmentPrompt(
     items: GoogleSearchItem[],
-    candidate: candidate,
+    candidate: candidate & { sources: candidate_source[] },
   ): string {
     const knownCandidate = {
       name: [candidate.first_name, candidate.last_name]
@@ -280,8 +291,10 @@ export class GeminiService {
         .join(' '),
       current_title: candidate.current_title,
       current_company: candidate.current_company,
-      original_source_url: candidate.original_source_url,
-      known_sources: candidate.sources,
+      known_sources: candidate.sources.map((source) => ({
+        name: source.source,
+        url: source.url,
+      })),
     };
 
     const results = items.map((item) => ({
@@ -302,7 +315,7 @@ export class GeminiService {
       'Do not guess contact details (email, phone) unless they literally appear in the text.',
       'Also extract every distinct employment history entry you can find into "experience": company_name and role are required for each entry; include start_date/end_date (ISO dates, approximate if only a year is known) and responsibilities/skills when available.',
       `Also extract every distinct education history entry you can find into "education": institution_name and institution_type (one of ${Object.values(InstitutionType).join(', ')}) are required for each entry; include institution_location/degree/field_of_study/start_date/end_date (ISO dates, approximate if only a year is known) when available.`,
-      'List any newly-found platform names (e.g. "GitHub", "Stack Overflow") in "additional_sources" — do not repeat sources already known.',
+      'List any newly-found platforms in "additional_sources" as objects with "title" (a short label for the source, e.g. the platform name or the page title), "name" (the platform name, e.g. "GitHub"), and "url" (the profile link, if found) — do not repeat sources already known.',
       'Only include a field when you have real evidence for it in the text below — omit anything you are not confident about.',
       '',
       `Known candidate: ${JSON.stringify(knownCandidate)}`,

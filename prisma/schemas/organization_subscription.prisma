@@ -1,0 +1,19 @@
+model organization_subscription {
+  uid             String             @id @unique @default(uuid()) @db.Uuid
+  created         DateTime           @default(now())
+  updated         DateTime           @updatedAt
+  organization_id String
+  plan            String
+  status          String
+  purchase_date   DateTime
+  renewal_date    DateTime?
+  expire_date     DateTime?
+  subscription_id String
+  logs            organization_log[] @relation("SubscriptionLogs")
+
+  @@index([organization_id])
+  // subscription_id is the external payment-provider id — indexed (not
+  // unique) since it's not yet clear whether it's reused across renewal
+  // rows for the same org; tighten to @unique if it turns out to be.
+  @@index([subscription_id])
+}

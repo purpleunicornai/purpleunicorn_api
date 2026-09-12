@@ -43,4 +43,10 @@ model role_filters {
   filter_companies       filter_companies[]
   filter_location_cities filter_location_cities[]
   role_results           role_result[]
+  logs                   organization_log[]       @relation("RoleFilterLogs")
+
+  // Every filter lookup in the app is scoped to a role and the "current"
+  // (non-archived) one, e.g. `where: { role_id, archived: false }` — this
+  // composite index covers that directly and plain role_id lookups too.
+  @@index([role_id, archived])
 }

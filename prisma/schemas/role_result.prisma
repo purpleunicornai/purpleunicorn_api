@@ -1,27 +1,37 @@
 model role_result {
-  uid                    String        @id @unique @default(uuid()) @db.Uuid
-  created                DateTime      @default(now())
-  updated                DateTime      @updatedAt
-  candidate_uid          String?       @db.Uuid
-  candidate              candidate?    @relation(fields: [candidate_uid], references: [uid])
-  role_id                String        @db.Uuid
-  role                   roles         @relation(fields: [role_id], references: [uid])
-  filter_id              String?       @db.Uuid
-  role_filter            role_filters? @relation(fields: [filter_id], references: [uid])
+  uid                    String             @id @unique @default(uuid()) @db.Uuid
+  created                DateTime           @default(now())
+  updated                DateTime           @updatedAt
+  candidate_uid          String?            @db.Uuid
+  candidate              candidate?         @relation(fields: [candidate_uid], references: [uid])
+  role_id                String             @db.Uuid
+  role                   roles              @relation(fields: [role_id], references: [uid])
+  filter_id              String?            @db.Uuid
+  role_filter            role_filters?      @relation(fields: [filter_id], references: [uid])
   // AI Summary and scoring fields
   score                  Int?
+  ai_score               Int?
   reasoning              String?
   skills_matched         String[]
   summary                String?
   // User feedback fields
   relevancy_score        Int?
   rated_by               String?
-  shortlist              Boolean?      @default(false)
+  shortlist              Boolean?           @default(false)
   shortlist_date         DateTime?
-  marked_for_review      Boolean?      @default(false)
+  marked_for_review      Boolean?           @default(false)
   marked_for_review_date DateTime?
-  not_suitable           Boolean?      @default(false)
+  not_suitable           Boolean?           @default(false)
   not_suitable_date      DateTime?
   tokens_used            Int?
   tokens_cost            Int?
+  metadata               Json?
+  logs                   organization_log[] @relation("RoleResultLogs")
+
+  // upsertRoleResult looks up by (role_id, candidate_uid) on every search
+  // save; filter_id and candidate_uid alone are also traversed (a filter's
+  // results, a candidate's match history), so each gets its own index too.
+  @@index([role_id, candidate_uid])
+  @@index([candidate_uid])
+  @@index([filter_id])
 }

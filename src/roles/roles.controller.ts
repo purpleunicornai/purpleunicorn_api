@@ -124,7 +124,7 @@ export class RolesController {
   }
 
   @Get('/:roleId/result/:resultId')
-  @Serialize(RoleResultSummaryDto)
+  //@Serialize(RoleResultSummaryDto)
   async getRoleResult(
     @Param('roleId') roleId: string,
     @Param('resultId') resultId: string,
@@ -142,6 +142,7 @@ export class RolesController {
       try {
         result.candidate = await this.searchService.deepSearchCandidate(
           candidate.uid,
+          roleId,
           force,
         );
       } catch (error) {

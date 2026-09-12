@@ -1,0 +1,21 @@
+enum SourceType {
+  SEARCH
+  IMPORT
+  PLUGIN
+  OTHER
+}
+
+model candidate_source {
+  uid          String     @id @unique @default(uuid()) @db.Uuid
+  created      DateTime   @default(now())
+  updated      DateTime   @updatedAt
+  title        String
+  source       String?
+  url          String?
+  candidate_id String     @db.Uuid
+  candidate    candidate  @relation(fields: [candidate_id], references: [uid], onDelete: Cascade)
+  main         Boolean
+  type         SourceType
+
+  @@index([candidate_id])
+}

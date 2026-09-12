@@ -54,8 +54,12 @@ export const ModelName = {
   candidate: 'candidate',
   candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
+  candidate_source: 'candidate_source',
   filter_companies: 'filter_companies',
   filter_location_cities: 'filter_location_cities',
+  organization_credits: 'organization_credits',
+  organization_log: 'organization_log',
+  organization_subscription: 'organization_subscription',
   projects: 'projects',
   role_filters: 'role_filters',
   role_result: 'role_result',
@@ -82,7 +86,6 @@ export const CandidateScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
   updated: 'updated',
-  main_source: 'main_source',
   first_name: 'first_name',
   last_name: 'last_name',
   email: 'email',
@@ -108,8 +111,6 @@ export const CandidateScalarFieldEnum = {
   diversity: 'diversity',
   summary: 'summary',
   image_url: 'image_url',
-  original_source_url: 'original_source_url',
-  sources: 'sources',
   enriched_at: 'enriched_at'
 } as const
 
@@ -152,6 +153,21 @@ export const Candidate_experienceScalarFieldEnum = {
 export type Candidate_experienceScalarFieldEnum = (typeof Candidate_experienceScalarFieldEnum)[keyof typeof Candidate_experienceScalarFieldEnum]
 
 
+export const Candidate_sourceScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  title: 'title',
+  source: 'source',
+  url: 'url',
+  candidate_id: 'candidate_id',
+  main: 'main',
+  type: 'type'
+} as const
+
+export type Candidate_sourceScalarFieldEnum = (typeof Candidate_sourceScalarFieldEnum)[keyof typeof Candidate_sourceScalarFieldEnum]
+
+
 export const Filter_companiesScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -177,6 +193,55 @@ export const Filter_location_citiesScalarFieldEnum = {
 } as const
 
 export type Filter_location_citiesScalarFieldEnum = (typeof Filter_location_citiesScalarFieldEnum)[keyof typeof Filter_location_citiesScalarFieldEnum]
+
+
+export const Organization_creditsScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  organization_id: 'organization_id',
+  type: 'type',
+  amount: 'amount',
+  transaction_type: 'transaction_type'
+} as const
+
+export type Organization_creditsScalarFieldEnum = (typeof Organization_creditsScalarFieldEnum)[keyof typeof Organization_creditsScalarFieldEnum]
+
+
+export const Organization_logScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  user_id: 'user_id',
+  organization_id: 'organization_id',
+  type: 'type',
+  message: 'message',
+  tokens_used: 'tokens_used',
+  project_id: 'project_id',
+  role_id: 'role_id',
+  role_filter_id: 'role_filter_id',
+  role_result_id: 'role_result_id',
+  subscription_id: 'subscription_id',
+  credits_id: 'credits_id'
+} as const
+
+export type Organization_logScalarFieldEnum = (typeof Organization_logScalarFieldEnum)[keyof typeof Organization_logScalarFieldEnum]
+
+
+export const Organization_subscriptionScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  organization_id: 'organization_id',
+  plan: 'plan',
+  status: 'status',
+  purchase_date: 'purchase_date',
+  renewal_date: 'renewal_date',
+  expire_date: 'expire_date',
+  subscription_id: 'subscription_id'
+} as const
+
+export type Organization_subscriptionScalarFieldEnum = (typeof Organization_subscriptionScalarFieldEnum)[keyof typeof Organization_subscriptionScalarFieldEnum]
 
 
 export const ProjectsScalarFieldEnum = {
@@ -241,6 +306,7 @@ export const Role_resultScalarFieldEnum = {
   role_id: 'role_id',
   filter_id: 'filter_id',
   score: 'score',
+  ai_score: 'ai_score',
   reasoning: 'reasoning',
   skills_matched: 'skills_matched',
   summary: 'summary',
@@ -253,7 +319,8 @@ export const Role_resultScalarFieldEnum = {
   not_suitable: 'not_suitable',
   not_suitable_date: 'not_suitable_date',
   tokens_used: 'tokens_used',
-  tokens_cost: 'tokens_cost'
+  tokens_cost: 'tokens_cost',
+  metadata: 'metadata'
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]

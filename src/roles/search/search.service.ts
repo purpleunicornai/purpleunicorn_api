@@ -7,6 +7,7 @@ import {
   GeminiCandidateExperienceEnrichment,
   GeminiCandidateFields,
   GeminiCandidateMatch,
+  GeminiCandidateSourceEnrichment,
   GeminiService,
 } from '../../services/gemini/gemini.service';
 import { PrismaService } from '../../common/database/prisma.service';
@@ -14,14 +15,20 @@ import {
   candidate,
   candidate_education,
   candidate_experience,
+  candidate_source,
   filter_location_cities,
   Prisma,
   role_filters,
   role_result,
   roles,
 } from '../../generated/prisma/client.js';
+import { SourceType } from '../../generated/prisma/enums';
 import { RequestException } from '../../common/exception/core/ExceptionBase';
 import { Observable } from 'rxjs';
+import {
+  CandidateScoreResult,
+  CandidateScoringService,
+} from './candidate-scoring.service';
 
 type StoredFilter = role_filters & {
   filter_location_cities: filter_location_cities[];
@@ -34,6 +41,7 @@ export class SearchService {
   constructor(
     private readonly googleSearchService: GoogleSearchService,
     private readonly geminiService: GeminiService,
+    private readonly candidateScoringService: CandidateScoringService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -42,7 +50,7 @@ export class SearchService {
     const dto = this.toRoleFilterDto(filter);
     const items = await this.googleSearchService.search(dto);
     const formatted = await this.geminiService.formatCandidates(items, dto);
-    return this.saveCandidateMatches(role.uid, filter.uid, formatted);
+    return this.saveCandidateMatches(role.uid, filter.uid, dto, formatted);
   }
 
   // Digs deeper on a single already-found candidate to build out their
@@ -52,16 +60,27 @@ export class SearchService {
   // includes `experience`/`education` so every return path has the same shape.
   async deepSearchCandidate(
     candidateUid: string,
+    roleId: string,
     force = false,
   ): Promise<
     candidate & {
       experience: candidate_experience[];
       education: candidate_education[];
+      sources: candidate_source[];
     }
   > {
     const existing = await this.prisma.candidate.findUniqueOrThrow({
       where: { uid: candidateUid },
-      include: { experience: true, education: true },
+      include: {
+        experience: true,
+        education: true,
+        sources: true,
+        role_results: {
+          where: {
+            role_id: roleId,
+          },
+        },
+      },
     });
     if (existing.enriched_at && !force) return existing;
 
@@ -76,7 +95,7 @@ export class SearchService {
       return this.prisma.candidate.update({
         where: { uid: candidateUid },
         data: { enriched_at: new Date() },
-        include: { experience: true, education: true },
+        include: { experience: true, education: true, sources: true },
       });
     }
 
@@ -85,10 +104,15 @@ export class SearchService {
       existing,
     );
 
-    // Create any new work/education-history rows before the final read so
-    // they're included in the `experience`/`education` this method returns.
+    // Create any new work/education/source rows before the final read so
+    // they're included in the `experience`/`education`/`sources` this
+    // method returns.
     await this.createCandidateExperience(candidateUid, enrichment.experience);
     await this.createCandidateEducation(candidateUid, enrichment.education);
+    await this.createAdditionalCandidateSources(
+      candidateUid,
+      enrichment.additional_sources,
+    );
 
     return this.prisma.candidate.update({
       where: { uid: candidateUid },
@@ -96,7 +120,16 @@ export class SearchService {
         ...this.buildEnrichmentCandidateData(enrichment, existing),
         enriched_at: new Date(),
       },
-      include: { experience: true, education: true },
+      include: {
+        experience: true,
+        education: true,
+        sources: true,
+        role_results: {
+          where: {
+            role_id: roleId,
+          },
+        },
+      },
     });
   }
 
@@ -152,13 +185,6 @@ export class SearchService {
       if (incoming?.length) {
         data[field] = this.unionStrings(existing[field], incoming);
       }
-    }
-
-    if (enrichment.additional_sources?.length) {
-      data.sources = this.unionStrings(
-        existing.sources,
-        enrichment.additional_sources,
-      );
     }
 
     return data;
@@ -218,6 +244,28 @@ export class SearchService {
     if (rows.length === 0) return;
 
     await this.prisma.candidate_education.createMany({ data: rows });
+  }
+
+  // Newly-found platforms from a deep search become their own
+  // candidate_source rows (main: false — the original creation-time source
+  // stays the primary one), the same "create sources" operation
+  // upsertCandidate performs for a brand-new candidate.
+  private async createAdditionalCandidateSources(
+    candidateUid: string,
+    additionalSources?: GeminiCandidateSourceEnrichment[],
+  ): Promise<void> {
+    const rows = (additionalSources ?? []).map((entry) => ({
+      candidate_id: candidateUid,
+      title: entry.title,
+      source: entry.name,
+      url: entry.url,
+      main: false,
+      type: SourceType.SEARCH,
+    }));
+
+    if (rows.length === 0) return;
+
+    await this.prisma.candidate_source.createMany({ data: rows });
   }
 
   streamSearch(roleId: string): Observable<MessageEvent> {
@@ -304,6 +352,7 @@ export class SearchService {
           const saved = await this.saveCandidateMatches(
             filter.role_id,
             filter.uid,
+            dto,
             formatted,
           );
           subscriber.next({
@@ -406,6 +455,7 @@ export class SearchService {
   private async saveCandidateMatches(
     roleId: string,
     filterId: string,
+    dto: RoleFilterDto,
     result: { matches: GeminiCandidateMatch[]; tokensUsed: number },
   ): Promise<role_result[]> {
     const tokensPerMatch = result.matches.length
@@ -415,31 +465,55 @@ export class SearchService {
     const roleResults: role_result[] = [];
     for (const match of result.matches) {
       const candidateRecord = await this.upsertCandidate(match.candidate);
+      const scoreResult = this.candidateScoringService.scoreCandidate(
+        dto,
+        candidateRecord,
+      );
       const roleResult = await this.upsertRoleResult(
         roleId,
         filterId,
         candidateRecord.uid,
         match,
         tokensPerMatch,
+        scoreResult,
       );
       roleResults.push(roleResult);
     }
     return roleResults;
   }
 
-  private async upsertCandidate(
-    fields: GeminiCandidateFields,
-  ): Promise<candidate> {
-    const data = this.buildCandidateData(fields);
-    const existing = fields.original_source_url
+  private async upsertCandidate(fields: GeminiCandidateFields): Promise<
+    candidate & {
+      experience: candidate_experience[];
+      education: candidate_education[];
+    }
+  > {
+    const { source_title, source_name, source_url, ...scalarFields } = fields;
+    const data = this.buildCandidateData(scalarFields);
+    const existing = source_url
       ? await this.prisma.candidate.findFirst({
-          where: { original_source_url: fields.original_source_url },
+          where: { sources: { some: { url: source_url } } },
+          include: { experience: true, education: true },
         })
       : null;
 
     if (!existing) {
       return this.prisma.candidate.create({
-        data: data as Prisma.candidateCreateInput,
+        data: {
+          ...(data as Prisma.candidateCreateInput),
+          sources: {
+            create: [
+              {
+                title: source_title,
+                source: source_name,
+                url: source_url,
+                main: true,
+                type: SourceType.SEARCH,
+              },
+            ],
+          },
+        },
+        include: { experience: true, education: true },
       });
     }
 
@@ -452,6 +526,7 @@ export class SearchService {
     return this.prisma.candidate.update({
       where: { uid: existing.uid },
       data: data,
+      include: { experience: true, education: true },
     });
   }
 
@@ -461,6 +536,7 @@ export class SearchService {
     candidateUid: string,
     match: GeminiCandidateMatch,
     tokensUsed: number,
+    scoreResult: CandidateScoreResult,
   ): Promise<role_result> {
     const existing = await this.prisma.role_result.findFirst({
       where: { role_id: roleId, candidate_uid: candidateUid },
@@ -473,7 +549,9 @@ export class SearchService {
       summary: match.summary,
       reasoning: match.reasoning,
       skills_matched: match.skills_matched,
-      score: match.score,
+      ai_score: match.score,
+      score: scoreResult.score,
+      metadata: scoreResult.breakdown as unknown as Prisma.InputJsonValue,
       tokens_used: tokensUsed,
     };
 
@@ -489,12 +567,16 @@ export class SearchService {
 
   // Prisma's generated candidateCreateInput/candidateUncheckedUpdateInput
   // types are too strict for a dynamically-built object (they require
-  // main_source to be a literal known key, not inferred from a loop), so
+  // first_name to be a literal known key, not inferred from a loop), so
   // this returns a plain Record and the two .create()/.update() call sites
-  // below cast it — every key/value pair is copied straight from
-  // GeminiCandidateFields, whose shape matches the candidate table's columns.
+  // below cast it — every key/value pair is copied straight from the
+  // scalar subset of GeminiCandidateFields (source_title/source_name/
+  // source_url are handled separately as a nested candidate_source create).
   private buildCandidateData(
-    fields: GeminiCandidateFields,
+    fields: Omit<
+      GeminiCandidateFields,
+      'source_title' | 'source_name' | 'source_url'
+    >,
   ): Record<string, unknown> {
     const data: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {

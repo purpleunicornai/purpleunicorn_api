@@ -11,4 +11,6 @@ model candidate_experience {
   end_date         DateTime?
   responsibilities String?
   skills           String[]
+
+  @@index([candidate_id])
 }

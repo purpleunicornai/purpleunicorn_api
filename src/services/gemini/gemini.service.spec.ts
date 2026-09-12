@@ -1,14 +1,34 @@
 import { GeminiService } from './gemini.service';
 import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
 import { GoogleSearchItem } from '../google-search/google-search.service';
-import { candidate } from '../../generated/prisma/client';
+import { candidate, candidate_source } from '../../generated/prisma/client';
 
-function buildCandidate(overrides: Partial<candidate> = {}): candidate {
+type CandidateWithSources = candidate & { sources: candidate_source[] };
+
+function buildSource(
+  overrides: Partial<candidate_source> = {},
+): candidate_source {
+  return {
+    uid: 'source-1',
+    created: new Date('2026-08-23T00:00:00.000Z'),
+    updated: new Date('2026-08-23T00:00:00.000Z'),
+    title: 'Jane Doe - Software Engineer - LinkedIn',
+    source: 'LinkedIn',
+    url: 'https://www.linkedin.com/in/janedoe',
+    candidate_id: 'candidate-1',
+    main: true,
+    type: 'SEARCH',
+    ...overrides,
+  };
+}
+
+function buildCandidate(
+  overrides: Partial<CandidateWithSources> = {},
+): CandidateWithSources {
   return {
     uid: 'candidate-1',
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
-    main_source: 'LinkedIn',
     first_name: 'Jane',
     last_name: 'Doe',
     email: null,
@@ -34,9 +54,8 @@ function buildCandidate(overrides: Partial<candidate> = {}): candidate {
     diversity: [],
     summary: null,
     image_url: null,
-    original_source_url: 'https://www.linkedin.com/in/janedoe',
-    sources: ['LinkedIn'],
     enriched_at: null,
+    sources: [buildSource()],
     ...overrides,
   };
 }
@@ -185,11 +204,11 @@ describe('GeminiService', () => {
       const matches = [
         {
           candidate: {
-            main_source: 'LinkedIn',
+            source_title: 'Jane Doe - Software Engineer - LinkedIn',
+            source_name: 'LinkedIn',
+            source_url: 'https://www.linkedin.com/in/janedoe',
             first_name: 'Jane',
             last_name: 'Doe',
-            original_source_url: 'https://www.linkedin.com/in/janedoe',
-            sources: ['LinkedIn'],
           },
           summary: 'Strong TypeScript background matching the role.',
           reasoning:
@@ -206,6 +225,28 @@ describe('GeminiService', () => {
       const result = await service.formatCandidates([buildItem()], buildDto());
 
       expect(result).toEqual({ matches, tokensUsed: 456 });
+    });
+
+    it('asks the model for source_title, source_name, and source_url', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      await service.formatCandidates([buildItem()], buildDto());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringMatching(/source_title/),
+        }),
+      );
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringMatching(/source_name/),
+        }),
+      );
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringMatching(/source_url/),
+        }),
+      );
     });
 
     it('asks the model for reasoning and skills_matched alongside the summary and score', async () => {
@@ -297,7 +338,13 @@ describe('GeminiService', () => {
       const enrichment = {
         email: 'jane.doe@example.com',
         skills: ['TypeScript', 'NestJS'],
-        additional_sources: ['GitHub'],
+        additional_sources: [
+          {
+            title: 'Jane Doe - GitHub',
+            name: 'GitHub',
+            url: 'https://github.com/janedoe',
+          },
+        ],
         experience: [
           {
             company_name: 'TechCorp',
@@ -337,6 +384,26 @@ describe('GeminiService', () => {
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
           prompt: expect.stringMatching(/institution_name/i),
+        }),
+      );
+    });
+
+    it('includes the known source names and URLs in the prompt so they are not re-discovered', async () => {
+      generateText.mockResolvedValue({ output: {}, usage: { totalTokens: 0 } });
+
+      const candidate = buildCandidate({
+        sources: [
+          buildSource({
+            source: 'LinkedIn',
+            url: 'https://linkedin.com/in/janedoe',
+          }),
+        ],
+      });
+      await service.enrichCandidate([buildItem()], candidate);
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('https://linkedin.com/in/janedoe'),
         }),
       );
     });

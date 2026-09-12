@@ -5,14 +5,19 @@ enum ProjectVisibility {
 }
 
 model projects {
-  uid             String            @id @unique @default(uuid()) @db.Uuid
-  created         DateTime          @default(now())
-  updated         DateTime          @updatedAt
+  uid             String             @id @unique @default(uuid()) @db.Uuid
+  created         DateTime           @default(now())
+  updated         DateTime           @updatedAt
   user_id         String // Clerk user id
   organization_id String // Clerk organization id
   name            String
   description     String?
-  visibility      ProjectVisibility @default(USER)
+  visibility      ProjectVisibility  @default(USER)
   users           String[] // list of user ids who have access to the project
   roles           roles[]
+  // Relationships
+  logs            organization_log[] @relation("ProjectLogs")
+
+  @@index([organization_id])
+  @@index([user_id])
 }

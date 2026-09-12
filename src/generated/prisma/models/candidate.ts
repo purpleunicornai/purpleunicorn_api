@@ -40,7 +40,6 @@ export type CandidateMinAggregateOutputType = {
   uid: string | null
   created: Date | null
   updated: Date | null
-  main_source: string | null
   first_name: string | null
   last_name: string | null
   email: string | null
@@ -62,7 +61,6 @@ export type CandidateMinAggregateOutputType = {
   current_role_start_date: Date | null
   summary: string | null
   image_url: string | null
-  original_source_url: string | null
   enriched_at: Date | null
 }
 
@@ -70,7 +68,6 @@ export type CandidateMaxAggregateOutputType = {
   uid: string | null
   created: Date | null
   updated: Date | null
-  main_source: string | null
   first_name: string | null
   last_name: string | null
   email: string | null
@@ -92,7 +89,6 @@ export type CandidateMaxAggregateOutputType = {
   current_role_start_date: Date | null
   summary: string | null
   image_url: string | null
-  original_source_url: string | null
   enriched_at: Date | null
 }
 
@@ -100,7 +96,6 @@ export type CandidateCountAggregateOutputType = {
   uid: number
   created: number
   updated: number
-  main_source: number
   first_name: number
   last_name: number
   email: number
@@ -126,8 +121,6 @@ export type CandidateCountAggregateOutputType = {
   diversity: number
   summary: number
   image_url: number
-  original_source_url: number
-  sources: number
   enriched_at: number
   _all: number
 }
@@ -147,7 +140,6 @@ export type CandidateMinAggregateInputType = {
   uid?: true
   created?: true
   updated?: true
-  main_source?: true
   first_name?: true
   last_name?: true
   email?: true
@@ -169,7 +161,6 @@ export type CandidateMinAggregateInputType = {
   current_role_start_date?: true
   summary?: true
   image_url?: true
-  original_source_url?: true
   enriched_at?: true
 }
 
@@ -177,7 +168,6 @@ export type CandidateMaxAggregateInputType = {
   uid?: true
   created?: true
   updated?: true
-  main_source?: true
   first_name?: true
   last_name?: true
   email?: true
@@ -199,7 +189,6 @@ export type CandidateMaxAggregateInputType = {
   current_role_start_date?: true
   summary?: true
   image_url?: true
-  original_source_url?: true
   enriched_at?: true
 }
 
@@ -207,7 +196,6 @@ export type CandidateCountAggregateInputType = {
   uid?: true
   created?: true
   updated?: true
-  main_source?: true
   first_name?: true
   last_name?: true
   email?: true
@@ -233,8 +221,6 @@ export type CandidateCountAggregateInputType = {
   diversity?: true
   summary?: true
   image_url?: true
-  original_source_url?: true
-  sources?: true
   enriched_at?: true
   _all?: true
 }
@@ -329,7 +315,6 @@ export type CandidateGroupByOutputType = {
   uid: string
   created: Date
   updated: Date
-  main_source: string
   first_name: string | null
   last_name: string | null
   email: string | null
@@ -355,8 +340,6 @@ export type CandidateGroupByOutputType = {
   diversity: string[]
   summary: string | null
   image_url: string | null
-  original_source_url: string | null
-  sources: string[]
   enriched_at: Date | null
   _count: CandidateCountAggregateOutputType | null
   _avg: CandidateAvgAggregateOutputType | null
@@ -387,7 +370,6 @@ export type candidateWhereInput = {
   uid?: Prisma.UuidFilter<"candidate"> | string
   created?: Prisma.DateTimeFilter<"candidate"> | Date | string
   updated?: Prisma.DateTimeFilter<"candidate"> | Date | string
-  main_source?: Prisma.StringFilter<"candidate"> | string
   first_name?: Prisma.StringNullableFilter<"candidate"> | string | null
   last_name?: Prisma.StringNullableFilter<"candidate"> | string | null
   email?: Prisma.StringNullableFilter<"candidate"> | string | null
@@ -413,19 +395,17 @@ export type candidateWhereInput = {
   diversity?: Prisma.StringNullableListFilter<"candidate">
   summary?: Prisma.StringNullableFilter<"candidate"> | string | null
   image_url?: Prisma.StringNullableFilter<"candidate"> | string | null
-  original_source_url?: Prisma.StringNullableFilter<"candidate"> | string | null
-  sources?: Prisma.StringNullableListFilter<"candidate">
   enriched_at?: Prisma.DateTimeNullableFilter<"candidate"> | Date | string | null
   experience?: Prisma.Candidate_experienceListRelationFilter
   role_results?: Prisma.Role_resultListRelationFilter
   education?: Prisma.Candidate_educationListRelationFilter
+  sources?: Prisma.Candidate_sourceListRelationFilter
 }
 
 export type candidateOrderByWithRelationInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
-  main_source?: Prisma.SortOrder
   first_name?: Prisma.SortOrderInput | Prisma.SortOrder
   last_name?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -451,12 +431,11 @@ export type candidateOrderByWithRelationInput = {
   diversity?: Prisma.SortOrder
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
   image_url?: Prisma.SortOrderInput | Prisma.SortOrder
-  original_source_url?: Prisma.SortOrderInput | Prisma.SortOrder
-  sources?: Prisma.SortOrder
   enriched_at?: Prisma.SortOrderInput | Prisma.SortOrder
   experience?: Prisma.candidate_experienceOrderByRelationAggregateInput
   role_results?: Prisma.role_resultOrderByRelationAggregateInput
   education?: Prisma.candidate_educationOrderByRelationAggregateInput
+  sources?: Prisma.candidate_sourceOrderByRelationAggregateInput
 }
 
 export type candidateWhereUniqueInput = Prisma.AtLeast<{
@@ -466,7 +445,6 @@ export type candidateWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.candidateWhereInput | Prisma.candidateWhereInput[]
   created?: Prisma.DateTimeFilter<"candidate"> | Date | string
   updated?: Prisma.DateTimeFilter<"candidate"> | Date | string
-  main_source?: Prisma.StringFilter<"candidate"> | string
   first_name?: Prisma.StringNullableFilter<"candidate"> | string | null
   last_name?: Prisma.StringNullableFilter<"candidate"> | string | null
   email?: Prisma.StringNullableFilter<"candidate"> | string | null
@@ -492,19 +470,17 @@ export type candidateWhereUniqueInput = Prisma.AtLeast<{
   diversity?: Prisma.StringNullableListFilter<"candidate">
   summary?: Prisma.StringNullableFilter<"candidate"> | string | null
   image_url?: Prisma.StringNullableFilter<"candidate"> | string | null
-  original_source_url?: Prisma.StringNullableFilter<"candidate"> | string | null
-  sources?: Prisma.StringNullableListFilter<"candidate">
   enriched_at?: Prisma.DateTimeNullableFilter<"candidate"> | Date | string | null
   experience?: Prisma.Candidate_experienceListRelationFilter
   role_results?: Prisma.Role_resultListRelationFilter
   education?: Prisma.Candidate_educationListRelationFilter
+  sources?: Prisma.Candidate_sourceListRelationFilter
 }, "uid" | "uid">
 
 export type candidateOrderByWithAggregationInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
-  main_source?: Prisma.SortOrder
   first_name?: Prisma.SortOrderInput | Prisma.SortOrder
   last_name?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -530,8 +506,6 @@ export type candidateOrderByWithAggregationInput = {
   diversity?: Prisma.SortOrder
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
   image_url?: Prisma.SortOrderInput | Prisma.SortOrder
-  original_source_url?: Prisma.SortOrderInput | Prisma.SortOrder
-  sources?: Prisma.SortOrder
   enriched_at?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.candidateCountOrderByAggregateInput
   _avg?: Prisma.candidateAvgOrderByAggregateInput
@@ -547,7 +521,6 @@ export type candidateScalarWhereWithAggregatesInput = {
   uid?: Prisma.UuidWithAggregatesFilter<"candidate"> | string
   created?: Prisma.DateTimeWithAggregatesFilter<"candidate"> | Date | string
   updated?: Prisma.DateTimeWithAggregatesFilter<"candidate"> | Date | string
-  main_source?: Prisma.StringWithAggregatesFilter<"candidate"> | string
   first_name?: Prisma.StringNullableWithAggregatesFilter<"candidate"> | string | null
   last_name?: Prisma.StringNullableWithAggregatesFilter<"candidate"> | string | null
   email?: Prisma.StringNullableWithAggregatesFilter<"candidate"> | string | null
@@ -573,8 +546,6 @@ export type candidateScalarWhereWithAggregatesInput = {
   diversity?: Prisma.StringNullableListFilter<"candidate">
   summary?: Prisma.StringNullableWithAggregatesFilter<"candidate"> | string | null
   image_url?: Prisma.StringNullableWithAggregatesFilter<"candidate"> | string | null
-  original_source_url?: Prisma.StringNullableWithAggregatesFilter<"candidate"> | string | null
-  sources?: Prisma.StringNullableListFilter<"candidate">
   enriched_at?: Prisma.DateTimeNullableWithAggregatesFilter<"candidate"> | Date | string | null
 }
 
@@ -582,7 +553,6 @@ export type candidateCreateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -608,19 +578,17 @@ export type candidateCreateInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -646,19 +614,17 @@ export type candidateUncheckedCreateInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUpdateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -684,19 +650,17 @@ export type candidateUpdateInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -722,19 +686,17 @@ export type candidateUncheckedUpdateInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateCreateManyInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -760,8 +722,6 @@ export type candidateCreateManyInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
 }
 
@@ -769,7 +729,6 @@ export type candidateUpdateManyMutationInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -795,8 +754,6 @@ export type candidateUpdateManyMutationInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -804,7 +761,6 @@ export type candidateUncheckedUpdateManyInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -830,8 +786,6 @@ export type candidateUncheckedUpdateManyInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -847,7 +801,6 @@ export type candidateCountOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
-  main_source?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -873,8 +826,6 @@ export type candidateCountOrderByAggregateInput = {
   diversity?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   image_url?: Prisma.SortOrder
-  original_source_url?: Prisma.SortOrder
-  sources?: Prisma.SortOrder
   enriched_at?: Prisma.SortOrder
 }
 
@@ -887,7 +838,6 @@ export type candidateMaxOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
-  main_source?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -909,7 +859,6 @@ export type candidateMaxOrderByAggregateInput = {
   current_role_start_date?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   image_url?: Prisma.SortOrder
-  original_source_url?: Prisma.SortOrder
   enriched_at?: Prisma.SortOrder
 }
 
@@ -917,7 +866,6 @@ export type candidateMinOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
-  main_source?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -939,7 +887,6 @@ export type candidateMinOrderByAggregateInput = {
   current_role_start_date?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   image_url?: Prisma.SortOrder
-  original_source_url?: Prisma.SortOrder
   enriched_at?: Prisma.SortOrder
 }
 
@@ -971,10 +918,6 @@ export type candidateCreatelanguagesInput = {
 }
 
 export type candidateCreatediversityInput = {
-  set: string[]
-}
-
-export type candidateCreatesourcesInput = {
   set: string[]
 }
 
@@ -1034,11 +977,6 @@ export type candidateUpdatediversityInput = {
   push?: string | string[]
 }
 
-export type candidateUpdatesourcesInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
 export type candidateCreateNestedOneWithoutEducationInput = {
   create?: Prisma.XOR<Prisma.candidateCreateWithoutEducationInput, Prisma.candidateUncheckedCreateWithoutEducationInput>
   connectOrCreate?: Prisma.candidateCreateOrConnectWithoutEducationInput
@@ -1067,6 +1005,20 @@ export type candidateUpdateOneRequiredWithoutExperienceNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.candidateUpdateToOneWithWhereWithoutExperienceInput, Prisma.candidateUpdateWithoutExperienceInput>, Prisma.candidateUncheckedUpdateWithoutExperienceInput>
 }
 
+export type candidateCreateNestedOneWithoutSourcesInput = {
+  create?: Prisma.XOR<Prisma.candidateCreateWithoutSourcesInput, Prisma.candidateUncheckedCreateWithoutSourcesInput>
+  connectOrCreate?: Prisma.candidateCreateOrConnectWithoutSourcesInput
+  connect?: Prisma.candidateWhereUniqueInput
+}
+
+export type candidateUpdateOneRequiredWithoutSourcesNestedInput = {
+  create?: Prisma.XOR<Prisma.candidateCreateWithoutSourcesInput, Prisma.candidateUncheckedCreateWithoutSourcesInput>
+  connectOrCreate?: Prisma.candidateCreateOrConnectWithoutSourcesInput
+  upsert?: Prisma.candidateUpsertWithoutSourcesInput
+  connect?: Prisma.candidateWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.candidateUpdateToOneWithWhereWithoutSourcesInput, Prisma.candidateUpdateWithoutSourcesInput>, Prisma.candidateUncheckedUpdateWithoutSourcesInput>
+}
+
 export type candidateCreateNestedOneWithoutRole_resultsInput = {
   create?: Prisma.XOR<Prisma.candidateCreateWithoutRole_resultsInput, Prisma.candidateUncheckedCreateWithoutRole_resultsInput>
   connectOrCreate?: Prisma.candidateCreateOrConnectWithoutRole_resultsInput
@@ -1087,7 +1039,6 @@ export type candidateCreateWithoutEducationInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -1113,18 +1064,16 @@ export type candidateCreateWithoutEducationInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateWithoutEducationInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -1150,11 +1099,10 @@ export type candidateUncheckedCreateWithoutEducationInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateCreateOrConnectWithoutEducationInput = {
@@ -1177,7 +1125,6 @@ export type candidateUpdateWithoutEducationInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1203,18 +1150,16 @@ export type candidateUpdateWithoutEducationInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateWithoutEducationInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1240,18 +1185,16 @@ export type candidateUncheckedUpdateWithoutEducationInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateCreateWithoutExperienceInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -1277,18 +1220,16 @@ export type candidateCreateWithoutExperienceInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateWithoutExperienceInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -1314,11 +1255,10 @@ export type candidateUncheckedCreateWithoutExperienceInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateCreateOrConnectWithoutExperienceInput = {
@@ -1341,7 +1281,6 @@ export type candidateUpdateWithoutExperienceInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1367,18 +1306,16 @@ export type candidateUpdateWithoutExperienceInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateWithoutExperienceInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1404,9 +1341,164 @@ export type candidateUncheckedUpdateWithoutExperienceInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
+  education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
+}
+
+export type candidateCreateWithoutSourcesInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  phone?: string | null
+  country_calling_code?: string | null
+  contact_info_last_updated?: Date | string | null
+  rocketreach_profile_id?: string | null
+  current_location_city?: string | null
+  current_location_country_code?: string | null
+  current_location_postal_code?: string | null
+  open_to_relocation?: boolean | null
+  open_to_remote_work?: boolean | null
+  current_work_authorization_status?: string | null
+  experience_years?: number | null
+  experience_roles?: Prisma.candidateCreateexperience_rolesInput | string[]
+  current_title?: string | null
+  current_company?: string | null
+  current_salary?: number | null
+  current_salary_currency?: string | null
+  current_role_start_date?: Date | string | null
+  skills?: Prisma.candidateCreateskillsInput | string[]
+  languages?: Prisma.candidateCreatelanguagesInput | string[]
+  diversity?: Prisma.candidateCreatediversityInput | string[]
+  summary?: string | null
+  image_url?: string | null
+  enriched_at?: Date | string | null
+  experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
+  role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
+  education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
+}
+
+export type candidateUncheckedCreateWithoutSourcesInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  phone?: string | null
+  country_calling_code?: string | null
+  contact_info_last_updated?: Date | string | null
+  rocketreach_profile_id?: string | null
+  current_location_city?: string | null
+  current_location_country_code?: string | null
+  current_location_postal_code?: string | null
+  open_to_relocation?: boolean | null
+  open_to_remote_work?: boolean | null
+  current_work_authorization_status?: string | null
+  experience_years?: number | null
+  experience_roles?: Prisma.candidateCreateexperience_rolesInput | string[]
+  current_title?: string | null
+  current_company?: string | null
+  current_salary?: number | null
+  current_salary_currency?: string | null
+  current_role_start_date?: Date | string | null
+  skills?: Prisma.candidateCreateskillsInput | string[]
+  languages?: Prisma.candidateCreatelanguagesInput | string[]
+  diversity?: Prisma.candidateCreatediversityInput | string[]
+  summary?: string | null
+  image_url?: string | null
+  enriched_at?: Date | string | null
+  experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
+  role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
+  education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
+}
+
+export type candidateCreateOrConnectWithoutSourcesInput = {
+  where: Prisma.candidateWhereUniqueInput
+  create: Prisma.XOR<Prisma.candidateCreateWithoutSourcesInput, Prisma.candidateUncheckedCreateWithoutSourcesInput>
+}
+
+export type candidateUpsertWithoutSourcesInput = {
+  update: Prisma.XOR<Prisma.candidateUpdateWithoutSourcesInput, Prisma.candidateUncheckedUpdateWithoutSourcesInput>
+  create: Prisma.XOR<Prisma.candidateCreateWithoutSourcesInput, Prisma.candidateUncheckedCreateWithoutSourcesInput>
+  where?: Prisma.candidateWhereInput
+}
+
+export type candidateUpdateToOneWithWhereWithoutSourcesInput = {
+  where?: Prisma.candidateWhereInput
+  data: Prisma.XOR<Prisma.candidateUpdateWithoutSourcesInput, Prisma.candidateUncheckedUpdateWithoutSourcesInput>
+}
+
+export type candidateUpdateWithoutSourcesInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country_calling_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contact_info_last_updated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rocketreach_profile_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  open_to_relocation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  open_to_remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  current_work_authorization_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  experience_years?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  experience_roles?: Prisma.candidateUpdateexperience_rolesInput | string[]
+  current_title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_salary?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  current_salary_currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_role_start_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  skills?: Prisma.candidateUpdateskillsInput | string[]
+  languages?: Prisma.candidateUpdatelanguagesInput | string[]
+  diversity?: Prisma.candidateUpdatediversityInput | string[]
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
+  role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
+  education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
+}
+
+export type candidateUncheckedUpdateWithoutSourcesInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country_calling_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contact_info_last_updated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rocketreach_profile_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  open_to_relocation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  open_to_remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  current_work_authorization_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  experience_years?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  experience_roles?: Prisma.candidateUpdateexperience_rolesInput | string[]
+  current_title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_salary?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  current_salary_currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_role_start_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  skills?: Prisma.candidateUpdateskillsInput | string[]
+  languages?: Prisma.candidateUpdatelanguagesInput | string[]
+  diversity?: Prisma.candidateUpdatediversityInput | string[]
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
 }
@@ -1415,7 +1507,6 @@ export type candidateCreateWithoutRole_resultsInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -1441,18 +1532,16 @@ export type candidateCreateWithoutRole_resultsInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateWithoutRole_resultsInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  main_source: string
   first_name?: string | null
   last_name?: string | null
   email?: string | null
@@ -1478,11 +1567,10 @@ export type candidateUncheckedCreateWithoutRole_resultsInput = {
   diversity?: Prisma.candidateCreatediversityInput | string[]
   summary?: string | null
   image_url?: string | null
-  original_source_url?: string | null
-  sources?: Prisma.candidateCreatesourcesInput | string[]
   enriched_at?: Date | string | null
   experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateCreateOrConnectWithoutRole_resultsInput = {
@@ -1505,7 +1593,6 @@ export type candidateUpdateWithoutRole_resultsInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1531,18 +1618,16 @@ export type candidateUpdateWithoutRole_resultsInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateWithoutRole_resultsInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  main_source?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1568,11 +1653,10 @@ export type candidateUncheckedUpdateWithoutRole_resultsInput = {
   diversity?: Prisma.candidateUpdatediversityInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  original_source_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sources?: Prisma.candidateUpdatesourcesInput | string[]
   enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 
@@ -1584,12 +1668,14 @@ export type CandidateCountOutputType = {
   experience: number
   role_results: number
   education: number
+  sources: number
 }
 
 export type CandidateCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   experience?: boolean | CandidateCountOutputTypeCountExperienceArgs
   role_results?: boolean | CandidateCountOutputTypeCountRole_resultsArgs
   education?: boolean | CandidateCountOutputTypeCountEducationArgs
+  sources?: boolean | CandidateCountOutputTypeCountSourcesArgs
 }
 
 /**
@@ -1623,12 +1709,18 @@ export type CandidateCountOutputTypeCountEducationArgs<ExtArgs extends runtime.T
   where?: Prisma.candidate_educationWhereInput
 }
 
+/**
+ * CandidateCountOutputType without action
+ */
+export type CandidateCountOutputTypeCountSourcesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.candidate_sourceWhereInput
+}
+
 
 export type candidateSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   uid?: boolean
   created?: boolean
   updated?: boolean
-  main_source?: boolean
   first_name?: boolean
   last_name?: boolean
   email?: boolean
@@ -1654,12 +1746,11 @@ export type candidateSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   diversity?: boolean
   summary?: boolean
   image_url?: boolean
-  original_source_url?: boolean
-  sources?: boolean
   enriched_at?: boolean
   experience?: boolean | Prisma.candidate$experienceArgs<ExtArgs>
   role_results?: boolean | Prisma.candidate$role_resultsArgs<ExtArgs>
   education?: boolean | Prisma.candidate$educationArgs<ExtArgs>
+  sources?: boolean | Prisma.candidate$sourcesArgs<ExtArgs>
   _count?: boolean | Prisma.CandidateCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["candidate"]>
 
@@ -1667,7 +1758,6 @@ export type candidateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   uid?: boolean
   created?: boolean
   updated?: boolean
-  main_source?: boolean
   first_name?: boolean
   last_name?: boolean
   email?: boolean
@@ -1693,8 +1783,6 @@ export type candidateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   diversity?: boolean
   summary?: boolean
   image_url?: boolean
-  original_source_url?: boolean
-  sources?: boolean
   enriched_at?: boolean
 }, ExtArgs["result"]["candidate"]>
 
@@ -1702,7 +1790,6 @@ export type candidateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   uid?: boolean
   created?: boolean
   updated?: boolean
-  main_source?: boolean
   first_name?: boolean
   last_name?: boolean
   email?: boolean
@@ -1728,8 +1815,6 @@ export type candidateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   diversity?: boolean
   summary?: boolean
   image_url?: boolean
-  original_source_url?: boolean
-  sources?: boolean
   enriched_at?: boolean
 }, ExtArgs["result"]["candidate"]>
 
@@ -1737,7 +1822,6 @@ export type candidateSelectScalar = {
   uid?: boolean
   created?: boolean
   updated?: boolean
-  main_source?: boolean
   first_name?: boolean
   last_name?: boolean
   email?: boolean
@@ -1763,16 +1847,15 @@ export type candidateSelectScalar = {
   diversity?: boolean
   summary?: boolean
   image_url?: boolean
-  original_source_url?: boolean
-  sources?: boolean
   enriched_at?: boolean
 }
 
-export type candidateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "main_source" | "first_name" | "last_name" | "email" | "phone" | "country_calling_code" | "contact_info_last_updated" | "rocketreach_profile_id" | "current_location_city" | "current_location_country_code" | "current_location_postal_code" | "open_to_relocation" | "open_to_remote_work" | "current_work_authorization_status" | "experience_years" | "experience_roles" | "current_title" | "current_company" | "current_salary" | "current_salary_currency" | "current_role_start_date" | "skills" | "languages" | "diversity" | "summary" | "image_url" | "original_source_url" | "sources" | "enriched_at", ExtArgs["result"]["candidate"]>
+export type candidateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "first_name" | "last_name" | "email" | "phone" | "country_calling_code" | "contact_info_last_updated" | "rocketreach_profile_id" | "current_location_city" | "current_location_country_code" | "current_location_postal_code" | "open_to_relocation" | "open_to_remote_work" | "current_work_authorization_status" | "experience_years" | "experience_roles" | "current_title" | "current_company" | "current_salary" | "current_salary_currency" | "current_role_start_date" | "skills" | "languages" | "diversity" | "summary" | "image_url" | "enriched_at", ExtArgs["result"]["candidate"]>
 export type candidateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   experience?: boolean | Prisma.candidate$experienceArgs<ExtArgs>
   role_results?: boolean | Prisma.candidate$role_resultsArgs<ExtArgs>
   education?: boolean | Prisma.candidate$educationArgs<ExtArgs>
+  sources?: boolean | Prisma.candidate$sourcesArgs<ExtArgs>
   _count?: boolean | Prisma.CandidateCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type candidateIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1784,12 +1867,12 @@ export type $candidatePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     experience: Prisma.$candidate_experiencePayload<ExtArgs>[]
     role_results: Prisma.$role_resultPayload<ExtArgs>[]
     education: Prisma.$candidate_educationPayload<ExtArgs>[]
+    sources: Prisma.$candidate_sourcePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
     created: Date
     updated: Date
-    main_source: string
     first_name: string | null
     last_name: string | null
     email: string | null
@@ -1815,8 +1898,6 @@ export type $candidatePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     diversity: string[]
     summary: string | null
     image_url: string | null
-    original_source_url: string | null
-    sources: string[]
     enriched_at: Date | null
   }, ExtArgs["result"]["candidate"]>
   composites: {}
@@ -2215,6 +2296,7 @@ export interface Prisma__candidateClient<T, Null = never, ExtArgs extends runtim
   experience<T extends Prisma.candidate$experienceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$experienceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$candidate_experiencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   role_results<T extends Prisma.candidate$role_resultsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$role_resultsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_resultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   education<T extends Prisma.candidate$educationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$educationArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$candidate_educationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sources<T extends Prisma.candidate$sourcesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$sourcesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$candidate_sourcePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2247,7 +2329,6 @@ export interface candidateFieldRefs {
   readonly uid: Prisma.FieldRef<"candidate", 'String'>
   readonly created: Prisma.FieldRef<"candidate", 'DateTime'>
   readonly updated: Prisma.FieldRef<"candidate", 'DateTime'>
-  readonly main_source: Prisma.FieldRef<"candidate", 'String'>
   readonly first_name: Prisma.FieldRef<"candidate", 'String'>
   readonly last_name: Prisma.FieldRef<"candidate", 'String'>
   readonly email: Prisma.FieldRef<"candidate", 'String'>
@@ -2273,8 +2354,6 @@ export interface candidateFieldRefs {
   readonly diversity: Prisma.FieldRef<"candidate", 'String[]'>
   readonly summary: Prisma.FieldRef<"candidate", 'String'>
   readonly image_url: Prisma.FieldRef<"candidate", 'String'>
-  readonly original_source_url: Prisma.FieldRef<"candidate", 'String'>
-  readonly sources: Prisma.FieldRef<"candidate", 'String[]'>
   readonly enriched_at: Prisma.FieldRef<"candidate", 'DateTime'>
 }
     
@@ -2738,6 +2817,30 @@ export type candidate$educationArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.Candidate_educationScalarFieldEnum | Prisma.Candidate_educationScalarFieldEnum[]
+}
+
+/**
+ * candidate.sources
+ */
+export type candidate$sourcesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the candidate_source
+   */
+  select?: Prisma.candidate_sourceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the candidate_source
+   */
+  omit?: Prisma.candidate_sourceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.candidate_sourceInclude<ExtArgs> | null
+  where?: Prisma.candidate_sourceWhereInput
+  orderBy?: Prisma.candidate_sourceOrderByWithRelationInput | Prisma.candidate_sourceOrderByWithRelationInput[]
+  cursor?: Prisma.candidate_sourceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Candidate_sourceScalarFieldEnum | Prisma.Candidate_sourceScalarFieldEnum[]
 }
 
 /**

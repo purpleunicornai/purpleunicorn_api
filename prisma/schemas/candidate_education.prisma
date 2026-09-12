@@ -21,4 +21,6 @@ model candidate_education {
   end_date             DateTime?
   summary              String?
   additional_info      String?
+
+  @@index([candidate_id])
 }

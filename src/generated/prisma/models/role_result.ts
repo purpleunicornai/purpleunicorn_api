@@ -28,6 +28,7 @@ export type AggregateRole_result = {
 
 export type Role_resultAvgAggregateOutputType = {
   score: number | null
+  ai_score: number | null
   relevancy_score: number | null
   tokens_used: number | null
   tokens_cost: number | null
@@ -35,6 +36,7 @@ export type Role_resultAvgAggregateOutputType = {
 
 export type Role_resultSumAggregateOutputType = {
   score: number | null
+  ai_score: number | null
   relevancy_score: number | null
   tokens_used: number | null
   tokens_cost: number | null
@@ -48,6 +50,7 @@ export type Role_resultMinAggregateOutputType = {
   role_id: string | null
   filter_id: string | null
   score: number | null
+  ai_score: number | null
   reasoning: string | null
   summary: string | null
   relevancy_score: number | null
@@ -70,6 +73,7 @@ export type Role_resultMaxAggregateOutputType = {
   role_id: string | null
   filter_id: string | null
   score: number | null
+  ai_score: number | null
   reasoning: string | null
   summary: string | null
   relevancy_score: number | null
@@ -92,6 +96,7 @@ export type Role_resultCountAggregateOutputType = {
   role_id: number
   filter_id: number
   score: number
+  ai_score: number
   reasoning: number
   skills_matched: number
   summary: number
@@ -105,12 +110,14 @@ export type Role_resultCountAggregateOutputType = {
   not_suitable_date: number
   tokens_used: number
   tokens_cost: number
+  metadata: number
   _all: number
 }
 
 
 export type Role_resultAvgAggregateInputType = {
   score?: true
+  ai_score?: true
   relevancy_score?: true
   tokens_used?: true
   tokens_cost?: true
@@ -118,6 +125,7 @@ export type Role_resultAvgAggregateInputType = {
 
 export type Role_resultSumAggregateInputType = {
   score?: true
+  ai_score?: true
   relevancy_score?: true
   tokens_used?: true
   tokens_cost?: true
@@ -131,6 +139,7 @@ export type Role_resultMinAggregateInputType = {
   role_id?: true
   filter_id?: true
   score?: true
+  ai_score?: true
   reasoning?: true
   summary?: true
   relevancy_score?: true
@@ -153,6 +162,7 @@ export type Role_resultMaxAggregateInputType = {
   role_id?: true
   filter_id?: true
   score?: true
+  ai_score?: true
   reasoning?: true
   summary?: true
   relevancy_score?: true
@@ -175,6 +185,7 @@ export type Role_resultCountAggregateInputType = {
   role_id?: true
   filter_id?: true
   score?: true
+  ai_score?: true
   reasoning?: true
   skills_matched?: true
   summary?: true
@@ -188,6 +199,7 @@ export type Role_resultCountAggregateInputType = {
   not_suitable_date?: true
   tokens_used?: true
   tokens_cost?: true
+  metadata?: true
   _all?: true
 }
 
@@ -285,6 +297,7 @@ export type Role_resultGroupByOutputType = {
   role_id: string
   filter_id: string | null
   score: number | null
+  ai_score: number | null
   reasoning: string | null
   skills_matched: string[]
   summary: string | null
@@ -298,6 +311,7 @@ export type Role_resultGroupByOutputType = {
   not_suitable_date: Date | null
   tokens_used: number | null
   tokens_cost: number | null
+  metadata: runtime.JsonValue | null
   _count: Role_resultCountAggregateOutputType | null
   _avg: Role_resultAvgAggregateOutputType | null
   _sum: Role_resultSumAggregateOutputType | null
@@ -331,6 +345,7 @@ export type role_resultWhereInput = {
   role_id?: Prisma.UuidFilter<"role_result"> | string
   filter_id?: Prisma.UuidNullableFilter<"role_result"> | string | null
   score?: Prisma.IntNullableFilter<"role_result"> | number | null
+  ai_score?: Prisma.IntNullableFilter<"role_result"> | number | null
   reasoning?: Prisma.StringNullableFilter<"role_result"> | string | null
   skills_matched?: Prisma.StringNullableListFilter<"role_result">
   summary?: Prisma.StringNullableFilter<"role_result"> | string | null
@@ -344,9 +359,11 @@ export type role_resultWhereInput = {
   not_suitable_date?: Prisma.DateTimeNullableFilter<"role_result"> | Date | string | null
   tokens_used?: Prisma.IntNullableFilter<"role_result"> | number | null
   tokens_cost?: Prisma.IntNullableFilter<"role_result"> | number | null
+  metadata?: Prisma.JsonNullableFilter<"role_result">
   candidate?: Prisma.XOR<Prisma.CandidateNullableScalarRelationFilter, Prisma.candidateWhereInput> | null
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
   role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
+  logs?: Prisma.Organization_logListRelationFilter
 }
 
 export type role_resultOrderByWithRelationInput = {
@@ -357,6 +374,7 @@ export type role_resultOrderByWithRelationInput = {
   role_id?: Prisma.SortOrder
   filter_id?: Prisma.SortOrderInput | Prisma.SortOrder
   score?: Prisma.SortOrderInput | Prisma.SortOrder
+  ai_score?: Prisma.SortOrderInput | Prisma.SortOrder
   reasoning?: Prisma.SortOrderInput | Prisma.SortOrder
   skills_matched?: Prisma.SortOrder
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -370,9 +388,11 @@ export type role_resultOrderByWithRelationInput = {
   not_suitable_date?: Prisma.SortOrderInput | Prisma.SortOrder
   tokens_used?: Prisma.SortOrderInput | Prisma.SortOrder
   tokens_cost?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   candidate?: Prisma.candidateOrderByWithRelationInput
   role?: Prisma.rolesOrderByWithRelationInput
   role_filter?: Prisma.role_filtersOrderByWithRelationInput
+  logs?: Prisma.organization_logOrderByRelationAggregateInput
 }
 
 export type role_resultWhereUniqueInput = Prisma.AtLeast<{
@@ -386,6 +406,7 @@ export type role_resultWhereUniqueInput = Prisma.AtLeast<{
   role_id?: Prisma.UuidFilter<"role_result"> | string
   filter_id?: Prisma.UuidNullableFilter<"role_result"> | string | null
   score?: Prisma.IntNullableFilter<"role_result"> | number | null
+  ai_score?: Prisma.IntNullableFilter<"role_result"> | number | null
   reasoning?: Prisma.StringNullableFilter<"role_result"> | string | null
   skills_matched?: Prisma.StringNullableListFilter<"role_result">
   summary?: Prisma.StringNullableFilter<"role_result"> | string | null
@@ -399,9 +420,11 @@ export type role_resultWhereUniqueInput = Prisma.AtLeast<{
   not_suitable_date?: Prisma.DateTimeNullableFilter<"role_result"> | Date | string | null
   tokens_used?: Prisma.IntNullableFilter<"role_result"> | number | null
   tokens_cost?: Prisma.IntNullableFilter<"role_result"> | number | null
+  metadata?: Prisma.JsonNullableFilter<"role_result">
   candidate?: Prisma.XOR<Prisma.CandidateNullableScalarRelationFilter, Prisma.candidateWhereInput> | null
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
   role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
+  logs?: Prisma.Organization_logListRelationFilter
 }, "uid" | "uid">
 
 export type role_resultOrderByWithAggregationInput = {
@@ -412,6 +435,7 @@ export type role_resultOrderByWithAggregationInput = {
   role_id?: Prisma.SortOrder
   filter_id?: Prisma.SortOrderInput | Prisma.SortOrder
   score?: Prisma.SortOrderInput | Prisma.SortOrder
+  ai_score?: Prisma.SortOrderInput | Prisma.SortOrder
   reasoning?: Prisma.SortOrderInput | Prisma.SortOrder
   skills_matched?: Prisma.SortOrder
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -425,6 +449,7 @@ export type role_resultOrderByWithAggregationInput = {
   not_suitable_date?: Prisma.SortOrderInput | Prisma.SortOrder
   tokens_used?: Prisma.SortOrderInput | Prisma.SortOrder
   tokens_cost?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.role_resultCountOrderByAggregateInput
   _avg?: Prisma.role_resultAvgOrderByAggregateInput
   _max?: Prisma.role_resultMaxOrderByAggregateInput
@@ -443,6 +468,7 @@ export type role_resultScalarWhereWithAggregatesInput = {
   role_id?: Prisma.UuidWithAggregatesFilter<"role_result"> | string
   filter_id?: Prisma.UuidNullableWithAggregatesFilter<"role_result"> | string | null
   score?: Prisma.IntNullableWithAggregatesFilter<"role_result"> | number | null
+  ai_score?: Prisma.IntNullableWithAggregatesFilter<"role_result"> | number | null
   reasoning?: Prisma.StringNullableWithAggregatesFilter<"role_result"> | string | null
   skills_matched?: Prisma.StringNullableListFilter<"role_result">
   summary?: Prisma.StringNullableWithAggregatesFilter<"role_result"> | string | null
@@ -456,6 +482,7 @@ export type role_resultScalarWhereWithAggregatesInput = {
   not_suitable_date?: Prisma.DateTimeNullableWithAggregatesFilter<"role_result"> | Date | string | null
   tokens_used?: Prisma.IntNullableWithAggregatesFilter<"role_result"> | number | null
   tokens_cost?: Prisma.IntNullableWithAggregatesFilter<"role_result"> | number | null
+  metadata?: Prisma.JsonNullableWithAggregatesFilter<"role_result">
 }
 
 export type role_resultCreateInput = {
@@ -463,6 +490,7 @@ export type role_resultCreateInput = {
   created?: Date | string
   updated?: Date | string
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -476,9 +504,11 @@ export type role_resultCreateInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   candidate?: Prisma.candidateCreateNestedOneWithoutRole_resultsInput
   role: Prisma.rolesCreateNestedOneWithoutRole_resultInput
   role_filter?: Prisma.role_filtersCreateNestedOneWithoutRole_resultsInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultUncheckedCreateInput = {
@@ -489,6 +519,7 @@ export type role_resultUncheckedCreateInput = {
   role_id: string
   filter_id?: string | null
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -502,6 +533,8 @@ export type role_resultUncheckedCreateInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultUpdateInput = {
@@ -509,6 +542,7 @@ export type role_resultUpdateInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -522,9 +556,11 @@ export type role_resultUpdateInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   candidate?: Prisma.candidateUpdateOneWithoutRole_resultsNestedInput
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_resultNestedInput
   role_filter?: Prisma.role_filtersUpdateOneWithoutRole_resultsNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultUncheckedUpdateInput = {
@@ -535,6 +571,7 @@ export type role_resultUncheckedUpdateInput = {
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
   filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -548,6 +585,8 @@ export type role_resultUncheckedUpdateInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultCreateManyInput = {
@@ -558,6 +597,7 @@ export type role_resultCreateManyInput = {
   role_id: string
   filter_id?: string | null
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -571,6 +611,7 @@ export type role_resultCreateManyInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_resultUpdateManyMutationInput = {
@@ -578,6 +619,7 @@ export type role_resultUpdateManyMutationInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -591,6 +633,7 @@ export type role_resultUpdateManyMutationInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_resultUncheckedUpdateManyInput = {
@@ -601,6 +644,7 @@ export type role_resultUncheckedUpdateManyInput = {
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
   filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -614,6 +658,7 @@ export type role_resultUncheckedUpdateManyInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type Role_resultListRelationFilter = {
@@ -626,6 +671,11 @@ export type role_resultOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type Role_resultNullableScalarRelationFilter = {
+  is?: Prisma.role_resultWhereInput | null
+  isNot?: Prisma.role_resultWhereInput | null
+}
+
 export type role_resultCountOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
@@ -634,6 +684,7 @@ export type role_resultCountOrderByAggregateInput = {
   role_id?: Prisma.SortOrder
   filter_id?: Prisma.SortOrder
   score?: Prisma.SortOrder
+  ai_score?: Prisma.SortOrder
   reasoning?: Prisma.SortOrder
   skills_matched?: Prisma.SortOrder
   summary?: Prisma.SortOrder
@@ -647,10 +698,12 @@ export type role_resultCountOrderByAggregateInput = {
   not_suitable_date?: Prisma.SortOrder
   tokens_used?: Prisma.SortOrder
   tokens_cost?: Prisma.SortOrder
+  metadata?: Prisma.SortOrder
 }
 
 export type role_resultAvgOrderByAggregateInput = {
   score?: Prisma.SortOrder
+  ai_score?: Prisma.SortOrder
   relevancy_score?: Prisma.SortOrder
   tokens_used?: Prisma.SortOrder
   tokens_cost?: Prisma.SortOrder
@@ -664,6 +717,7 @@ export type role_resultMaxOrderByAggregateInput = {
   role_id?: Prisma.SortOrder
   filter_id?: Prisma.SortOrder
   score?: Prisma.SortOrder
+  ai_score?: Prisma.SortOrder
   reasoning?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   relevancy_score?: Prisma.SortOrder
@@ -686,6 +740,7 @@ export type role_resultMinOrderByAggregateInput = {
   role_id?: Prisma.SortOrder
   filter_id?: Prisma.SortOrder
   score?: Prisma.SortOrder
+  ai_score?: Prisma.SortOrder
   reasoning?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   relevancy_score?: Prisma.SortOrder
@@ -702,6 +757,7 @@ export type role_resultMinOrderByAggregateInput = {
 
 export type role_resultSumOrderByAggregateInput = {
   score?: Prisma.SortOrder
+  ai_score?: Prisma.SortOrder
   relevancy_score?: Prisma.SortOrder
   tokens_used?: Prisma.SortOrder
   tokens_cost?: Prisma.SortOrder
@@ -747,6 +803,22 @@ export type role_resultUncheckedUpdateManyWithoutCandidateNestedInput = {
   update?: Prisma.role_resultUpdateWithWhereUniqueWithoutCandidateInput | Prisma.role_resultUpdateWithWhereUniqueWithoutCandidateInput[]
   updateMany?: Prisma.role_resultUpdateManyWithWhereWithoutCandidateInput | Prisma.role_resultUpdateManyWithWhereWithoutCandidateInput[]
   deleteMany?: Prisma.role_resultScalarWhereInput | Prisma.role_resultScalarWhereInput[]
+}
+
+export type role_resultCreateNestedOneWithoutLogsInput = {
+  create?: Prisma.XOR<Prisma.role_resultCreateWithoutLogsInput, Prisma.role_resultUncheckedCreateWithoutLogsInput>
+  connectOrCreate?: Prisma.role_resultCreateOrConnectWithoutLogsInput
+  connect?: Prisma.role_resultWhereUniqueInput
+}
+
+export type role_resultUpdateOneWithoutLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.role_resultCreateWithoutLogsInput, Prisma.role_resultUncheckedCreateWithoutLogsInput>
+  connectOrCreate?: Prisma.role_resultCreateOrConnectWithoutLogsInput
+  upsert?: Prisma.role_resultUpsertWithoutLogsInput
+  disconnect?: Prisma.role_resultWhereInput | boolean
+  delete?: Prisma.role_resultWhereInput | boolean
+  connect?: Prisma.role_resultWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.role_resultUpdateToOneWithWhereWithoutLogsInput, Prisma.role_resultUpdateWithoutLogsInput>, Prisma.role_resultUncheckedUpdateWithoutLogsInput>
 }
 
 export type role_resultCreateNestedManyWithoutRole_filterInput = {
@@ -847,6 +919,7 @@ export type role_resultCreateWithoutCandidateInput = {
   created?: Date | string
   updated?: Date | string
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -860,8 +933,10 @@ export type role_resultCreateWithoutCandidateInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role: Prisma.rolesCreateNestedOneWithoutRole_resultInput
   role_filter?: Prisma.role_filtersCreateNestedOneWithoutRole_resultsInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultUncheckedCreateWithoutCandidateInput = {
@@ -871,6 +946,7 @@ export type role_resultUncheckedCreateWithoutCandidateInput = {
   role_id: string
   filter_id?: string | null
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -884,6 +960,8 @@ export type role_resultUncheckedCreateWithoutCandidateInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultCreateOrConnectWithoutCandidateInput = {
@@ -923,6 +1001,7 @@ export type role_resultScalarWhereInput = {
   role_id?: Prisma.UuidFilter<"role_result"> | string
   filter_id?: Prisma.UuidNullableFilter<"role_result"> | string | null
   score?: Prisma.IntNullableFilter<"role_result"> | number | null
+  ai_score?: Prisma.IntNullableFilter<"role_result"> | number | null
   reasoning?: Prisma.StringNullableFilter<"role_result"> | string | null
   skills_matched?: Prisma.StringNullableListFilter<"role_result">
   summary?: Prisma.StringNullableFilter<"role_result"> | string | null
@@ -936,13 +1015,15 @@ export type role_resultScalarWhereInput = {
   not_suitable_date?: Prisma.DateTimeNullableFilter<"role_result"> | Date | string | null
   tokens_used?: Prisma.IntNullableFilter<"role_result"> | number | null
   tokens_cost?: Prisma.IntNullableFilter<"role_result"> | number | null
+  metadata?: Prisma.JsonNullableFilter<"role_result">
 }
 
-export type role_resultCreateWithoutRole_filterInput = {
+export type role_resultCreateWithoutLogsInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -956,8 +1037,126 @@ export type role_resultCreateWithoutRole_filterInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   candidate?: Prisma.candidateCreateNestedOneWithoutRole_resultsInput
   role: Prisma.rolesCreateNestedOneWithoutRole_resultInput
+  role_filter?: Prisma.role_filtersCreateNestedOneWithoutRole_resultsInput
+}
+
+export type role_resultUncheckedCreateWithoutLogsInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  candidate_uid?: string | null
+  role_id: string
+  filter_id?: string | null
+  score?: number | null
+  ai_score?: number | null
+  reasoning?: string | null
+  skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
+  summary?: string | null
+  relevancy_score?: number | null
+  rated_by?: string | null
+  shortlist?: boolean | null
+  shortlist_date?: Date | string | null
+  marked_for_review?: boolean | null
+  marked_for_review_date?: Date | string | null
+  not_suitable?: boolean | null
+  not_suitable_date?: Date | string | null
+  tokens_used?: number | null
+  tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type role_resultCreateOrConnectWithoutLogsInput = {
+  where: Prisma.role_resultWhereUniqueInput
+  create: Prisma.XOR<Prisma.role_resultCreateWithoutLogsInput, Prisma.role_resultUncheckedCreateWithoutLogsInput>
+}
+
+export type role_resultUpsertWithoutLogsInput = {
+  update: Prisma.XOR<Prisma.role_resultUpdateWithoutLogsInput, Prisma.role_resultUncheckedUpdateWithoutLogsInput>
+  create: Prisma.XOR<Prisma.role_resultCreateWithoutLogsInput, Prisma.role_resultUncheckedCreateWithoutLogsInput>
+  where?: Prisma.role_resultWhereInput
+}
+
+export type role_resultUpdateToOneWithWhereWithoutLogsInput = {
+  where?: Prisma.role_resultWhereInput
+  data: Prisma.XOR<Prisma.role_resultUpdateWithoutLogsInput, Prisma.role_resultUncheckedUpdateWithoutLogsInput>
+}
+
+export type role_resultUpdateWithoutLogsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relevancy_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortlist?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  shortlist_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  marked_for_review?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  marked_for_review_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  not_suitable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  candidate?: Prisma.candidateUpdateOneWithoutRole_resultsNestedInput
+  role?: Prisma.rolesUpdateOneRequiredWithoutRole_resultNestedInput
+  role_filter?: Prisma.role_filtersUpdateOneWithoutRole_resultsNestedInput
+}
+
+export type role_resultUncheckedUpdateWithoutLogsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  candidate_uid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.StringFieldUpdateOperationsInput | string
+  filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relevancy_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortlist?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  shortlist_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  marked_for_review?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  marked_for_review_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  not_suitable?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type role_resultCreateWithoutRole_filterInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  score?: number | null
+  ai_score?: number | null
+  reasoning?: string | null
+  skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
+  summary?: string | null
+  relevancy_score?: number | null
+  rated_by?: string | null
+  shortlist?: boolean | null
+  shortlist_date?: Date | string | null
+  marked_for_review?: boolean | null
+  marked_for_review_date?: Date | string | null
+  not_suitable?: boolean | null
+  not_suitable_date?: Date | string | null
+  tokens_used?: number | null
+  tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  candidate?: Prisma.candidateCreateNestedOneWithoutRole_resultsInput
+  role: Prisma.rolesCreateNestedOneWithoutRole_resultInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultUncheckedCreateWithoutRole_filterInput = {
@@ -967,6 +1166,7 @@ export type role_resultUncheckedCreateWithoutRole_filterInput = {
   candidate_uid?: string | null
   role_id: string
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -980,6 +1180,8 @@ export type role_resultUncheckedCreateWithoutRole_filterInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultCreateOrConnectWithoutRole_filterInput = {
@@ -1013,6 +1215,7 @@ export type role_resultCreateWithoutRoleInput = {
   created?: Date | string
   updated?: Date | string
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -1026,8 +1229,10 @@ export type role_resultCreateWithoutRoleInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   candidate?: Prisma.candidateCreateNestedOneWithoutRole_resultsInput
   role_filter?: Prisma.role_filtersCreateNestedOneWithoutRole_resultsInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultUncheckedCreateWithoutRoleInput = {
@@ -1037,6 +1242,7 @@ export type role_resultUncheckedCreateWithoutRoleInput = {
   candidate_uid?: string | null
   filter_id?: string | null
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -1050,6 +1256,8 @@ export type role_resultUncheckedCreateWithoutRoleInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_resultInput
 }
 
 export type role_resultCreateOrConnectWithoutRoleInput = {
@@ -1085,6 +1293,7 @@ export type role_resultCreateManyCandidateInput = {
   role_id: string
   filter_id?: string | null
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -1098,6 +1307,7 @@ export type role_resultCreateManyCandidateInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_resultUpdateWithoutCandidateInput = {
@@ -1105,6 +1315,7 @@ export type role_resultUpdateWithoutCandidateInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1118,8 +1329,10 @@ export type role_resultUpdateWithoutCandidateInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_resultNestedInput
   role_filter?: Prisma.role_filtersUpdateOneWithoutRole_resultsNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultUncheckedUpdateWithoutCandidateInput = {
@@ -1129,6 +1342,7 @@ export type role_resultUncheckedUpdateWithoutCandidateInput = {
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
   filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1142,6 +1356,8 @@ export type role_resultUncheckedUpdateWithoutCandidateInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultUncheckedUpdateManyWithoutCandidateInput = {
@@ -1151,6 +1367,7 @@ export type role_resultUncheckedUpdateManyWithoutCandidateInput = {
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
   filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1164,6 +1381,7 @@ export type role_resultUncheckedUpdateManyWithoutCandidateInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_resultCreateManyRole_filterInput = {
@@ -1173,6 +1391,7 @@ export type role_resultCreateManyRole_filterInput = {
   candidate_uid?: string | null
   role_id: string
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -1186,6 +1405,7 @@ export type role_resultCreateManyRole_filterInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_resultUpdateWithoutRole_filterInput = {
@@ -1193,6 +1413,7 @@ export type role_resultUpdateWithoutRole_filterInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1206,8 +1427,10 @@ export type role_resultUpdateWithoutRole_filterInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   candidate?: Prisma.candidateUpdateOneWithoutRole_resultsNestedInput
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_resultNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultUncheckedUpdateWithoutRole_filterInput = {
@@ -1217,6 +1440,7 @@ export type role_resultUncheckedUpdateWithoutRole_filterInput = {
   candidate_uid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1230,6 +1454,8 @@ export type role_resultUncheckedUpdateWithoutRole_filterInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultUncheckedUpdateManyWithoutRole_filterInput = {
@@ -1239,6 +1465,7 @@ export type role_resultUncheckedUpdateManyWithoutRole_filterInput = {
   candidate_uid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1252,6 +1479,7 @@ export type role_resultUncheckedUpdateManyWithoutRole_filterInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_resultCreateManyRoleInput = {
@@ -1261,6 +1489,7 @@ export type role_resultCreateManyRoleInput = {
   candidate_uid?: string | null
   filter_id?: string | null
   score?: number | null
+  ai_score?: number | null
   reasoning?: string | null
   skills_matched?: Prisma.role_resultCreateskills_matchedInput | string[]
   summary?: string | null
@@ -1274,6 +1503,7 @@ export type role_resultCreateManyRoleInput = {
   not_suitable_date?: Date | string | null
   tokens_used?: number | null
   tokens_cost?: number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_resultUpdateWithoutRoleInput = {
@@ -1281,6 +1511,7 @@ export type role_resultUpdateWithoutRoleInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1294,8 +1525,10 @@ export type role_resultUpdateWithoutRoleInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   candidate?: Prisma.candidateUpdateOneWithoutRole_resultsNestedInput
   role_filter?: Prisma.role_filtersUpdateOneWithoutRole_resultsNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultUncheckedUpdateWithoutRoleInput = {
@@ -1305,6 +1538,7 @@ export type role_resultUncheckedUpdateWithoutRoleInput = {
   candidate_uid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1318,6 +1552,8 @@ export type role_resultUncheckedUpdateWithoutRoleInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_resultNestedInput
 }
 
 export type role_resultUncheckedUpdateManyWithoutRoleInput = {
@@ -1327,6 +1563,7 @@ export type role_resultUncheckedUpdateManyWithoutRoleInput = {
   candidate_uid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ai_score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reasoning?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   skills_matched?: Prisma.role_resultUpdateskills_matchedInput | string[]
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1340,8 +1577,38 @@ export type role_resultUncheckedUpdateManyWithoutRoleInput = {
   not_suitable_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   tokens_cost?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
+
+/**
+ * Count Type Role_resultCountOutputType
+ */
+
+export type Role_resultCountOutputType = {
+  logs: number
+}
+
+export type Role_resultCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  logs?: boolean | Role_resultCountOutputTypeCountLogsArgs
+}
+
+/**
+ * Role_resultCountOutputType without action
+ */
+export type Role_resultCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Role_resultCountOutputType
+   */
+  select?: Prisma.Role_resultCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * Role_resultCountOutputType without action
+ */
+export type Role_resultCountOutputTypeCountLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.organization_logWhereInput
+}
 
 
 export type role_resultSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1352,6 +1619,7 @@ export type role_resultSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   role_id?: boolean
   filter_id?: boolean
   score?: boolean
+  ai_score?: boolean
   reasoning?: boolean
   skills_matched?: boolean
   summary?: boolean
@@ -1365,9 +1633,12 @@ export type role_resultSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   not_suitable_date?: boolean
   tokens_used?: boolean
   tokens_cost?: boolean
+  metadata?: boolean
   candidate?: boolean | Prisma.role_result$candidateArgs<ExtArgs>
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   role_filter?: boolean | Prisma.role_result$role_filterArgs<ExtArgs>
+  logs?: boolean | Prisma.role_result$logsArgs<ExtArgs>
+  _count?: boolean | Prisma.Role_resultCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_result"]>
 
 export type role_resultSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1378,6 +1649,7 @@ export type role_resultSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   role_id?: boolean
   filter_id?: boolean
   score?: boolean
+  ai_score?: boolean
   reasoning?: boolean
   skills_matched?: boolean
   summary?: boolean
@@ -1391,6 +1663,7 @@ export type role_resultSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   not_suitable_date?: boolean
   tokens_used?: boolean
   tokens_cost?: boolean
+  metadata?: boolean
   candidate?: boolean | Prisma.role_result$candidateArgs<ExtArgs>
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   role_filter?: boolean | Prisma.role_result$role_filterArgs<ExtArgs>
@@ -1404,6 +1677,7 @@ export type role_resultSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   role_id?: boolean
   filter_id?: boolean
   score?: boolean
+  ai_score?: boolean
   reasoning?: boolean
   skills_matched?: boolean
   summary?: boolean
@@ -1417,6 +1691,7 @@ export type role_resultSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   not_suitable_date?: boolean
   tokens_used?: boolean
   tokens_cost?: boolean
+  metadata?: boolean
   candidate?: boolean | Prisma.role_result$candidateArgs<ExtArgs>
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   role_filter?: boolean | Prisma.role_result$role_filterArgs<ExtArgs>
@@ -1430,6 +1705,7 @@ export type role_resultSelectScalar = {
   role_id?: boolean
   filter_id?: boolean
   score?: boolean
+  ai_score?: boolean
   reasoning?: boolean
   skills_matched?: boolean
   summary?: boolean
@@ -1443,13 +1719,16 @@ export type role_resultSelectScalar = {
   not_suitable_date?: boolean
   tokens_used?: boolean
   tokens_cost?: boolean
+  metadata?: boolean
 }
 
-export type role_resultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "candidate_uid" | "role_id" | "filter_id" | "score" | "reasoning" | "skills_matched" | "summary" | "relevancy_score" | "rated_by" | "shortlist" | "shortlist_date" | "marked_for_review" | "marked_for_review_date" | "not_suitable" | "not_suitable_date" | "tokens_used" | "tokens_cost", ExtArgs["result"]["role_result"]>
+export type role_resultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "candidate_uid" | "role_id" | "filter_id" | "score" | "ai_score" | "reasoning" | "skills_matched" | "summary" | "relevancy_score" | "rated_by" | "shortlist" | "shortlist_date" | "marked_for_review" | "marked_for_review_date" | "not_suitable" | "not_suitable_date" | "tokens_used" | "tokens_cost" | "metadata", ExtArgs["result"]["role_result"]>
 export type role_resultInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   candidate?: boolean | Prisma.role_result$candidateArgs<ExtArgs>
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   role_filter?: boolean | Prisma.role_result$role_filterArgs<ExtArgs>
+  logs?: boolean | Prisma.role_result$logsArgs<ExtArgs>
+  _count?: boolean | Prisma.Role_resultCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type role_resultIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   candidate?: boolean | Prisma.role_result$candidateArgs<ExtArgs>
@@ -1468,6 +1747,7 @@ export type $role_resultPayload<ExtArgs extends runtime.Types.Extensions.Interna
     candidate: Prisma.$candidatePayload<ExtArgs> | null
     role: Prisma.$rolesPayload<ExtArgs>
     role_filter: Prisma.$role_filtersPayload<ExtArgs> | null
+    logs: Prisma.$organization_logPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
@@ -1477,6 +1757,7 @@ export type $role_resultPayload<ExtArgs extends runtime.Types.Extensions.Interna
     role_id: string
     filter_id: string | null
     score: number | null
+    ai_score: number | null
     reasoning: string | null
     skills_matched: string[]
     summary: string | null
@@ -1490,6 +1771,7 @@ export type $role_resultPayload<ExtArgs extends runtime.Types.Extensions.Interna
     not_suitable_date: Date | null
     tokens_used: number | null
     tokens_cost: number | null
+    metadata: runtime.JsonValue | null
   }, ExtArgs["result"]["role_result"]>
   composites: {}
 }
@@ -1887,6 +2169,7 @@ export interface Prisma__role_resultClient<T, Null = never, ExtArgs extends runt
   candidate<T extends Prisma.role_result$candidateArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_result$candidateArgs<ExtArgs>>): Prisma.Prisma__candidateClient<runtime.Types.Result.GetResult<Prisma.$candidatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   role<T extends Prisma.rolesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.rolesDefaultArgs<ExtArgs>>): Prisma.Prisma__rolesClient<runtime.Types.Result.GetResult<Prisma.$rolesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   role_filter<T extends Prisma.role_result$role_filterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_result$role_filterArgs<ExtArgs>>): Prisma.Prisma__role_filtersClient<runtime.Types.Result.GetResult<Prisma.$role_filtersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  logs<T extends Prisma.role_result$logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_result$logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$organization_logPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1923,6 +2206,7 @@ export interface role_resultFieldRefs {
   readonly role_id: Prisma.FieldRef<"role_result", 'String'>
   readonly filter_id: Prisma.FieldRef<"role_result", 'String'>
   readonly score: Prisma.FieldRef<"role_result", 'Int'>
+  readonly ai_score: Prisma.FieldRef<"role_result", 'Int'>
   readonly reasoning: Prisma.FieldRef<"role_result", 'String'>
   readonly skills_matched: Prisma.FieldRef<"role_result", 'String[]'>
   readonly summary: Prisma.FieldRef<"role_result", 'String'>
@@ -1936,6 +2220,7 @@ export interface role_resultFieldRefs {
   readonly not_suitable_date: Prisma.FieldRef<"role_result", 'DateTime'>
   readonly tokens_used: Prisma.FieldRef<"role_result", 'Int'>
   readonly tokens_cost: Prisma.FieldRef<"role_result", 'Int'>
+  readonly metadata: Prisma.FieldRef<"role_result", 'Json'>
 }
     
 
@@ -2372,6 +2657,30 @@ export type role_result$role_filterArgs<ExtArgs extends runtime.Types.Extensions
    */
   include?: Prisma.role_filtersInclude<ExtArgs> | null
   where?: Prisma.role_filtersWhereInput
+}
+
+/**
+ * role_result.logs
+ */
+export type role_result$logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the organization_log
+   */
+  select?: Prisma.organization_logSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the organization_log
+   */
+  omit?: Prisma.organization_logOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.organization_logInclude<ExtArgs> | null
+  where?: Prisma.organization_logWhereInput
+  orderBy?: Prisma.organization_logOrderByWithRelationInput | Prisma.organization_logOrderByWithRelationInput[]
+  cursor?: Prisma.organization_logWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Organization_logScalarFieldEnum | Prisma.Organization_logScalarFieldEnum[]
 }
 
 /**

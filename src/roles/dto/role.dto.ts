@@ -339,11 +339,24 @@ export class RoleResultSummaryDto {
   @IsDateString()
   updated: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    description:
+      'Deterministic algorithmic match score, weighted by the role filter criteria (0-100)',
+    required: false,
+  })
   @Expose()
   @IsOptional()
   @IsInt()
   score?: number;
+
+  @ApiProperty({
+    description: 'AI-generated match score from Gemini (0-100)',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsInt()
+  ai_score?: number;
 
   @ApiProperty({
     description: 'AI-generated explanation of the score',
