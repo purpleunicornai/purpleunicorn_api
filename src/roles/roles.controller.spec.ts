@@ -237,6 +237,7 @@ describe('RolesController', () => {
       );
       expect(searchService.deepSearchCandidate).toHaveBeenCalledWith(
         'candidate-1',
+        'role-1',
         false,
       );
       expect(response).toEqual({
@@ -283,6 +284,7 @@ describe('RolesController', () => {
 
       expect(searchService.deepSearchCandidate).toHaveBeenCalledWith(
         'candidate-1',
+        'role-1',
         true,
       );
       expect(response).toEqual({
