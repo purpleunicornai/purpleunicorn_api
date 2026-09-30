@@ -4,7 +4,7 @@ model candidate_experience {
   updated          DateTime  @updatedAt
   candidate_id     String    @db.Uuid
   candidate        candidate @relation(fields: [candidate_id], references: [uid])
-  comapany_name    String
+  company_name     String
   company_location String?
   role             String
   start_date       DateTime

@@ -308,6 +308,16 @@ export class RoleFilterSummaryDto {
   @IsBoolean()
   archived: boolean;
 
+  @ApiProperty({
+    description:
+      'When a search was last run against this filter — unset until the user has run a search on it',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsDateString()
+  search_run_date?: string;
+
   @ApiProperty({ type: () => [RoleFilterCompanyDto] })
   @Expose()
   @IsArray()
@@ -321,6 +331,37 @@ export class RoleFilterSummaryDto {
   @ValidateNested({ each: true })
   @Type(() => RoleFilterLocationCityDto)
   filter_location_cities: RoleFilterLocationCityDto[];
+}
+
+export class RoleResultScoreBreakdownDto {
+  @ApiProperty({ description: 'Unique identifier (UUID v4)' })
+  @Expose()
+  @IsUUID()
+  uid: string;
+
+  @ApiProperty({
+    description: 'Scoring category, e.g. required_skills, education',
+  })
+  @Expose()
+  @IsString()
+  category: string;
+
+  @ApiProperty({ description: 'Maximum points available for this category' })
+  @Expose()
+  @IsInt()
+  weight: number;
+
+  @ApiProperty({
+    description: 'Whether this category applied to the role filter',
+  })
+  @Expose()
+  @IsBoolean()
+  applicable: boolean;
+
+  @ApiProperty({ description: 'Points earned in this category' })
+  @Expose()
+  @IsInt()
+  score: number;
 }
 
 export class RoleResultSummaryDto {
@@ -456,6 +497,19 @@ export class RoleResultSummaryDto {
   @ValidateNested()
   @Type(() => CandidateDto)
   candidate?: CandidateDto;
+
+  @ApiProperty({
+    description: 'Per-category breakdown of the algorithmic score',
+    type: () => RoleResultScoreBreakdownDto,
+    isArray: true,
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RoleResultScoreBreakdownDto)
+  score_breakdown?: RoleResultScoreBreakdownDto[];
 }
 
 export class RoleDto {

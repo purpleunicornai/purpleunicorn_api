@@ -49,7 +49,7 @@ function buildPrisma() {
     },
     role_filters: {
       create: jest.fn(),
-      updateMany: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     role_result: {
       findFirst: jest.fn(),
@@ -172,7 +172,10 @@ describe('RolesService', () => {
               filter_location_cities: true,
             },
           },
-          role_result: { include: { candidate: true } },
+          role_result: {
+            where: { role_filter: { archived: false } },
+            include: { candidate: true },
+          },
         },
       });
       expect(projectsService.findOneForUser).toHaveBeenCalledWith(
@@ -288,7 +291,22 @@ describe('RolesService', () => {
           filter_location_cities: true,
         },
       });
-      expect(result).toBe(created);
+      expect(result).toEqual({ filter: created, isFirst: true });
+    });
+
+    it('reports isFirst false when a previous filter existed for the role', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.updateMany.mockResolvedValue({ count: 1 });
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-2' });
+
+      const result = await service.createFilter(
+        'role-1',
+        buildRoleFilterDto(),
+        'org-1',
+        'user-1',
+      );
+
+      expect(result.isFirst).toBe(false);
     });
 
     it('nests filter_location_cities as a create', async () => {
@@ -380,6 +398,7 @@ describe('RolesService', () => {
           candidate: {
             include: { experience: true, education: true, sources: true },
           },
+          score_breakdown: true,
         },
       });
       expect(found).toBe(result);
@@ -450,17 +469,19 @@ describe('RolesService', () => {
   });
 
   describe('remove', () => {
-    it('deletes the role when the caller owns the parent project', async () => {
-      prisma.roles.findFirst.mockResolvedValue(buildRole());
+    it('deletes the role when the caller owns the parent project, and returns the deleted role', async () => {
+      const role = buildRole();
+      prisma.roles.findFirst.mockResolvedValue(role);
       projectsService.findOneForUser.mockResolvedValue(
         buildProject({ user_id: 'user-1' }) as any,
       );
 
-      await service.remove('role-1', 'user-1', 'org-1');
+      const result = await service.remove('role-1', 'user-1', 'org-1');
 
       expect(prisma.roles.delete).toHaveBeenCalledWith({
         where: { uid: 'role-1' },
       });
+      expect(result).toBe(role);
     });
 
     it('throws a 403 RequestException when the caller does not own the parent project', async () => {

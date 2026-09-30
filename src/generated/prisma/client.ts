@@ -100,6 +100,11 @@ export type role_filters = Prisma.role_filtersModel
  */
 export type role_result = Prisma.role_resultModel
 /**
+ * Model role_result_score_breakdown
+ * 
+ */
+export type role_result_score_breakdown = Prisma.role_result_score_breakdownModel
+/**
  * Model roles
  * 
  */

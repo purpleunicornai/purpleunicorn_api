@@ -63,6 +63,7 @@ export const ModelName = {
   projects: 'projects',
   role_filters: 'role_filters',
   role_result: 'role_result',
+  role_result_score_breakdown: 'role_result_score_breakdown',
   roles: 'roles'
 } as const
 
@@ -141,7 +142,7 @@ export const Candidate_experienceScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   candidate_id: 'candidate_id',
-  comapany_name: 'comapany_name',
+  company_name: 'company_name',
   company_location: 'company_location',
   role: 'role',
   start_date: 'start_date',
@@ -292,7 +293,8 @@ export const Role_filtersScalarFieldEnum = {
   sites: 'sites',
   metadata: 'metadata',
   archived: 'archived',
-  industry: 'industry'
+  industry: 'industry',
+  search_run_date: 'search_run_date'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -324,6 +326,21 @@ export const Role_resultScalarFieldEnum = {
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]
+
+
+export const Role_result_score_breakdownScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  role_result_id: 'role_result_id',
+  category: 'category',
+  weight: 'weight',
+  applicable: 'applicable',
+  score: 'score',
+  metadata: 'metadata'
+} as const
+
+export type Role_result_score_breakdownScalarFieldEnum = (typeof Role_result_score_breakdownScalarFieldEnum)[keyof typeof Role_result_score_breakdownScalarFieldEnum]
 
 
 export const RolesScalarFieldEnum = {

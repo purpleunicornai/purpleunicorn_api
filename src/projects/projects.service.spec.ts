@@ -203,7 +203,47 @@ describe('ProjectsService', () => {
         where: { uid: 'project-1' },
         data: { name: 'Sanlam Renamed' },
       });
-      expect(result).toBe(updated);
+      expect(result).toEqual({
+        project: updated,
+        addedUsers: [],
+        removedUsers: [],
+      });
+    });
+
+    it('reports no user diff when the update does not include a users field', async () => {
+      prisma.projects.findFirst.mockResolvedValue(
+        buildProject({ user_id: 'user-1', users: ['user-2'] }),
+      );
+      prisma.projects.update.mockResolvedValue(buildProject());
+
+      const result = await service.update(
+        'project-1',
+        { name: 'Sanlam Renamed' },
+        'user-1',
+        'org-1',
+      );
+
+      expect(result.addedUsers).toEqual([]);
+      expect(result.removedUsers).toEqual([]);
+    });
+
+    it('reports added and removed users relative to the previous list', async () => {
+      prisma.projects.findFirst.mockResolvedValue(
+        buildProject({ user_id: 'user-1', users: ['user-2', 'user-3'] }),
+      );
+      prisma.projects.update.mockResolvedValue(
+        buildProject({ users: ['user-3', 'user-4'] }),
+      );
+
+      const result = await service.update(
+        'project-1',
+        { users: ['user-3', 'user-4'] },
+        'user-1',
+        'org-1',
+      );
+
+      expect(result.addedUsers).toEqual(['user-4']);
+      expect(result.removedUsers).toEqual(['user-2']);
     });
 
     it('throws a 403 RequestException when the caller does not own the project', async () => {
@@ -237,16 +277,16 @@ describe('ProjectsService', () => {
   });
 
   describe('remove', () => {
-    it('deletes the project when the caller owns it', async () => {
-      prisma.projects.findFirst.mockResolvedValue(
-        buildProject({ user_id: 'user-1' }),
-      );
+    it('deletes the project when the caller owns it, and returns the deleted project', async () => {
+      const project = buildProject({ user_id: 'user-1' });
+      prisma.projects.findFirst.mockResolvedValue(project);
 
-      await service.remove('project-1', 'user-1', 'org-1');
+      const result = await service.remove('project-1', 'user-1', 'org-1');
 
       expect(prisma.projects.delete).toHaveBeenCalledWith({
         where: { uid: 'project-1' },
       });
+      expect(result).toBe(project);
     });
 
     it('throws a 403 RequestException when the caller does not own the project', async () => {

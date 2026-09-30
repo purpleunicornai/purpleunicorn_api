@@ -96,7 +96,7 @@ function buildExperience(
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
     candidate_id: 'candidate-1',
-    comapany_name: 'TechCorp',
+    company_name: 'TechCorp',
     company_location: null,
     role: 'Engineer',
     start_date: new Date('2020-01-01T00:00:00.000Z'),

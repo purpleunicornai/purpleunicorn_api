@@ -5,9 +5,16 @@ import { DatabaseModule } from '../common/database/database.module';
 import { SearchModule } from './search/search.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { AuthModule } from '../auth/auth.module';
+import { LogsModule } from '../common/logs/logs.module';
 
 @Module({
-  imports: [DatabaseModule, SearchModule, ProjectsModule, AuthModule],
+  imports: [
+    DatabaseModule,
+    SearchModule,
+    ProjectsModule,
+    AuthModule,
+    LogsModule,
+  ],
   controllers: [RolesController],
   providers: [RolesService],
 })

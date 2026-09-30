@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Logger,
+  MessageEvent,
   Param,
   Patch,
   Post,
@@ -13,6 +14,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Observable, from } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
 import { RoleFilterDto, RoleFilterResponseDto } from './dto/role_filter.dto';
@@ -28,6 +31,8 @@ import { CurrentAuth } from '../auth/current-auth.decorator';
 import type { ClerkAuthContext } from '../auth/auth.types';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { Serialize } from '../common/interceptors/serialize.interceptor';
+import { LogsService } from '../common/logs/logs.service';
+import { role_result } from '../generated/prisma/client';
 
 @ApiTags('Roles')
 @ApiBearerAuth('bearer')
@@ -39,6 +44,7 @@ export class RolesController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly searchService: SearchService,
+    private readonly logsService: LogsService,
   ) {}
 
   @Get()
@@ -75,7 +81,17 @@ export class RolesController {
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
     const orgId = this.requireOrgId(auth);
-    return this.rolesService.create(body, auth.userId, orgId);
+    const role = await this.rolesService.create(body, auth.userId, orgId);
+
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: 'ROLE_CREATED',
+      role_id: role.uid,
+      message: `Created role "${role.name}"`,
+    });
+
+    return role;
   }
 
   @Patch(':id')
@@ -86,13 +102,32 @@ export class RolesController {
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
     const orgId = this.requireOrgId(auth);
-    return this.rolesService.update(id, body, auth.userId, orgId);
+    const role = await this.rolesService.update(id, body, auth.userId, orgId);
+
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: 'ROLE_UPDATED',
+      role_id: role.uid,
+      message: `Updated role "${role.name}"`,
+    });
+
+    return role;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentAuth() auth: ClerkAuthContext) {
     const orgId = this.requireOrgId(auth);
-    await this.rolesService.remove(id, auth.userId, orgId);
+    const role = await this.rolesService.remove(id, auth.userId, orgId);
+
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: 'ROLE_DELETED',
+      role_id: role.uid,
+      message: `Deleted role "${role.name}"`,
+    });
+
     return { success: true };
   }
 
@@ -104,7 +139,23 @@ export class RolesController {
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
     const orgId = this.requireOrgId(auth);
-    return this.rolesService.createFilter(roleId, body, orgId, auth.userId);
+    const { filter, isFirst } = await this.rolesService.createFilter(
+      roleId,
+      body,
+      orgId,
+      auth.userId,
+    );
+
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: isFirst ? 'ROLE_FILTERS_CREATED' : 'ROLE_FILTERS_UPDATED',
+      role_id: roleId,
+      role_filter_id: filter.uid,
+      message: `${isFirst ? 'Created' : 'Updated'} search filters for role "${filter.title}"`,
+    });
+
+    return filter;
   }
 
   @Post('/:roleId/fixed-search')
@@ -115,16 +166,50 @@ export class RolesController {
   ) {
     const orgId = this.requireOrgId(auth);
     const role = await this.rolesService.getRole(roleId, orgId, auth.userId);
-    return this.searchService.search(body.filterId, role);
+    const results = await this.searchService.search(body.filterId, role);
+
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: 'ROLE_SEARCH',
+      role_id: roleId,
+      tokens_used: this.sumTokensUsed(results),
+      message: `Ran search for role "${role.name}", found ${results.length} candidate(s)`,
+    });
+
+    return results;
   }
 
   @Sse('/:roleId/search')
-  search(@Param('roleId') roleId: string) {
-    return this.searchService.streamSearch(roleId);
+  search(
+    @Param('roleId') roleId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ): Observable<MessageEvent> {
+    const orgId = this.requireOrgId(auth);
+
+    return from(this.rolesService.getRole(roleId, orgId, auth.userId)).pipe(
+      switchMap((role) =>
+        this.searchService.streamSearch(roleId).pipe(
+          tap((event) => {
+            if (event.type === 'done') {
+              const results = (event.data as { result: role_result[] }).result;
+              void this.logsService.log({
+                organization_id: orgId,
+                user_id: auth.userId,
+                type: 'ROLE_SEARCH',
+                role_id: roleId,
+                tokens_used: this.sumTokensUsed(results),
+                message: `Ran search for role "${role.name}", found ${results.length} candidate(s)`,
+              });
+            }
+          }),
+        ),
+      ),
+    );
   }
 
   @Get('/:roleId/result/:resultId')
-  //@Serialize(RoleResultSummaryDto)
+  @Serialize(RoleResultSummaryDto)
   async getRoleResult(
     @Param('roleId') roleId: string,
     @Param('resultId') resultId: string,
@@ -139,12 +224,34 @@ export class RolesController {
     const force = refresh === 'true';
     const candidate = result?.candidate;
     if (candidate && (!candidate.enriched_at || force)) {
+      const previousEnrichedAt = candidate.enriched_at;
       try {
-        result.candidate = await this.searchService.deepSearchCandidate(
+        const enrichedCandidate = await this.searchService.deepSearchCandidate(
           candidate.uid,
           roleId,
           force,
         );
+        result.candidate = enrichedCandidate;
+
+        // A real search only happened if enriched_at actually moved on —
+        // deepSearchCandidate returns the candidate unchanged when it
+        // short-circuits (no name to search on, or already enriched).
+        if (enrichedCandidate.enriched_at !== previousEnrichedAt) {
+          const name = [
+            enrichedCandidate.first_name,
+            enrichedCandidate.last_name,
+          ]
+            .filter(Boolean)
+            .join(' ');
+          void this.logsService.log({
+            organization_id: orgId,
+            user_id: auth.userId,
+            type: 'CANDIDATE_DEEP_SEARCH',
+            role_id: roleId,
+            role_result_id: resultId,
+            message: `Deep search for candidate "${name || enrichedCandidate.uid}"`,
+          });
+        }
       } catch (error) {
         this.logger.warn(
           `Deep candidate search failed for candidate=${candidate.uid}: ${error instanceof Error ? error.message : String(error)}`,
@@ -153,6 +260,10 @@ export class RolesController {
     }
 
     return result;
+  }
+
+  private sumTokensUsed(results: role_result[]): number {
+    return results.reduce((sum, result) => sum + (result.tokens_used ?? 0), 0);
   }
 
   private requireOrgId(auth: ClerkAuthContext): string {

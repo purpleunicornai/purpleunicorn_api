@@ -14,6 +14,10 @@ export interface GoogleSearchItem {
   title: string;
   link: string;
   snippet?: string;
+  // The fetched page's own visible text, when PageFetchService was able to
+  // retrieve it — set by SearchService.deepSearchCandidate, not by this
+  // service (which only calls the Google Custom Search API).
+  page_content?: string;
   [key: string]: unknown;
 }
 
@@ -170,7 +174,7 @@ export class GoogleSearchService {
     );
 
     const previousCompanies = [
-      ...new Set(candidate.experience.map((entry) => entry.comapany_name)),
+      ...new Set(candidate.experience.map((entry) => entry.company_name)),
     ].slice(0, 3);
     for (const company of previousCompanies) {
       queries.add(

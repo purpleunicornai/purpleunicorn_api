@@ -23,6 +23,11 @@ const ROLE_WITH_DETAILS_INCLUDE = {
     },
   },
   role_result: {
+    where: {
+      role_filter: {
+        archived: false,
+      },
+    },
     include: {
       candidate: true,
     },
@@ -93,21 +98,26 @@ export class RolesService {
     });
   }
 
+  // Returns whether this is the role's first-ever filter alongside the
+  // created row — the archiving updateMany's `count` tells us that for
+  // free, so callers (the controller, for audit logging) don't need a
+  // separate existence check.
   async createFilter(
     roleId: string,
     dto: RoleFilterDto,
     orgId: string,
     userId: string,
-  ): Promise<
-    role_filters & {
+  ): Promise<{
+    filter: role_filters & {
       filter_companies: Prisma.filter_companiesGetPayload<object>[];
       filter_location_cities: Prisma.filter_location_citiesGetPayload<object>[];
-    }
-  > {
+    };
+    isFirst: boolean;
+  }> {
     await this.getRole(roleId, orgId, userId);
 
     // Archive previous filters to mark them as archived, so we can keep a history of filters for the role.
-    await this.prisma.role_filters.updateMany({
+    const { count } = await this.prisma.role_filters.updateMany({
       where: {
         role_id: roleId,
       },
@@ -116,7 +126,7 @@ export class RolesService {
       },
     });
 
-    return this.prisma.role_filters.create({
+    const filter = await this.prisma.role_filters.create({
       data: {
         role_id: roleId,
         country_code: dto.country_code,
@@ -172,6 +182,8 @@ export class RolesService {
         filter_location_cities: true,
       },
     });
+
+    return { filter, isFirst: count === 0 };
   }
 
   // education_graduation_min_yr/max_yr are years (e.g. 2020) in RoleFilterDto
@@ -198,11 +210,12 @@ export class RolesService {
     return this.prisma.roles.update({ where: { uid: id }, data });
   }
 
-  async remove(id: string, userId: string, orgId: string): Promise<void> {
+  async remove(id: string, userId: string, orgId: string): Promise<roles> {
     const role = await this.findRoleOrThrow(id);
     await this.requireProjectOwner(role.project_id, userId, orgId, 'delete');
 
     await this.prisma.roles.delete({ where: { uid: id } });
+    return role;
   }
 
   async getRoleResult(resultId: string, organization_id: string) {
@@ -223,6 +236,7 @@ export class RolesService {
             sources: true,
           },
         },
+        score_breakdown: true,
       },
     });
 

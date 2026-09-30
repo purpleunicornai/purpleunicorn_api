@@ -305,12 +305,14 @@ export class GeminiService {
       description: (item.pagemap as any)?.metatags?.[0]?.[
         'og:description'
       ] as string,
+      page_content: item.page_content,
       image: this.extractImageUrl(item),
     }));
 
     return [
       'You are building out a deeper profile for a specific candidate already identified below, using additional search results found about them.',
       'Extract any new details you can find (contact info, location, work authorization, salary, skills, languages, education, a short bio) from the results below.',
+      'When a result includes "page_content", it is the fetched text of the profile page itself — it is more reliable and complete than "snippet"/"description" (which are just a search engine\'s short summary), so prefer it as your primary source when present.',
       'When a result includes an "image" URL, copy it verbatim into "image_url" — do not fabricate one when it is absent.',
       'Do not guess contact details (email, phone) unless they literally appear in the text.',
       'Also extract every distinct employment history entry you can find into "experience": company_name and role are required for each entry; include start_date/end_date (ISO dates, approximate if only a year is known) and responsibilities/skills when available.',

@@ -27,7 +27,7 @@ export class CandidateExperienceDto {
   @ApiProperty({ description: 'Employer name', example: 'TechCorp UK' })
   @Expose()
   @IsString()
-  comapany_name: string;
+  company_name: string;
 
   @ApiProperty({
     description: 'Employer location',
@@ -383,7 +383,7 @@ export class CandidateDto {
   @Expose()
   @IsOptional()
   @IsString()
-  current_work_autorization_status?: string;
+  current_work_authorization_status?: string;
 
   @ApiProperty({
     description: 'Total cumulative years of professional experience',

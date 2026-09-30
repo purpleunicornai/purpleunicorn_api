@@ -29,7 +29,7 @@ export type Candidate_experienceMinAggregateOutputType = {
   created: Date | null
   updated: Date | null
   candidate_id: string | null
-  comapany_name: string | null
+  company_name: string | null
   company_location: string | null
   role: string | null
   start_date: Date | null
@@ -42,7 +42,7 @@ export type Candidate_experienceMaxAggregateOutputType = {
   created: Date | null
   updated: Date | null
   candidate_id: string | null
-  comapany_name: string | null
+  company_name: string | null
   company_location: string | null
   role: string | null
   start_date: Date | null
@@ -55,7 +55,7 @@ export type Candidate_experienceCountAggregateOutputType = {
   created: number
   updated: number
   candidate_id: number
-  comapany_name: number
+  company_name: number
   company_location: number
   role: number
   start_date: number
@@ -71,7 +71,7 @@ export type Candidate_experienceMinAggregateInputType = {
   created?: true
   updated?: true
   candidate_id?: true
-  comapany_name?: true
+  company_name?: true
   company_location?: true
   role?: true
   start_date?: true
@@ -84,7 +84,7 @@ export type Candidate_experienceMaxAggregateInputType = {
   created?: true
   updated?: true
   candidate_id?: true
-  comapany_name?: true
+  company_name?: true
   company_location?: true
   role?: true
   start_date?: true
@@ -97,7 +97,7 @@ export type Candidate_experienceCountAggregateInputType = {
   created?: true
   updated?: true
   candidate_id?: true
-  comapany_name?: true
+  company_name?: true
   company_location?: true
   role?: true
   start_date?: true
@@ -184,7 +184,7 @@ export type Candidate_experienceGroupByOutputType = {
   created: Date
   updated: Date
   candidate_id: string
-  comapany_name: string
+  company_name: string
   company_location: string | null
   role: string
   start_date: Date
@@ -219,7 +219,7 @@ export type candidate_experienceWhereInput = {
   created?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
   updated?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
   candidate_id?: Prisma.UuidFilter<"candidate_experience"> | string
-  comapany_name?: Prisma.StringFilter<"candidate_experience"> | string
+  company_name?: Prisma.StringFilter<"candidate_experience"> | string
   company_location?: Prisma.StringNullableFilter<"candidate_experience"> | string | null
   role?: Prisma.StringFilter<"candidate_experience"> | string
   start_date?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
@@ -234,7 +234,7 @@ export type candidate_experienceOrderByWithRelationInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   candidate_id?: Prisma.SortOrder
-  comapany_name?: Prisma.SortOrder
+  company_name?: Prisma.SortOrder
   company_location?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   start_date?: Prisma.SortOrder
@@ -252,7 +252,7 @@ export type candidate_experienceWhereUniqueInput = Prisma.AtLeast<{
   created?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
   updated?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
   candidate_id?: Prisma.UuidFilter<"candidate_experience"> | string
-  comapany_name?: Prisma.StringFilter<"candidate_experience"> | string
+  company_name?: Prisma.StringFilter<"candidate_experience"> | string
   company_location?: Prisma.StringNullableFilter<"candidate_experience"> | string | null
   role?: Prisma.StringFilter<"candidate_experience"> | string
   start_date?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
@@ -267,7 +267,7 @@ export type candidate_experienceOrderByWithAggregationInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   candidate_id?: Prisma.SortOrder
-  comapany_name?: Prisma.SortOrder
+  company_name?: Prisma.SortOrder
   company_location?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   start_date?: Prisma.SortOrder
@@ -287,7 +287,7 @@ export type candidate_experienceScalarWhereWithAggregatesInput = {
   created?: Prisma.DateTimeWithAggregatesFilter<"candidate_experience"> | Date | string
   updated?: Prisma.DateTimeWithAggregatesFilter<"candidate_experience"> | Date | string
   candidate_id?: Prisma.UuidWithAggregatesFilter<"candidate_experience"> | string
-  comapany_name?: Prisma.StringWithAggregatesFilter<"candidate_experience"> | string
+  company_name?: Prisma.StringWithAggregatesFilter<"candidate_experience"> | string
   company_location?: Prisma.StringNullableWithAggregatesFilter<"candidate_experience"> | string | null
   role?: Prisma.StringWithAggregatesFilter<"candidate_experience"> | string
   start_date?: Prisma.DateTimeWithAggregatesFilter<"candidate_experience"> | Date | string
@@ -300,7 +300,7 @@ export type candidate_experienceCreateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  comapany_name: string
+  company_name: string
   company_location?: string | null
   role: string
   start_date: Date | string
@@ -315,7 +315,7 @@ export type candidate_experienceUncheckedCreateInput = {
   created?: Date | string
   updated?: Date | string
   candidate_id: string
-  comapany_name: string
+  company_name: string
   company_location?: string | null
   role: string
   start_date: Date | string
@@ -328,7 +328,7 @@ export type candidate_experienceUpdateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comapany_name?: Prisma.StringFieldUpdateOperationsInput | string
+  company_name?: Prisma.StringFieldUpdateOperationsInput | string
   company_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   start_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -343,7 +343,7 @@ export type candidate_experienceUncheckedUpdateInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   candidate_id?: Prisma.StringFieldUpdateOperationsInput | string
-  comapany_name?: Prisma.StringFieldUpdateOperationsInput | string
+  company_name?: Prisma.StringFieldUpdateOperationsInput | string
   company_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   start_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -357,7 +357,7 @@ export type candidate_experienceCreateManyInput = {
   created?: Date | string
   updated?: Date | string
   candidate_id: string
-  comapany_name: string
+  company_name: string
   company_location?: string | null
   role: string
   start_date: Date | string
@@ -370,7 +370,7 @@ export type candidate_experienceUpdateManyMutationInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comapany_name?: Prisma.StringFieldUpdateOperationsInput | string
+  company_name?: Prisma.StringFieldUpdateOperationsInput | string
   company_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   start_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -384,7 +384,7 @@ export type candidate_experienceUncheckedUpdateManyInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   candidate_id?: Prisma.StringFieldUpdateOperationsInput | string
-  comapany_name?: Prisma.StringFieldUpdateOperationsInput | string
+  company_name?: Prisma.StringFieldUpdateOperationsInput | string
   company_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   start_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -408,7 +408,7 @@ export type candidate_experienceCountOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   candidate_id?: Prisma.SortOrder
-  comapany_name?: Prisma.SortOrder
+  company_name?: Prisma.SortOrder
   company_location?: Prisma.SortOrder
   role?: Prisma.SortOrder
   start_date?: Prisma.SortOrder
@@ -422,7 +422,7 @@ export type candidate_experienceMaxOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   candidate_id?: Prisma.SortOrder
-  comapany_name?: Prisma.SortOrder
+  company_name?: Prisma.SortOrder
   company_location?: Prisma.SortOrder
   role?: Prisma.SortOrder
   start_date?: Prisma.SortOrder
@@ -435,7 +435,7 @@ export type candidate_experienceMinOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   candidate_id?: Prisma.SortOrder
-  comapany_name?: Prisma.SortOrder
+  company_name?: Prisma.SortOrder
   company_location?: Prisma.SortOrder
   role?: Prisma.SortOrder
   start_date?: Prisma.SortOrder
@@ -498,7 +498,7 @@ export type candidate_experienceCreateWithoutCandidateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  comapany_name: string
+  company_name: string
   company_location?: string | null
   role: string
   start_date: Date | string
@@ -511,7 +511,7 @@ export type candidate_experienceUncheckedCreateWithoutCandidateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  comapany_name: string
+  company_name: string
   company_location?: string | null
   role: string
   start_date: Date | string
@@ -554,7 +554,7 @@ export type candidate_experienceScalarWhereInput = {
   created?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
   updated?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
   candidate_id?: Prisma.UuidFilter<"candidate_experience"> | string
-  comapany_name?: Prisma.StringFilter<"candidate_experience"> | string
+  company_name?: Prisma.StringFilter<"candidate_experience"> | string
   company_location?: Prisma.StringNullableFilter<"candidate_experience"> | string | null
   role?: Prisma.StringFilter<"candidate_experience"> | string
   start_date?: Prisma.DateTimeFilter<"candidate_experience"> | Date | string
@@ -567,7 +567,7 @@ export type candidate_experienceCreateManyCandidateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  comapany_name: string
+  company_name: string
   company_location?: string | null
   role: string
   start_date: Date | string
@@ -580,7 +580,7 @@ export type candidate_experienceUpdateWithoutCandidateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comapany_name?: Prisma.StringFieldUpdateOperationsInput | string
+  company_name?: Prisma.StringFieldUpdateOperationsInput | string
   company_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   start_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -593,7 +593,7 @@ export type candidate_experienceUncheckedUpdateWithoutCandidateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comapany_name?: Prisma.StringFieldUpdateOperationsInput | string
+  company_name?: Prisma.StringFieldUpdateOperationsInput | string
   company_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   start_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -606,7 +606,7 @@ export type candidate_experienceUncheckedUpdateManyWithoutCandidateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comapany_name?: Prisma.StringFieldUpdateOperationsInput | string
+  company_name?: Prisma.StringFieldUpdateOperationsInput | string
   company_location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.StringFieldUpdateOperationsInput | string
   start_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -622,7 +622,7 @@ export type candidate_experienceSelect<ExtArgs extends runtime.Types.Extensions.
   created?: boolean
   updated?: boolean
   candidate_id?: boolean
-  comapany_name?: boolean
+  company_name?: boolean
   company_location?: boolean
   role?: boolean
   start_date?: boolean
@@ -637,7 +637,7 @@ export type candidate_experienceSelectCreateManyAndReturn<ExtArgs extends runtim
   created?: boolean
   updated?: boolean
   candidate_id?: boolean
-  comapany_name?: boolean
+  company_name?: boolean
   company_location?: boolean
   role?: boolean
   start_date?: boolean
@@ -652,7 +652,7 @@ export type candidate_experienceSelectUpdateManyAndReturn<ExtArgs extends runtim
   created?: boolean
   updated?: boolean
   candidate_id?: boolean
-  comapany_name?: boolean
+  company_name?: boolean
   company_location?: boolean
   role?: boolean
   start_date?: boolean
@@ -667,7 +667,7 @@ export type candidate_experienceSelectScalar = {
   created?: boolean
   updated?: boolean
   candidate_id?: boolean
-  comapany_name?: boolean
+  company_name?: boolean
   company_location?: boolean
   role?: boolean
   start_date?: boolean
@@ -676,7 +676,7 @@ export type candidate_experienceSelectScalar = {
   skills?: boolean
 }
 
-export type candidate_experienceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "candidate_id" | "comapany_name" | "company_location" | "role" | "start_date" | "end_date" | "responsibilities" | "skills", ExtArgs["result"]["candidate_experience"]>
+export type candidate_experienceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "candidate_id" | "company_name" | "company_location" | "role" | "start_date" | "end_date" | "responsibilities" | "skills", ExtArgs["result"]["candidate_experience"]>
 export type candidate_experienceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   candidate?: boolean | Prisma.candidateDefaultArgs<ExtArgs>
 }
@@ -697,7 +697,7 @@ export type $candidate_experiencePayload<ExtArgs extends runtime.Types.Extension
     created: Date
     updated: Date
     candidate_id: string
-    comapany_name: string
+    company_name: string
     company_location: string | null
     role: string
     start_date: Date
@@ -1132,7 +1132,7 @@ export interface candidate_experienceFieldRefs {
   readonly created: Prisma.FieldRef<"candidate_experience", 'DateTime'>
   readonly updated: Prisma.FieldRef<"candidate_experience", 'DateTime'>
   readonly candidate_id: Prisma.FieldRef<"candidate_experience", 'String'>
-  readonly comapany_name: Prisma.FieldRef<"candidate_experience", 'String'>
+  readonly company_name: Prisma.FieldRef<"candidate_experience", 'String'>
   readonly company_location: Prisma.FieldRef<"candidate_experience", 'String'>
   readonly role: Prisma.FieldRef<"candidate_experience", 'String'>
   readonly start_date: Prisma.FieldRef<"candidate_experience", 'DateTime'>

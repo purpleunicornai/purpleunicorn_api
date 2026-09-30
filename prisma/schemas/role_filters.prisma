@@ -39,6 +39,7 @@ model role_filters {
   metadata                        Json?     @db.JsonB // any additional metadata that may be needed for the search service, e.g. LinkedIn search filters, Indeed search filters, etc.
   archived                        Boolean   @default(false)
   industry                        String?
+  search_run_date                 DateTime?
 
   filter_companies       filter_companies[]
   filter_location_cities filter_location_cities[]

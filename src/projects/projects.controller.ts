@@ -22,6 +22,7 @@ import { CurrentAuth } from '../auth/current-auth.decorator';
 import type { ClerkAuthContext } from '../auth/auth.types';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { Serialize } from '../common/interceptors/serialize.interceptor';
+import { LogsService } from '../common/logs/logs.service';
 
 @ApiTags('Projects')
 @ApiBearerAuth('bearer')
@@ -29,7 +30,10 @@ import { Serialize } from '../common/interceptors/serialize.interceptor';
 @Controller('projects')
 export class ProjectsController {
   logger = new Logger(ProjectsController.name);
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly logsService: LogsService,
+  ) {}
 
   @Get()
   @Serialize(ProjectDto)
@@ -55,7 +59,17 @@ export class ProjectsController {
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
     const orgId = this.requireOrgId(auth);
-    return this.projectsService.create(body, auth.userId, orgId);
+    const project = await this.projectsService.create(body, auth.userId, orgId);
+
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: 'PROJECT_CREATED',
+      project_id: project.uid,
+      message: `Created project "${project.name}"`,
+    });
+
+    return project;
   }
 
   @Patch(':id')
@@ -66,13 +80,57 @@ export class ProjectsController {
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
     const orgId = this.requireOrgId(auth);
-    return this.projectsService.update(id, body, auth.userId, orgId);
+    const { project, addedUsers, removedUsers } =
+      await this.projectsService.update(id, body, auth.userId, orgId);
+
+    const hasNonUserChanges =
+      body.name !== undefined ||
+      body.description !== undefined ||
+      body.visibility !== undefined;
+    if (hasNonUserChanges) {
+      void this.logsService.log({
+        organization_id: orgId,
+        user_id: auth.userId,
+        type: 'PROJECT_UPDATED',
+        project_id: project.uid,
+        message: `Updated project "${project.name}"`,
+      });
+    }
+    if (addedUsers.length > 0) {
+      void this.logsService.log({
+        organization_id: orgId,
+        user_id: auth.userId,
+        type: 'PROJECT_USERS_ADDED',
+        project_id: project.uid,
+        message: `Added ${addedUsers.length} user(s) to project "${project.name}"`,
+      });
+    }
+    if (removedUsers.length > 0) {
+      void this.logsService.log({
+        organization_id: orgId,
+        user_id: auth.userId,
+        type: 'PROJECT_USERS_REMOVED',
+        project_id: project.uid,
+        message: `Removed ${removedUsers.length} user(s) from project "${project.name}"`,
+      });
+    }
+
+    return project;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentAuth() auth: ClerkAuthContext) {
     const orgId = this.requireOrgId(auth);
-    await this.projectsService.remove(id, auth.userId, orgId);
+    const project = await this.projectsService.remove(id, auth.userId, orgId);
+
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: 'PROJECT_DELETED',
+      project_id: project.uid,
+      message: `Deleted project "${project.name}"`,
+    });
+
     return { success: true };
   }
 

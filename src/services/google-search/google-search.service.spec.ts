@@ -14,7 +14,7 @@ function buildExperience(
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
     candidate_id: 'candidate-1',
-    comapany_name: 'Alpha Inc',
+    company_name: 'Alpha Inc',
     company_location: null,
     role: 'Engineer',
     start_date: new Date('2020-01-01T00:00:00.000Z'),
@@ -258,10 +258,10 @@ describe('GoogleSearchService', () => {
         last_name: 'Doe',
         current_company: null,
         experience: [
-          buildExperience({ comapany_name: 'Alpha Inc' }),
-          buildExperience({ comapany_name: 'Beta LLC' }),
-          buildExperience({ comapany_name: 'Gamma Co' }),
-          buildExperience({ comapany_name: 'Delta Ltd' }),
+          buildExperience({ company_name: 'Alpha Inc' }),
+          buildExperience({ company_name: 'Beta LLC' }),
+          buildExperience({ company_name: 'Gamma Co' }),
+          buildExperience({ company_name: 'Delta Ltd' }),
         ],
       });
 
@@ -295,8 +295,8 @@ describe('GoogleSearchService', () => {
         last_name: 'Doe',
         current_company: null,
         experience: [
-          buildExperience({ comapany_name: 'Alpha Inc' }),
-          buildExperience({ comapany_name: 'Alpha Inc' }),
+          buildExperience({ company_name: 'Alpha Inc' }),
+          buildExperience({ company_name: 'Alpha Inc' }),
         ],
       });
 

@@ -1,6 +1,10 @@
 import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
 import { RoleFilterDto, RoleFilterMetadataDto } from '../dto/role_filter.dto';
-import { GoogleSearchService } from '../../services/google-search/google-search.service';
+import {
+  GoogleSearchItem,
+  GoogleSearchService,
+} from '../../services/google-search/google-search.service';
+import { PageFetchService } from '../../services/page-fetch/page-fetch.service';
 import {
   GeminiCandidateEducationEnrichment,
   GeminiCandidateEnrichment,
@@ -26,6 +30,7 @@ import { SourceType } from '../../generated/prisma/enums';
 import { RequestException } from '../../common/exception/core/ExceptionBase';
 import { Observable } from 'rxjs';
 import {
+  CandidateScoreCategory,
   CandidateScoreResult,
   CandidateScoringService,
 } from './candidate-scoring.service';
@@ -41,6 +46,7 @@ export class SearchService {
   constructor(
     private readonly googleSearchService: GoogleSearchService,
     private readonly geminiService: GeminiService,
+    private readonly pageFetchService: PageFetchService,
     private readonly candidateScoringService: CandidateScoringService,
     private readonly prisma: PrismaService,
   ) {}
@@ -99,15 +105,19 @@ export class SearchService {
       });
     }
 
+    const enrichedItems = await this.attachPageContent(items);
     const { enrichment } = await this.geminiService.enrichCandidate(
-      items,
+      enrichedItems,
       existing,
     );
 
     // Create any new work/education/source rows before the final read so
     // they're included in the `experience`/`education`/`sources` this
     // method returns.
-    await this.createCandidateExperience(candidateUid, enrichment.experience);
+    await this.createCandidateExperience(
+      candidateUid,
+      this.mergeCurrentRoleExperience(existing, enrichment),
+    );
     await this.createCandidateEducation(candidateUid, enrichment.education);
     await this.createAdditionalCandidateSources(
       candidateUid,
@@ -131,6 +141,22 @@ export class SearchService {
         },
       },
     });
+  }
+
+  // Fetches each result's own page text in parallel (PageFetchService skips
+  // blocked hosts like LinkedIn and swallows failures on its own, resolving
+  // to undefined) so Gemini can prefer the full profile over the search
+  // snippet when it's available.
+  private async attachPageContent(
+    items: GoogleSearchItem[],
+  ): Promise<GoogleSearchItem[]> {
+    const pageContents = await Promise.all(
+      items.map((item) => this.pageFetchService.fetchPageText(item.link)),
+    );
+    return items.map((item, index) => ({
+      ...item,
+      page_content: pageContents[index],
+    }));
   }
 
   // Scalar fields get overwritten by newly-found values (a targeted deep
@@ -194,6 +220,66 @@ export class SearchService {
     return [...new Set([...existing, ...incoming])];
   }
 
+  // Synthesizes a candidate_experience row for the candidate's current role
+  // from the scalar current_title/current_company/current_role_start_date
+  // fields, so a candidate still gets a usable experience entry even when
+  // Gemini hasn't (or hasn't yet) returned a detailed history. Skipped when
+  // any of the three is missing, since start_date is a required column.
+  private buildCurrentRoleExperienceRow(
+    company: string | undefined,
+    role: string | undefined,
+    startDate: Date | string | undefined,
+  ):
+    | {
+        company_name: string;
+        role: string;
+        start_date: Date;
+        end_date: null;
+        skills: string[];
+      }
+    | undefined {
+    if (!company || !role || !startDate) return undefined;
+    return {
+      company_name: company,
+      role,
+      start_date: startDate instanceof Date ? startDate : new Date(startDate),
+      end_date: null,
+      skills: [],
+    };
+  }
+
+  // Appends a synthesized current-role entry to Gemini's experience list when
+  // the resolved current_company/current_title/current_role_start_date (from
+  // this enrichment, falling back to what was already known) aren't already
+  // represented in it — so a candidate still gets a usable experience row
+  // even when Gemini didn't return detailed history. Falls back to the
+  // existing candidate's fields since a given enrichment pass may only touch
+  // a subset of scalar fields.
+  private mergeCurrentRoleExperience(
+    existing: candidate,
+    enrichment: GeminiCandidateEnrichment,
+  ): GeminiCandidateExperienceEnrichment[] | undefined {
+    const company = enrichment.current_company ?? existing.current_company;
+    const role = enrichment.current_title ?? existing.current_title;
+    const startDate =
+      enrichment.current_role_start_date ??
+      existing.current_role_start_date?.toISOString();
+
+    if (!company || !role || !startDate) return enrichment.experience;
+
+    const alreadyCovered = (enrichment.experience ?? []).some(
+      (entry) =>
+        entry.company_name.trim().toLowerCase() ===
+        company.trim().toLowerCase(),
+    );
+    if (alreadyCovered) return enrichment.experience;
+
+    return [
+      ...(enrichment.experience ?? []),
+      { company_name: company, role, start_date: startDate },
+    ];
+  }
+
   // candidate_experience.start_date is a required column — an entry Gemini
   // couldn't pin a start date on gets skipped rather than written with a
   // fabricated date.
@@ -205,7 +291,7 @@ export class SearchService {
       .filter((entry) => Boolean(entry.start_date))
       .map((entry) => ({
         candidate_id: candidateUid,
-        comapany_name: entry.company_name,
+        company_name: entry.company_name,
         company_location: entry.company_location,
         role: entry.role,
         start_date: new Date(entry.start_date as string),
@@ -479,6 +565,12 @@ export class SearchService {
       );
       roleResults.push(roleResult);
     }
+
+    await this.prisma.role_filters.update({
+      where: { uid: filterId },
+      data: { search_run_date: new Date() },
+    });
+
     return roleResults;
   }
 
@@ -498,6 +590,12 @@ export class SearchService {
       : null;
 
     if (!existing) {
+      const currentRoleRow = this.buildCurrentRoleExperienceRow(
+        data.current_company as string | undefined,
+        data.current_title as string | undefined,
+        data.current_role_start_date as Date | undefined,
+      );
+
       return this.prisma.candidate.create({
         data: {
           ...(data as Prisma.candidateCreateInput),
@@ -512,6 +610,7 @@ export class SearchService {
               },
             ],
           },
+          ...(currentRoleRow && { experience: { create: [currentRoleRow] } }),
         },
         include: { experience: true, education: true },
       });
@@ -551,18 +650,44 @@ export class SearchService {
       skills_matched: match.skills_matched,
       ai_score: match.score,
       score: scoreResult.score,
-      metadata: scoreResult.breakdown as unknown as Prisma.InputJsonValue,
       tokens_used: tokensUsed,
     };
 
-    if (existing) {
-      return this.prisma.role_result.update({
-        where: { uid: existing.uid },
-        data,
-        include: { candidate: true },
-      });
-    }
-    return this.prisma.role_result.create({ data });
+    const roleResult = existing
+      ? await this.prisma.role_result.update({
+          where: { uid: existing.uid },
+          data,
+          include: { candidate: true },
+        })
+      : await this.prisma.role_result.create({ data });
+
+    await this.createScoreBreakdown(roleResult.uid, scoreResult.breakdown);
+
+    return roleResult;
+  }
+
+  // A role_result's score breakdown is fully replaced on every save rather
+  // than diffed, since the category set and weights are re-derived from
+  // scratch each search run.
+  private async createScoreBreakdown(
+    roleResultId: string,
+    breakdown: CandidateScoreCategory[],
+  ): Promise<void> {
+    await this.prisma.role_result_score_breakdown.deleteMany({
+      where: { role_result_id: roleResultId },
+    });
+
+    if (breakdown.length === 0) return;
+
+    await this.prisma.role_result_score_breakdown.createMany({
+      data: breakdown.map((entry) => ({
+        role_result_id: roleResultId,
+        category: entry.category,
+        weight: entry.weight,
+        applicable: entry.applicable,
+        score: Math.round(entry.earned),
+      })),
+    });
   }
 
   // Prisma's generated candidateCreateInput/candidateUncheckedUpdateInput

@@ -334,6 +334,29 @@ describe('GeminiService', () => {
       );
     });
 
+    it('includes fetched page_content in the prompt and prefers it over the snippet', async () => {
+      generateText.mockResolvedValue({ output: {}, usage: { totalTokens: 0 } });
+
+      const item = buildItem({
+        page_content:
+          'Jane Doe Senior Engineer at Acme 2019-Present. BSc Computer Science, Oxford 2015-2019.',
+      });
+      await service.enrichCandidate([item], buildCandidate());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining(
+            'BSc Computer Science, Oxford 2015-2019',
+          ),
+        }),
+      );
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringMatching(/page_content.*more reliable/is),
+        }),
+      );
+    });
+
     it('parses the enrichment fields and token usage from the response', async () => {
       const enrichment = {
         email: 'jane.doe@example.com',

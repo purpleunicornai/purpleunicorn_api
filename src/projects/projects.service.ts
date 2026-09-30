@@ -82,14 +82,22 @@ export class ProjectsService {
     });
   }
 
+  // Returns the added/removed user ids alongside the updated project —
+  // computed for free against the project already loaded for the ownership
+  // check — so callers (the controller, for audit logging) don't need a
+  // separate "what changed" fetch.
   async update(
     id: string,
     dto: UpdateProjectDto,
     userId: string,
     orgId: string,
-  ): Promise<projects> {
-    const project = await this.findOneForUser(id, orgId, userId);
-    this.requireOwner(project, userId, 'update');
+  ): Promise<{
+    project: projects;
+    addedUsers: string[];
+    removedUsers: string[];
+  }> {
+    const existing = await this.findOneForUser(id, orgId, userId);
+    this.requireOwner(existing, userId, 'update');
 
     const data: Record<string, unknown> = {};
     if (dto.name !== undefined) data.name = dto.name;
@@ -97,14 +105,29 @@ export class ProjectsService {
     if (dto.visibility !== undefined) data.visibility = dto.visibility;
     if (dto.users !== undefined) data.users = dto.users;
 
-    return this.prisma.projects.update({ where: { uid: id }, data });
+    const project = await this.prisma.projects.update({
+      where: { uid: id },
+      data,
+    });
+
+    let addedUsers: string[] = [];
+    let removedUsers: string[] = [];
+    if (dto.users !== undefined) {
+      const previousUsers = new Set(existing.users);
+      const nextUsers = new Set(dto.users);
+      addedUsers = dto.users.filter((userId) => !previousUsers.has(userId));
+      removedUsers = existing.users.filter((userId) => !nextUsers.has(userId));
+    }
+
+    return { project, addedUsers, removedUsers };
   }
 
-  async remove(id: string, userId: string, orgId: string): Promise<void> {
+  async remove(id: string, userId: string, orgId: string): Promise<projects> {
     const project = await this.findOneForUser(id, orgId, userId);
     this.requireOwner(project, userId, 'delete');
 
     await this.prisma.projects.delete({ where: { uid: id } });
+    return project;
   }
 
   private visibleToUser(userId: string) {

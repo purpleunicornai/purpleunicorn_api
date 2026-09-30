@@ -1,8 +1,10 @@
 import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
+import { LogsService } from '../common/logs/logs.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import type { ClerkAuthContext } from '../auth/auth.types';
+import { of, lastValueFrom, toArray } from 'rxjs';
 
 function buildAuth(
   overrides: Partial<ClerkAuthContext> = {},
@@ -36,6 +38,12 @@ function buildSearchService(): jest.Mocked<SearchService> {
   } as unknown as jest.Mocked<SearchService>;
 }
 
+function buildLogsService(): jest.Mocked<LogsService> {
+  return {
+    log: jest.fn(),
+  } as unknown as jest.Mocked<LogsService>;
+}
+
 async function captureError(
   promise: Promise<unknown>,
 ): Promise<RequestException> {
@@ -50,12 +58,14 @@ async function captureError(
 describe('RolesController', () => {
   let rolesService: jest.Mocked<RolesService>;
   let searchService: jest.Mocked<SearchService>;
+  let logsService: jest.Mocked<LogsService>;
   let controller: RolesController;
 
   beforeEach(() => {
     rolesService = buildRolesService();
     searchService = buildSearchService();
-    controller = new RolesController(rolesService, searchService);
+    logsService = buildLogsService();
+    controller = new RolesController(rolesService, searchService, logsService);
   });
 
   it('should be defined', () => {
@@ -115,7 +125,7 @@ describe('RolesController', () => {
 
   describe('create', () => {
     it('creates a role', async () => {
-      const created = { uid: 'role-1' };
+      const created = { uid: 'role-1', name: 'Fullstack Developer' };
       rolesService.create.mockResolvedValue(created as any);
       const body = { project_id: 'project-1', name: 'Fullstack Developer' };
 
@@ -123,6 +133,24 @@ describe('RolesController', () => {
 
       expect(rolesService.create).toHaveBeenCalledWith(body, 'user-1', 'org-1');
       expect(result).toBe(created);
+    });
+
+    it('logs a ROLE_CREATED entry', async () => {
+      const created = { uid: 'role-1', name: 'Fullstack Developer' };
+      rolesService.create.mockResolvedValue(created as any);
+
+      await controller.create(
+        { project_id: 'project-1', name: 'Fullstack Developer' } as any,
+        buildAuth(),
+      );
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'ROLE_CREATED',
+        role_id: 'role-1',
+        message: 'Created role "Fullstack Developer"',
+      });
     });
   });
 
@@ -146,11 +174,33 @@ describe('RolesController', () => {
       );
       expect(result).toBe(updated);
     });
+
+    it('logs a ROLE_UPDATED entry', async () => {
+      const updated = { uid: 'role-1', name: 'Renamed' };
+      rolesService.update.mockResolvedValue(updated as any);
+
+      await controller.update(
+        'role-1',
+        { name: 'Renamed' } as any,
+        buildAuth(),
+      );
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'ROLE_UPDATED',
+        role_id: 'role-1',
+        message: 'Updated role "Renamed"',
+      });
+    });
   });
 
   describe('remove', () => {
     it('deletes a role and returns a success acknowledgement', async () => {
-      rolesService.remove.mockResolvedValue(undefined);
+      rolesService.remove.mockResolvedValue({
+        uid: 'role-1',
+        name: 'Fullstack Developer',
+      } as any);
 
       const result = await controller.remove('role-1', buildAuth());
 
@@ -161,12 +211,32 @@ describe('RolesController', () => {
       );
       expect(result).toEqual({ success: true });
     });
+
+    it('logs a ROLE_DELETED entry', async () => {
+      rolesService.remove.mockResolvedValue({
+        uid: 'role-1',
+        name: 'Fullstack Developer',
+      } as any);
+
+      await controller.remove('role-1', buildAuth());
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'ROLE_DELETED',
+        role_id: 'role-1',
+        message: 'Deleted role "Fullstack Developer"',
+      });
+    });
   });
 
   describe('createFilter', () => {
-    it('saves the filter criteria for the role', async () => {
-      const created = { uid: 'filter-1' };
-      rolesService.createFilter.mockResolvedValue(created as any);
+    it('saves the filter criteria for the role and returns just the filter', async () => {
+      const created = { uid: 'filter-1', title: 'Fullstack Developer' };
+      rolesService.createFilter.mockResolvedValue({
+        filter: created,
+        isFirst: true,
+      } as any);
       const body = { title: 'Fullstack Developer' };
 
       const result = await controller.createFilter(
@@ -183,13 +253,59 @@ describe('RolesController', () => {
       );
       expect(result).toBe(created);
     });
+
+    it('logs ROLE_FILTERS_CREATED when this is the first filter for the role', async () => {
+      const created = { uid: 'filter-1', title: 'Fullstack Developer' };
+      rolesService.createFilter.mockResolvedValue({
+        filter: created,
+        isFirst: true,
+      } as any);
+
+      await controller.createFilter(
+        'role-1',
+        { title: 'Fullstack Developer' } as any,
+        buildAuth(),
+      );
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'ROLE_FILTERS_CREATED',
+        role_id: 'role-1',
+        role_filter_id: 'filter-1',
+        message: 'Created search filters for role "Fullstack Developer"',
+      });
+    });
+
+    it('logs ROLE_FILTERS_UPDATED when a previous filter existed for the role', async () => {
+      const created = { uid: 'filter-2', title: 'Fullstack Developer' };
+      rolesService.createFilter.mockResolvedValue({
+        filter: created,
+        isFirst: false,
+      } as any);
+
+      await controller.createFilter(
+        'role-1',
+        { title: 'Fullstack Developer' } as any,
+        buildAuth(),
+      );
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'ROLE_FILTERS_UPDATED',
+        role_id: 'role-1',
+        role_filter_id: 'filter-2',
+        message: 'Updated search filters for role "Fullstack Developer"',
+      });
+    });
   });
 
   describe('fixedSearch', () => {
     it('resolves the role, then runs the search against the saved filter', async () => {
-      const role = { uid: 'role-1' };
+      const role = { uid: 'role-1', name: 'Fullstack Developer' };
       rolesService.getRole.mockResolvedValue(role as any);
-      const results = [{ uid: 'result-1' }];
+      const results = [{ uid: 'result-1', tokens_used: 100 }];
       searchService.search.mockResolvedValue(results as any);
 
       const result = await controller.fixedSearch(
@@ -205,6 +321,32 @@ describe('RolesController', () => {
       );
       expect(searchService.search).toHaveBeenCalledWith('filter-1', role);
       expect(result).toBe(results);
+    });
+
+    it('logs a ROLE_SEARCH entry with the summed tokens used', async () => {
+      const role = { uid: 'role-1', name: 'Fullstack Developer' };
+      rolesService.getRole.mockResolvedValue(role as any);
+      const results = [
+        { uid: 'result-1', tokens_used: 100 },
+        { uid: 'result-2', tokens_used: 50 },
+      ];
+      searchService.search.mockResolvedValue(results as any);
+
+      await controller.fixedSearch(
+        'role-1',
+        { filterId: 'filter-1' },
+        buildAuth(),
+      );
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'ROLE_SEARCH',
+        role_id: 'role-1',
+        tokens_used: 150,
+        message:
+          'Ran search for role "Fullstack Developer", found 2 candidate(s)',
+      });
     });
   });
 
@@ -246,6 +388,34 @@ describe('RolesController', () => {
       });
     });
 
+    it('logs a CANDIDATE_DEEP_SEARCH entry when a fresh search actually ran', async () => {
+      const role = { uid: 'role-1' };
+      rolesService.getRole.mockResolvedValue(role as any);
+      const candidate = { uid: 'candidate-1', enriched_at: null };
+      const result = { uid: 'result-1', candidate };
+      rolesService.getRoleResult.mockResolvedValue(result as any);
+      const enrichedCandidate = {
+        uid: 'candidate-1',
+        first_name: 'Jane',
+        last_name: 'Doe',
+        enriched_at: new Date(),
+      };
+      searchService.deepSearchCandidate.mockResolvedValue(
+        enrichedCandidate as any,
+      );
+
+      await controller.getRoleResult('role-1', 'result-1', buildAuth());
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'CANDIDATE_DEEP_SEARCH',
+        role_id: 'role-1',
+        role_result_id: 'result-1',
+        message: 'Deep search for candidate "Jane Doe"',
+      });
+    });
+
     it('skips the deep search when the candidate has already been enriched', async () => {
       rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
       const candidate = { uid: 'candidate-1', enriched_at: new Date() };
@@ -259,6 +429,7 @@ describe('RolesController', () => {
       );
 
       expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+      expect(logsService.log).not.toHaveBeenCalled();
       expect(response).toBe(result);
     });
 
@@ -286,6 +457,9 @@ describe('RolesController', () => {
         'candidate-1',
         'role-1',
         true,
+      );
+      expect(logsService.log).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'CANDIDATE_DEEP_SEARCH' }),
       );
       expect(response).toEqual({
         uid: 'result-1',
@@ -324,7 +498,7 @@ describe('RolesController', () => {
       expect(response).toBe(result);
     });
 
-    it('falls back to the un-enriched result when the deep search fails', async () => {
+    it('falls back to the un-enriched result when the deep search fails, without logging', async () => {
       rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
       const candidate = { uid: 'candidate-1', enriched_at: null };
       const result = { uid: 'result-1', candidate };
@@ -337,19 +511,94 @@ describe('RolesController', () => {
         buildAuth(),
       );
 
+      expect(logsService.log).not.toHaveBeenCalled();
       expect(response).toBe(result);
     });
   });
 
   describe('search (SSE)', () => {
-    it('delegates to SearchService.streamSearch for the given role', () => {
-      const stream = { subscribe: jest.fn() };
-      searchService.streamSearch.mockReturnValue(stream as any);
+    it('resolves the role for auth, then delegates to SearchService.streamSearch', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      searchService.streamSearch.mockReturnValue(of());
 
-      const result = controller.search('role-1');
+      await lastValueFrom(
+        controller.search('role-1', buildAuth()).pipe(toArray()),
+      );
 
+      expect(rolesService.getRole).toHaveBeenCalledWith(
+        'role-1',
+        'org-1',
+        'user-1',
+      );
       expect(searchService.streamSearch).toHaveBeenCalledWith('role-1');
-      expect(result).toBe(stream);
+    });
+
+    it("checks the caller's access to the role before streaming", async () => {
+      rolesService.getRole.mockRejectedValue(
+        new RequestException('Role not found', 404, 'ROLE_NOT_FOUND'),
+      );
+      searchService.streamSearch.mockReturnValue(of());
+
+      const observable = controller.search('role-1', buildAuth());
+
+      await expect(lastValueFrom(observable)).rejects.toBeInstanceOf(
+        RequestException,
+      );
+      expect(searchService.streamSearch).not.toHaveBeenCalled();
+    });
+
+    it('logs a ROLE_SEARCH entry with the summed tokens used once the stream completes', async () => {
+      rolesService.getRole.mockResolvedValue({
+        uid: 'role-1',
+        name: 'Fullstack Developer',
+      } as any);
+      searchService.streamSearch.mockReturnValue(
+        of(
+          { type: 'stage', data: { stage: 'searching', status: 'started' } },
+          {
+            type: 'done',
+            data: {
+              result: [
+                { uid: 'result-1', tokens_used: 100 },
+                { uid: 'result-2', tokens_used: 50 },
+              ],
+            },
+          },
+        ) as any,
+      );
+
+      await lastValueFrom(
+        controller.search('role-1', buildAuth()).pipe(toArray()),
+      );
+
+      expect(logsService.log).toHaveBeenCalledWith({
+        organization_id: 'org-1',
+        user_id: 'user-1',
+        type: 'ROLE_SEARCH',
+        role_id: 'role-1',
+        tokens_used: 150,
+        message:
+          'Ran search for role "Fullstack Developer", found 2 candidate(s)',
+      });
+    });
+
+    it('does not log when the stream errors out', async () => {
+      rolesService.getRole.mockResolvedValue({
+        uid: 'role-1',
+        name: 'Fullstack Developer',
+      } as any);
+      searchService.streamSearch.mockReturnValue(
+        of({
+          type: 'error',
+          data: { message: 'boom' },
+        }) as any,
+      );
+
+      await lastValueFrom(
+        controller.search('role-1', buildAuth()).pipe(toArray()),
+      );
+
+      expect(logsService.log).not.toHaveBeenCalled();
     });
   });
 });

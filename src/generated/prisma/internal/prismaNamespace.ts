@@ -409,6 +409,7 @@ export const ModelName = {
   projects: 'projects',
   role_filters: 'role_filters',
   role_result: 'role_result',
+  role_result_score_breakdown: 'role_result_score_breakdown',
   roles: 'roles'
 } as const
 
@@ -425,7 +426,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "filter_companies" | "filter_location_cities" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filters" | "role_result" | "roles"
+    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "filter_companies" | "filter_location_cities" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1317,6 +1318,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    role_result_score_breakdown: {
+      payload: Prisma.$role_result_score_breakdownPayload<ExtArgs>
+      fields: Prisma.role_result_score_breakdownFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.role_result_score_breakdownFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.role_result_score_breakdownFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>
+        }
+        findFirst: {
+          args: Prisma.role_result_score_breakdownFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.role_result_score_breakdownFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>
+        }
+        findMany: {
+          args: Prisma.role_result_score_breakdownFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>[]
+        }
+        create: {
+          args: Prisma.role_result_score_breakdownCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>
+        }
+        createMany: {
+          args: Prisma.role_result_score_breakdownCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.role_result_score_breakdownCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>[]
+        }
+        delete: {
+          args: Prisma.role_result_score_breakdownDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>
+        }
+        update: {
+          args: Prisma.role_result_score_breakdownUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>
+        }
+        deleteMany: {
+          args: Prisma.role_result_score_breakdownDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.role_result_score_breakdownUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.role_result_score_breakdownUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>[]
+        }
+        upsert: {
+          args: Prisma.role_result_score_breakdownUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_result_score_breakdownPayload>
+        }
+        aggregate: {
+          args: Prisma.Role_result_score_breakdownAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRole_result_score_breakdown>
+        }
+        groupBy: {
+          args: Prisma.role_result_score_breakdownGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Role_result_score_breakdownGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.role_result_score_breakdownCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Role_result_score_breakdownCountAggregateOutputType> | number
+        }
+      }
+    }
     roles: {
       payload: Prisma.$rolesPayload<ExtArgs>
       fields: Prisma.rolesFieldRefs
@@ -1489,7 +1564,7 @@ export const Candidate_experienceScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   candidate_id: 'candidate_id',
-  comapany_name: 'comapany_name',
+  company_name: 'company_name',
   company_location: 'company_location',
   role: 'role',
   start_date: 'start_date',
@@ -1640,7 +1715,8 @@ export const Role_filtersScalarFieldEnum = {
   sites: 'sites',
   metadata: 'metadata',
   archived: 'archived',
-  industry: 'industry'
+  industry: 'industry',
+  search_run_date: 'search_run_date'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -1672,6 +1748,21 @@ export const Role_resultScalarFieldEnum = {
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]
+
+
+export const Role_result_score_breakdownScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  role_result_id: 'role_result_id',
+  category: 'category',
+  weight: 'weight',
+  applicable: 'applicable',
+  score: 'score',
+  metadata: 'metadata'
+} as const
+
+export type Role_result_score_breakdownScalarFieldEnum = (typeof Role_result_score_breakdownScalarFieldEnum)[keyof typeof Role_result_score_breakdownScalarFieldEnum]
 
 
 export const RolesScalarFieldEnum = {
@@ -2072,6 +2163,7 @@ export type GlobalOmitConfig = {
   projects?: Prisma.projectsOmit
   role_filters?: Prisma.role_filtersOmit
   role_result?: Prisma.role_resultOmit
+  role_result_score_breakdown?: Prisma.role_result_score_breakdownOmit
   roles?: Prisma.rolesOmit
 }
 
