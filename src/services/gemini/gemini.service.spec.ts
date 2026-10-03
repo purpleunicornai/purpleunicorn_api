@@ -1,5 +1,5 @@
 import { GeminiService } from './gemini.service';
-import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
+import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { GoogleSearchItem } from '../google-search/google-search.service';
 import { candidate, candidate_source } from '../../generated/prisma/client';
 
@@ -60,37 +60,15 @@ function buildCandidate(
   };
 }
 
-function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
+function buildFilters(
+  overrides: Partial<ParsedRoleFilters> = {},
+): ParsedRoleFilters {
   return {
-    title: 'Software Engineer',
-    alternative_titles: [],
-    title_levels: [],
-    roles: [],
-    current_role_min_yrs: 0,
-    current_role_max_yrs: 0,
-    current_role_tenure_yrs: 0,
-    country_code: 'US',
-    remote_work: false,
-    work_authorization_required: false,
-    filter_location_cities: [],
-    experience_min_yrs: 0,
-    experience_max_yrs: 0,
-    required_skills: [],
-    optional_skills: [],
-    education_levels: [],
-    education_institution: [],
-    education_excluded_institutions: [],
-    education_graduation_min_yr: null,
-    education_graduation_max_yr: null,
-    required_languages: [],
-    optional_languages: [],
-    career_growth: [],
-    security_clearance_required: [],
-    diversity: [],
-    other_experience: [],
-    sites: [],
-    filter_companies: [],
-    metadata: { original_prompt: '', refined_prompt: '', complete: false },
+    jobTitles: [],
+    skills: [],
+    languages: [],
+    companies: [],
+    education: [],
     ...overrides,
   };
 }
@@ -137,7 +115,7 @@ describe('GeminiService', () => {
 
   describe('formatCandidates', () => {
     it('returns an empty result without calling the model when there are no items', async () => {
-      const result = await service.formatCandidates([], buildDto());
+      const result = await service.formatCandidates([], buildFilters());
 
       expect(generateText).not.toHaveBeenCalled();
       expect(result).toEqual({ matches: [], tokensUsed: 0 });
@@ -146,8 +124,17 @@ describe('GeminiService', () => {
     it('calls generateText with the configured model and a prompt describing the results and role criteria', async () => {
       generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
 
-      const dto = buildDto({ title: 'Fullstack Developer' });
-      await service.formatCandidates([buildItem()], dto);
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Fullstack Developer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
+      });
+      await service.formatCandidates([buildItem()], filters);
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -168,7 +155,7 @@ describe('GeminiService', () => {
           ],
         },
       } as any);
-      await service.formatCandidates([item], buildDto());
+      await service.formatCandidates([item], buildFilters());
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -189,13 +176,40 @@ describe('GeminiService', () => {
           ],
         },
       } as any);
-      await service.formatCandidates([item], buildDto());
+      await service.formatCandidates([item], buildFilters());
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
           prompt: expect.stringContaining(
             'https://media.licdn.com/dms/image/jane-cse.jpg',
           ),
+        }),
+      );
+    });
+
+    it("describes each filter row's priority and non-negotiability in the prompt", async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: true,
+            filterId: 'f1',
+          },
+        ],
+      });
+      await service.formatCandidates([buildItem()], filters);
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('"priority":"ESSENTIAL"'),
+        }),
+      );
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('"nonNegotiable":true'),
         }),
       );
     });
@@ -222,7 +236,10 @@ describe('GeminiService', () => {
         usage: { totalTokens: 456 },
       });
 
-      const result = await service.formatCandidates([buildItem()], buildDto());
+      const result = await service.formatCandidates(
+        [buildItem()],
+        buildFilters(),
+      );
 
       expect(result).toEqual({ matches, tokensUsed: 456 });
     });
@@ -230,7 +247,7 @@ describe('GeminiService', () => {
     it('asks the model for source_title, source_name, and source_url', async () => {
       generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
 
-      await service.formatCandidates([buildItem()], buildDto());
+      await service.formatCandidates([buildItem()], buildFilters());
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -252,7 +269,7 @@ describe('GeminiService', () => {
     it('asks the model for reasoning and skills_matched alongside the summary and score', async () => {
       generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
 
-      await service.formatCandidates([buildItem()], buildDto());
+      await service.formatCandidates([buildItem()], buildFilters());
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -272,7 +289,10 @@ describe('GeminiService', () => {
         usage: { totalTokens: undefined },
       });
 
-      const result = await service.formatCandidates([buildItem()], buildDto());
+      const result = await service.formatCandidates(
+        [buildItem()],
+        buildFilters(),
+      );
 
       expect(result.tokensUsed).toBe(0);
     });
@@ -280,8 +300,8 @@ describe('GeminiService', () => {
     it('only constructs the model once across multiple calls', async () => {
       generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
 
-      await service.formatCandidates([buildItem()], buildDto());
-      await service.formatCandidates([buildItem()], buildDto());
+      await service.formatCandidates([buildItem()], buildFilters());
+      await service.formatCandidates([buildItem()], buildFilters());
 
       expect(createGoogleGenerativeAI).toHaveBeenCalledTimes(1);
     });

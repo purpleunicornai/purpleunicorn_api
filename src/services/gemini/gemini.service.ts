@@ -3,7 +3,7 @@ import AiConfig from '../../config/ai.config';
 import { type ConfigType } from '@nestjs/config';
 import { z } from 'zod';
 import type { LanguageModel } from 'ai';
-import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
+import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { GoogleSearchItem } from '../google-search/google-search.service';
 import { candidate, candidate_source } from '../../generated/prisma/client';
 import { InstitutionType } from '../../generated/prisma/enums';
@@ -148,7 +148,7 @@ export class GeminiService {
 
   async formatCandidates(
     items: GoogleSearchItem[],
-    dto: RoleFilterDto,
+    filters: ParsedRoleFilters,
   ): Promise<FormatCandidatesResult> {
     if (items.length === 0) return { matches: [], tokensUsed: 0 };
 
@@ -161,7 +161,7 @@ export class GeminiService {
 
     const { output, usage } = await generateText({
       model,
-      prompt: this.buildPrompt(items, dto),
+      prompt: this.buildPrompt(items, filters),
       output: Output.array({ element: matchSchema }),
     });
 
@@ -243,18 +243,66 @@ export class GeminiService {
     );
   }
 
-  private buildPrompt(items: GoogleSearchItem[], dto: RoleFilterDto): string {
-    const criteria = {
-      title: dto.title,
-      alternative_titles: dto.alternative_titles,
-      required_skills: dto.required_skills,
-      optional_skills: dto.optional_skills,
-      locations: dto.filter_location_cities.map((city) => city.name),
-      experience_min_yrs: dto.experience_min_yrs,
-      experience_max_yrs: dto.experience_max_yrs,
-      education_levels: dto.education_levels,
-      required_languages: dto.required_languages,
-    };
+  private buildPrompt(
+    items: GoogleSearchItem[],
+    filters: ParsedRoleFilters,
+  ): string {
+    const criteria = [
+      ...filters.jobTitles.map((row) => ({
+        category: 'job_titles',
+        option: row.value.option,
+        titles: row.value.titles,
+        priority: row.priority,
+        nonNegotiable: row.nonNegotiable,
+      })),
+      ...filters.skills.map((row) => ({
+        category: 'skills',
+        skills: row.value,
+        priority: row.priority,
+        nonNegotiable: row.nonNegotiable,
+      })),
+      ...filters.languages.map((row) => ({
+        category: 'languages',
+        languages: row.value,
+        priority: row.priority,
+        nonNegotiable: row.nonNegotiable,
+      })),
+      ...filters.companies.map((row) => ({
+        category: 'companies',
+        companies: row.value.names,
+        type: row.value.type,
+        priority: row.priority,
+        nonNegotiable: row.nonNegotiable,
+      })),
+      ...filters.education.map((row) => ({
+        category: 'education',
+        qualifications: row.value.qualifications,
+        priority: row.priority,
+        nonNegotiable: row.nonNegotiable,
+      })),
+      ...(filters.location
+        ? [
+            {
+              category: 'location',
+              countryCode: filters.location.value.countryCode,
+              regions: filters.location.value.regions,
+              remoteWork: filters.location.value.remoteWork,
+              priority: filters.location.priority,
+              nonNegotiable: filters.location.nonNegotiable,
+            },
+          ]
+        : []),
+      ...(filters.industry
+        ? [
+            {
+              category: 'industry',
+              industry: filters.industry.value,
+              priority: filters.industry.priority,
+              nonNegotiable: filters.industry.nonNegotiable,
+            },
+          ]
+        : []),
+    ];
 
     const results = items.map((item) => ({
       title: item.title,
@@ -273,7 +321,7 @@ export class GeminiService {
       'Set "source_title" to the search result\'s title verbatim, "source_name" to the platform the result came from (e.g. "LinkedIn"), and "source_url" to the result\'s link — include "source_url" only if one is actually present.',
       'When a result includes an "image" URL, copy it verbatim into "image_url" — do not fabricate one when it is absent.',
       'Do not guess contact details (email, phone) unless they literally appear in the text.',
-      'Then compare the candidate against the role criteria below: write a short "summary" explaining how well they match, a more detailed "reasoning" for that assessment, a "skills_matched" array listing which required/optional skills they actually have evidence of, and a "score" from 0-100 rating the overall match quality.',
+      'Then compare the candidate against the role criteria below: each criterion has a "priority" ("ESSENTIAL" or "OPTIONAL") and a "nonNegotiable" flag — weigh ESSENTIAL and non-negotiable criteria most heavily. Write a short "summary" explaining how well they match, a more detailed "reasoning" for that assessment, a "skills_matched" array listing which required/optional skills they actually have evidence of, and a "score" from 0-100 rating the overall match quality.',
       '',
       `Role criteria: ${JSON.stringify(criteria)}`,
       '',
