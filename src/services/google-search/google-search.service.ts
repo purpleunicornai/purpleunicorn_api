@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import AiConfig from '../../config/ai.config';
 import { type ConfigType } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
+import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { DEFAULT_XRAY_SITES } from '../../common/constants/google';
 import { candidate, candidate_experience } from '../../generated/prisma/client';
 
@@ -45,8 +45,8 @@ export class GoogleSearchService {
     this.client = axios.create({ timeout: 20_000 });
   }
 
-  async search(dto: RoleFilterDto): Promise<GoogleSearchItem[]> {
-    const queries = this.buildXrayQueries(dto);
+  async search(filters: ParsedRoleFilters): Promise<GoogleSearchItem[]> {
+    const queries = this.buildXrayQueries(filters);
     this.logger.debug(`Running ${queries.length} Google x-ray query(s)`);
 
     const results = await Promise.all(
@@ -114,30 +114,52 @@ export class GoogleSearchService {
     return response.data.items ?? [];
   }
 
-  private buildSiteFilter(sites?: string[]): string {
-    const siteList = sites?.length
-      ? sites.map((site) => `site:${site}`)
-      : DEFAULT_XRAY_SITES;
+  private buildSiteFilter(): string {
+    const siteList = DEFAULT_XRAY_SITES;
     // A parenthesized single-term site: filter (e.g. "(site:linkedin.com/in)")
     // returns zero results from Google's Custom Search API — confirmed live.
     if (siteList.length === 1) return siteList[0];
     return `(${siteList.join(' OR ')})`;
   }
 
-  private buildXrayQueries(dto: RoleFilterDto): string[] {
-    const siteFilter = this.buildSiteFilter(dto.sites);
+  private buildXrayQueries(filters: ParsedRoleFilters): string[] {
+    const mainTitle = filters.jobTitles.find(
+      (row) => row.value.option === 'main_title',
+    );
+    if (!mainTitle) return [];
+
+    const siteFilter = this.buildSiteFilter();
+    const requiredSkills = filters.skills
+      .filter((row) => row.priority === 'ESSENTIAL')
+      .flatMap((row) => row.value);
+    const optionalSkills = filters.skills
+      .filter((row) => row.priority === 'OPTIONAL')
+      .flatMap((row) => row.value);
+    const locationNames =
+      filters.location?.value.regions.map((region) => region.value) ?? [];
+    const includedCompanies = filters.companies
+      .filter((row) => row.value.type === 'include')
+      .flatMap((row) => row.value.names);
+
     const commonParts = [
-      this.andClause(dto.required_skills),
-      this.orClause(dto.optional_skills),
-      this.orClause(dto.filter_location_cities.map((city) => city.name)),
+      this.andClause(requiredSkills),
+      this.orClause(optionalSkills),
+      this.orClause(locationNames),
+      this.orClause(includedCompanies),
     ];
 
     const queries = new Set<string>();
-    queries.add(
-      this.joinNonEmpty([siteFilter, this.quote(dto.title), ...commonParts]),
-    );
+    for (const title of mainTitle.value.titles) {
+      queries.add(
+        this.joinNonEmpty([siteFilter, this.quote(title), ...commonParts]),
+      );
+    }
 
-    for (const alternativeTitle of dto.alternative_titles.slice(0, 3)) {
+    const alternativeTitles =
+      filters.jobTitles
+        .find((row) => row.value.option === 'alternative_title')
+        ?.value.titles.slice(0, 3) ?? [];
+    for (const alternativeTitle of alternativeTitles) {
       queries.add(
         this.joinNonEmpty([
           siteFilter,

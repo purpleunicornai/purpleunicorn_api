@@ -1,5 +1,5 @@
 import { GoogleSearchService } from './google-search.service';
-import { RoleFilterDto } from '../../roles/dto/role_filter.dto';
+import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { candidate, candidate_experience } from '../../generated/prisma/client';
 
 type CandidateWithExperience = candidate & {
@@ -63,37 +63,15 @@ function buildCandidate(
   };
 }
 
-function buildDto(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
+function buildFilters(
+  overrides: Partial<ParsedRoleFilters> = {},
+): ParsedRoleFilters {
   return {
-    title: 'Software Engineer',
-    alternative_titles: [],
-    title_levels: [],
-    roles: [],
-    current_role_min_yrs: 0,
-    current_role_max_yrs: 0,
-    current_role_tenure_yrs: 0,
-    country_code: 'US',
-    remote_work: false,
-    work_authorization_required: false,
-    filter_location_cities: [],
-    experience_min_yrs: 0,
-    experience_max_yrs: 0,
-    required_skills: [],
-    optional_skills: [],
-    education_levels: [],
-    education_institution: [],
-    education_excluded_institutions: [],
-    education_graduation_min_yr: null,
-    education_graduation_max_yr: null,
-    required_languages: [],
-    optional_languages: [],
-    career_growth: [],
-    security_clearance_required: [],
-    diversity: [],
-    other_experience: [],
-    sites: [],
-    filter_companies: [],
-    metadata: { original_prompt: '', refined_prompt: '', complete: false },
+    jobTitles: [],
+    skills: [],
+    languages: [],
+    companies: [],
+    education: [],
     ...overrides,
   };
 }
@@ -113,8 +91,8 @@ describe('GoogleSearchService', () => {
   });
 
   describe('buildSiteFilter', () => {
-    it('defaults to LinkedIn, Indeed, and the XRAY_SITES list when no sites are given', () => {
-      const filter = (service as any).buildSiteFilter([]);
+    it('defaults to LinkedIn, Indeed, and the XRAY_SITES list', () => {
+      const filter = (service as any).buildSiteFilter();
 
       expect(filter).toBe(
         '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
@@ -123,86 +101,150 @@ describe('GoogleSearchService', () => {
           'site:kaggle.com OR site:medium.com OR site:dev.to)',
       );
     });
-
-    it('uses the given sites instead of the defaults when provided', () => {
-      const filter = (service as any).buildSiteFilter([
-        'github.com',
-        'gitlab.com',
-      ]);
-
-      expect(filter).toBe('(site:github.com OR site:gitlab.com)');
-    });
-
-    it('does not wrap a single site in parentheses', () => {
-      // Google's Custom Search API returns zero results for a
-      // parenthesized single-term path-scoped site: filter, e.g.
-      // "(site:linkedin.com/in)" — confirmed against the live API.
-      const filter = (service as any).buildSiteFilter(['linkedin.com/in']);
-
-      expect(filter).toBe('site:linkedin.com/in');
-    });
   });
 
   describe('buildXrayQueries', () => {
-    it('builds a primary query with the site filter, quoted title, required skills, and location', () => {
-      const dto = buildDto({
-        sites: ['linkedin.com'],
-        title: 'Software Engineer',
-        required_skills: ['TypeScript', 'AWS'],
-        filter_location_cities: [
+    it('builds a query from the main job title, essential skills, and location region', () => {
+      const filters = buildFilters({
+        jobTitles: [
           {
-            name: 'New York',
-            state: 'NY',
-            country_code: 'US',
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
           },
         ],
+        skills: [
+          {
+            value: ['TypeScript', 'AWS'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
+        location: {
+          value: {
+            countryCode: 'US',
+            regions: [{ type: 'city', value: 'New York' }],
+            remoteWork: false,
+            workAuthorizationRequired: false,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+          filterId: 'f3',
+        },
       });
 
-      const queries = (service as any).buildXrayQueries(dto);
+      const queries = (service as any).buildXrayQueries(filters);
 
       expect(queries).toContain(
-        'site:linkedin.com "Software Engineer" TypeScript AWS "New York"',
+        '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
+          'site:stackoverflow.com/users OR site:researchgate.net OR site:about.me OR ' +
+          'site:behance.net OR site:dribbble.com OR site:angel.co OR site:wellfound.com OR ' +
+          'site:kaggle.com OR site:medium.com OR site:dev.to) "Software Engineer" TypeScript AWS "New York"',
       );
     });
 
     it('OR-groups optional skills', () => {
-      const dto = buildDto({
-        sites: ['linkedin.com'],
-        title: 'Software Engineer',
-        optional_skills: ['GraphQL', 'Docker'],
-      });
-
-      const queries = (service as any).buildXrayQueries(dto);
-
-      expect(queries).toContain(
-        'site:linkedin.com "Software Engineer" (GraphQL OR Docker)',
-      );
-    });
-
-    it('adds a query variant for up to three alternative titles', () => {
-      const dto = buildDto({
-        sites: ['linkedin.com'],
-        title: 'Software Engineer',
-        alternative_titles: [
-          'Backend Engineer',
-          'Platform Engineer',
-          'Systems Engineer',
-          'Infra Engineer',
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
+        skills: [
+          {
+            value: ['GraphQL', 'Docker'],
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
         ],
       });
 
-      const queries = (service as any).buildXrayQueries(dto);
+      const queries = (service as any).buildXrayQueries(filters);
 
-      expect(queries).toContain('site:linkedin.com "Backend Engineer"');
-      expect(queries).toContain('site:linkedin.com "Platform Engineer"');
-      expect(queries).toContain('site:linkedin.com "Systems Engineer"');
-      expect(queries).not.toContain('site:linkedin.com "Infra Engineer"');
+      expect(
+        queries.some((query: string) => query.includes('(GraphQL OR Docker)')),
+      ).toBe(true);
     });
 
-    it('drops queries that are empty beyond the site filter', () => {
-      const dto = buildDto({ sites: ['linkedin.com'], title: '' });
+    it('adds a query variant for up to three alternative titles', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+          {
+            value: {
+              titles: [
+                'Backend Engineer',
+                'Platform Engineer',
+                'Systems Engineer',
+                'Infra Engineer',
+              ],
+              option: 'alternative_title',
+            },
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
+      });
 
-      const queries = (service as any).buildXrayQueries(dto);
+      const queries = (service as any).buildXrayQueries(filters);
+
+      expect(
+        queries.some((q: string) => q.includes('"Backend Engineer"')),
+      ).toBe(true);
+      expect(
+        queries.some((q: string) => q.includes('"Platform Engineer"')),
+      ).toBe(true);
+      expect(
+        queries.some((q: string) => q.includes('"Systems Engineer"')),
+      ).toBe(true);
+      expect(queries.some((q: string) => q.includes('"Infra Engineer"'))).toBe(
+        false,
+      );
+    });
+
+    it('includes required company names in the query', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
+        companies: [
+          {
+            value: { names: ['Google', 'Microsoft'], type: 'include' },
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
+      });
+
+      const queries = (service as any).buildXrayQueries(filters);
+
+      expect(
+        queries.some((q: string) => q.includes('(Google OR Microsoft)')),
+      ).toBe(true);
+    });
+
+    it('returns no queries when there is no main job title', () => {
+      const filters = buildFilters();
+
+      const queries = (service as any).buildXrayQueries(filters);
 
       expect(queries).toEqual([]);
     });
@@ -314,11 +356,28 @@ describe('GoogleSearchService', () => {
         .spyOn(service.client, 'get')
         .mockResolvedValue({ data: { items: [] } });
 
-      await service.search(buildDto({ sites: ['linkedin.com/in'] }));
-
-      expect(get).toHaveBeenCalledWith(
-        'https://www.googleapis.com/customsearch/v1?key=test-api-key&cx=test-cx&q=site%3Alinkedin.com%2Fin+%22Software+Engineer%22&num=10&start=1',
+      await service.search(
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Software Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+              filterId: 'f1',
+            },
+          ],
+        }),
       );
+
+      // Built via URLSearchParams (not encodeURIComponent) to match the
+      // form-urlencoded escaping the real request URL uses — notably,
+      // parentheses are escaped to %28/%29 under this scheme, unlike
+      // encodeURIComponent, which leaves them unescaped.
+      const expectedQuery = new URLSearchParams({
+        q: '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR site:stackoverflow.com/users OR site:researchgate.net OR site:about.me OR site:behance.net OR site:dribbble.com OR site:angel.co OR site:wellfound.com OR site:kaggle.com OR site:medium.com OR site:dev.to) "Software Engineer"',
+      }).toString();
+
+      expect(get).toHaveBeenCalledWith(expect.stringContaining(expectedQuery));
     });
 
     it('returns the combined items from every query', async () => {
@@ -328,7 +387,16 @@ describe('GoogleSearchService', () => {
       jest.spyOn(service.client, 'get').mockResolvedValue({ data: { items } });
 
       const result = await service.search(
-        buildDto({ sites: ['linkedin.com/in'] }),
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Software Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+              filterId: 'f1',
+            },
+          ],
+        }),
       );
 
       expect(result).toEqual(items);
@@ -338,7 +406,16 @@ describe('GoogleSearchService', () => {
       jest.spyOn(service.client, 'get').mockResolvedValue({ data: {} });
 
       const result = await service.search(
-        buildDto({ sites: ['linkedin.com/in'] }),
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Software Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+              filterId: 'f1',
+            },
+          ],
+        }),
       );
 
       expect(result).toEqual([]);
@@ -357,7 +434,16 @@ describe('GoogleSearchService', () => {
         .mockResolvedValueOnce({ data: { items: lastPage } });
 
       const result = await service.search(
-        buildDto({ sites: ['linkedin.com/in'] }),
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Software Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+              filterId: 'f1',
+            },
+          ],
+        }),
       );
 
       expect(get).toHaveBeenCalledTimes(3);
@@ -386,7 +472,16 @@ describe('GoogleSearchService', () => {
         .mockResolvedValue({ data: { items: fullPage } });
 
       const result = await service.search(
-        buildDto({ sites: ['linkedin.com/in'] }),
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Software Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+              filterId: 'f1',
+            },
+          ],
+        }),
       );
 
       expect(get).toHaveBeenCalledTimes(10);
