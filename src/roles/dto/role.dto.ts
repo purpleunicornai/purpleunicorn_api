@@ -32,14 +32,7 @@ export class CreateRoleDto {
 
 export class UpdateRoleDto extends PartialType(CreateRoleDto) {}
 
-export class RunSearchDto {
-  @ApiProperty({
-    description: 'A previously saved role_filters id to run the search with',
-    example: '0c9f9549-2f4c-4725-9be1-2b9a3b816347',
-  })
-  @IsUUID()
-  filterId: string;
-}
+export class RunSearchDto {}
 
 export class RoleProjectSummaryDto {
   @ApiProperty({ description: 'Project name' })

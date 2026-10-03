@@ -31,40 +31,21 @@ function buildRole(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildStoredFilter(overrides: Record<string, unknown> = {}) {
+function buildStoredFilterRow(overrides: Record<string, unknown> = {}) {
   return {
     uid: 'filter-1',
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
     role_id: 'role-1',
-    country_code: 'US',
-    remote_work: false,
-    work_authorization_required: false,
-    experience_min_yrs: 0,
-    experience_max_yrs: 0,
-    title: 'Fullstack Developer',
-    alternative_titles: [],
-    title_levels: [],
-    roles: [],
-    current_role_min_yrs: 0,
-    current_role_max_yrs: 0,
-    current_role_tenure_yrs: 0,
-    required_skills: ['React', 'Node.js'],
-    optional_skills: [],
-    education_levels: [],
-    education_institution: [],
-    education_excluded_institutions: [],
-    education_graduation_min_yr: null,
-    education_graduation_max_yr: null,
-    required_languages: [],
-    optional_languages: [],
-    career_growth: [],
-    security_clearance_required: [],
-    diversity: [],
-    other_experience: [],
-    sites: [],
-    metadata: { complete: true, refined_prompt: '', original_prompt: '' },
-    filter_location_cities: [],
+    category: 'skills',
+    value: null,
+    list_value: ['React', 'Node.js'],
+    priority: 'ESSENTIAL',
+    non_negotiable: false,
+    archived: false,
+    archived_at: null,
+    metadata: null,
+    children: [],
     ...overrides,
   };
 }
@@ -102,8 +83,8 @@ function buildCandidateScoringService(): jest.Mocked<CandidateScoringService> {
 function buildPrisma() {
   return {
     role_filters: {
-      findFirst: jest.fn(),
-      update: jest.fn(),
+      findMany: jest.fn(),
+      updateMany: jest.fn(),
     },
     candidate: {
       findFirst: jest.fn().mockResolvedValue(null),
@@ -202,72 +183,30 @@ describe('SearchService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('getRoleFilter', () => {
-    it('fetches the saved filter scoped to the role, with its location cities', async () => {
-      const filter = buildStoredFilter();
-      prisma.role_filters.findFirst.mockResolvedValue(filter);
+  describe('getRoleFilters', () => {
+    it('fetches every non-archived filter row for the role, with their children', async () => {
+      const rows = [buildStoredFilterRow()];
+      prisma.role_filters.findMany.mockResolvedValue(rows);
 
-      const result = await (service as any).getRoleFilter('filter-1', 'role-1');
+      const result = await (service as any).getRoleFilters('role-1');
 
-      expect(prisma.role_filters.findFirst).toHaveBeenCalledWith({
-        where: { uid: 'filter-1', role_id: 'role-1' },
-        include: { filter_location_cities: true },
+      expect(prisma.role_filters.findMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1', archived: false },
+        include: { children: true },
       });
-      expect(result).toBe(filter);
+      expect(result).toBe(rows);
     });
 
-    it('throws a 404 RequestException when no matching saved filter exists for the role', async () => {
-      prisma.role_filters.findFirst.mockResolvedValue(null);
+    it('throws a 404 RequestException when there are no non-archived filter rows for the role', async () => {
+      prisma.role_filters.findMany.mockResolvedValue([]);
 
       const error = await captureError(
-        (service as any).getRoleFilter('filter-1', 'role-1'),
+        (service as any).getRoleFilters('role-1'),
       );
 
       expect(error).toBeInstanceOf(RequestException);
       expect(error.message).toBe('Role filter not found');
       expect(error.getStatus()).toBe(404);
-    });
-  });
-
-  describe('toRoleFilterDto', () => {
-    it('maps the stored filter fields into the shape the search pipeline expects', () => {
-      const filter = buildStoredFilter({
-        title: 'Fullstack Developer',
-        required_skills: ['React', 'Node.js'],
-        industry: 'Technology',
-        filter_location_cities: [
-          {
-            uid: 'city-1',
-            created: new Date('2026-08-23T00:00:00.000Z'),
-            updated: new Date('2026-08-23T00:00:00.000Z'),
-            role_filters_id: 'filter-1',
-            name: 'London',
-            state: '',
-            country_code: 'GB',
-          },
-        ],
-      });
-
-      const dto = (service as any).toRoleFilterDto(filter);
-
-      expect(dto.title).toBe('Fullstack Developer');
-      expect(dto.required_skills).toEqual(['React', 'Node.js']);
-      expect(dto.industry).toBe('Technology');
-      expect(dto.filter_location_cities).toEqual([
-        expect.objectContaining({ name: 'London', country_code: 'GB' }),
-      ]);
-    });
-
-    it('converts stored graduation year dates back into plain years', () => {
-      const filter = buildStoredFilter({
-        education_graduation_min_yr: new Date(Date.UTC(2020, 0, 1)),
-        education_graduation_max_yr: null,
-      });
-
-      const dto = (service as any).toRoleFilterDto(filter);
-
-      expect(dto.education_graduation_min_yr).toBe(2020);
-      expect(dto.education_graduation_max_yr).toBeNull();
     });
   });
 
@@ -435,18 +374,21 @@ describe('SearchService', () => {
     };
     const scoreResult = {
       score: 72,
+      disqualified: false,
       breakdown: [
         {
-          category: 'required_skills',
-          weight: 30,
-          earned: 30,
+          category: 'skills',
+          weight: 60,
+          earned: 60,
           applicable: true,
+          filterId: 'filter-1',
         },
         {
-          category: 'experience_years',
-          weight: 15,
-          earned: 7.5,
+          category: 'location',
+          weight: 20,
+          earned: 10,
           applicable: true,
+          filterId: 'filter-2',
         },
       ],
     };
@@ -457,7 +399,6 @@ describe('SearchService', () => {
 
       const result = await (service as any).upsertRoleResult(
         'role-1',
-        'filter-1',
         'candidate-1',
         match,
         123,
@@ -470,13 +411,14 @@ describe('SearchService', () => {
       expect(prisma.role_result.create).toHaveBeenCalledWith({
         data: {
           role_id: 'role-1',
-          filter_id: 'filter-1',
+          filter_id: null,
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
           reasoning: 'Matches on required skills and location.',
           skills_matched: ['TypeScript'],
           ai_score: 85,
           score: 72,
+          disqualified: false,
           tokens_used: 123,
         },
       });
@@ -491,17 +433,19 @@ describe('SearchService', () => {
         data: [
           {
             role_result_id: 'result-1',
-            category: 'required_skills',
-            weight: 30,
+            role_filter_id: 'filter-1',
+            category: 'skills',
+            weight: 60,
             applicable: true,
-            score: 30,
+            score: 60,
           },
           {
             role_result_id: 'result-1',
-            category: 'experience_years',
-            weight: 15,
+            role_filter_id: 'filter-2',
+            category: 'location',
+            weight: 20,
             applicable: true,
-            score: 8,
+            score: 10,
           },
         ],
       });
@@ -516,7 +460,6 @@ describe('SearchService', () => {
 
       const result = await (service as any).upsertRoleResult(
         'role-1',
-        'filter-1',
         'candidate-1',
         match,
         123,
@@ -527,13 +470,14 @@ describe('SearchService', () => {
         where: { uid: 'result-1' },
         data: {
           role_id: 'role-1',
-          filter_id: 'filter-1',
+          filter_id: null,
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
           reasoning: 'Matches on required skills and location.',
           skills_matched: ['TypeScript'],
           ai_score: 85,
           score: 72,
+          disqualified: false,
           tokens_used: 123,
         },
         include: { candidate: true },
@@ -549,17 +493,19 @@ describe('SearchService', () => {
         data: [
           {
             role_result_id: 'result-1',
-            category: 'required_skills',
-            weight: 30,
+            role_filter_id: 'filter-1',
+            category: 'skills',
+            weight: 60,
             applicable: true,
-            score: 30,
+            score: 60,
           },
           {
             role_result_id: 'result-1',
-            category: 'experience_years',
-            weight: 15,
+            role_filter_id: 'filter-2',
+            category: 'location',
+            weight: 20,
             applicable: true,
-            score: 8,
+            score: 10,
           },
         ],
       });
@@ -568,10 +514,15 @@ describe('SearchService', () => {
   });
 
   describe('search', () => {
-    it('fetches the saved filter, runs the search against it, and stamps filter_id on each role_result', async () => {
+    it('fetches the saved filter rows for the role, runs the search against them, and stamps each role_result', async () => {
       const role = buildRole();
-      const storedFilter = buildStoredFilter({ title: 'Fullstack Developer' });
-      prisma.role_filters.findFirst.mockResolvedValue(storedFilter);
+      const filterRows = [
+        buildStoredFilterRow({
+          category: 'skills',
+          list_value: ['React', 'Node.js'],
+        }),
+      ];
+      prisma.role_filters.findMany.mockResolvedValue(filterRows);
 
       const items = [
         { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
@@ -594,12 +545,14 @@ describe('SearchService', () => {
       prisma.candidate.create.mockResolvedValue(candidate);
       const scoreResult = {
         score: 72,
+        disqualified: false,
         breakdown: [
           {
-            category: 'required_skills',
-            weight: 30,
-            earned: 30,
+            category: 'skills',
+            weight: 80,
+            earned: 57.6,
             applicable: true,
+            filterId: 'filter-1',
           },
         ],
       };
@@ -607,33 +560,43 @@ describe('SearchService', () => {
       const roleResult = { uid: 'result-1' };
       prisma.role_result.create.mockResolvedValue(roleResult);
 
-      const results = await service.search('filter-1', role as any);
+      const results = await service.search('role-1', role as any);
 
-      expect(prisma.role_filters.findFirst).toHaveBeenCalledWith({
-        where: { uid: 'filter-1', role_id: 'role-1' },
-        include: { filter_location_cities: true },
+      expect(prisma.role_filters.findMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1', archived: false },
+        include: { children: true },
       });
       expect(googleSearchService.search).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Fullstack Developer' }),
+        expect.objectContaining({
+          skills: [
+            {
+              value: ['React', 'Node.js'],
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+              filterId: 'filter-1',
+            },
+          ],
+        }),
       );
       expect(geminiService.formatCandidates).toHaveBeenCalledWith(
         items,
-        expect.objectContaining({ title: 'Fullstack Developer' }),
+        expect.anything(),
       );
       expect(candidateScoringService.scoreCandidate).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Fullstack Developer' }),
+        expect.anything(),
         candidate,
       );
       expect(prisma.role_result.create).toHaveBeenCalledWith({
         data: {
           role_id: 'role-1',
-          filter_id: 'filter-1',
+          filter_id: null,
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
           reasoning: 'Matches on required skills and location.',
           skills_matched: ['TypeScript'],
           ai_score: 85,
           score: 72,
+          disqualified: false,
           tokens_used: 100,
         },
       });
@@ -643,43 +606,75 @@ describe('SearchService', () => {
         data: [
           {
             role_result_id: 'result-1',
-            category: 'required_skills',
-            weight: 30,
+            role_filter_id: 'filter-1',
+            category: 'skills',
+            weight: 80,
             applicable: true,
-            score: 30,
+            score: 58,
           },
         ],
       });
-      expect(prisma.role_filters.update).toHaveBeenCalledWith({
-        where: { uid: 'filter-1' },
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1' },
         data: { search_run_date: expect.any(Date) },
       });
       expect(results).toEqual([roleResult]);
     });
 
-    it('stamps search_run_date on the filter even when no candidates are found', async () => {
+    it('forces score to 0 and marks disqualified when the candidate fails a non-negotiable filter', async () => {
       const role = buildRole();
-      const storedFilter = buildStoredFilter({ title: 'Fullstack Developer' });
-      prisma.role_filters.findFirst.mockResolvedValue(storedFilter);
+      prisma.role_filters.findMany.mockResolvedValue([buildStoredFilterRow()]);
+      googleSearchService.search.mockResolvedValue([
+        { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
+      ]);
+      const match = {
+        candidate: buildCandidateFields(),
+        summary: 'Weak match',
+        reasoning: 'Missing a required criterion.',
+        skills_matched: [],
+        score: 20,
+      };
+      geminiService.formatCandidates.mockResolvedValue({
+        matches: [match],
+        tokensUsed: 50,
+      });
+      prisma.candidate.create.mockResolvedValue({ uid: 'candidate-1' });
+      candidateScoringService.scoreCandidate.mockReturnValue({
+        score: 65,
+        disqualified: true,
+        breakdown: [],
+      });
+      prisma.role_result.create.mockResolvedValue({ uid: 'result-1' });
+
+      await service.search('role-1', role as any);
+
+      expect(prisma.role_result.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ score: 0, disqualified: true }),
+      });
+    });
+
+    it('stamps search_run_date on the filters even when no candidates are found', async () => {
+      const role = buildRole();
+      prisma.role_filters.findMany.mockResolvedValue([buildStoredFilterRow()]);
       googleSearchService.search.mockResolvedValue([]);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 0,
       });
 
-      await service.search('filter-1', role as any);
+      await service.search('role-1', role as any);
 
-      expect(prisma.role_filters.update).toHaveBeenCalledWith({
-        where: { uid: 'filter-1' },
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1' },
         data: { search_run_date: expect.any(Date) },
       });
     });
 
-    it('throws a 404 RequestException when the filter does not belong to the role', async () => {
-      prisma.role_filters.findFirst.mockResolvedValue(null);
+    it('throws a 404 RequestException when the role has no saved filter rows', async () => {
+      prisma.role_filters.findMany.mockResolvedValue([]);
 
       const error = await captureError(
-        service.search('filter-1', buildRole() as any),
+        service.search('role-1', buildRole() as any),
       );
 
       expect(error).toBeInstanceOf(RequestException);

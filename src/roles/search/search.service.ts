@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
-import { RoleFilterDto, RoleFilterMetadataDto } from '../dto/role_filter.dto';
+import { parseRoleFilters, ParsedRoleFilters } from './role-filter-parser';
 import {
   GoogleSearchItem,
   GoogleSearchService,
@@ -20,8 +20,8 @@ import {
   candidate_education,
   candidate_experience,
   candidate_source,
-  filter_location_cities,
   Prisma,
+  role_filter_child,
   role_filters,
   role_result,
   roles,
@@ -35,10 +35,6 @@ import {
   CandidateScoringService,
 } from './candidate-scoring.service';
 
-type StoredFilter = role_filters & {
-  filter_location_cities: filter_location_cities[];
-};
-
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
@@ -51,12 +47,12 @@ export class SearchService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async search(filterId: string, role: roles): Promise<role_result[]> {
-    const filter = await this.getRoleFilter(filterId);
-    const dto = this.toRoleFilterDto(filter);
-    const items = await this.googleSearchService.search(dto);
-    const formatted = await this.geminiService.formatCandidates(items, dto);
-    return this.saveCandidateMatches(role.uid, filter.uid, dto, formatted);
+  async search(roleId: string, role: roles): Promise<role_result[]> {
+    const filterRows = await this.getRoleFilters(roleId);
+    const filters = parseRoleFilters(filterRows);
+    const items = await this.googleSearchService.search(filters);
+    const formatted = await this.geminiService.formatCandidates(items, filters);
+    return this.saveCandidateMatches(role.uid, filters, formatted);
   }
 
   // Digs deeper on a single already-found candidate to build out their
@@ -364,27 +360,21 @@ export class SearchService {
             data: { stage: 'fetching filters', status: 'started' },
           });
           this.logger.debug(`Fetching role filter for roleId=${roleId}`);
-          const filter = await this.getRoleFilter(roleId);
+          const filterRows = await this.getRoleFilters(roleId);
           subscriber.next({
             type: 'stage',
-            data: {
-              stage: 'fetching filters',
-              status: 'done',
-            },
+            data: { stage: 'fetching filters', status: 'done' },
           });
 
           subscriber.next({
             type: 'stage',
             data: { stage: 'parsing filters', status: 'started' },
           });
-          this.logger.debug('Parsing role filter into DTO');
-          const dto = this.toRoleFilterDto(filter);
+          this.logger.debug('Parsing role filters');
+          const filters = parseRoleFilters(filterRows);
           subscriber.next({
             type: 'stage',
-            data: {
-              stage: 'parsing filters',
-              status: 'done',
-            },
+            data: { stage: 'parsing filters', status: 'done' },
           });
 
           subscriber.next({
@@ -394,7 +384,7 @@ export class SearchService {
               status: 'started',
             },
           });
-          const items = await this.googleSearchService.search(dto);
+          const items = await this.googleSearchService.search(filters);
           this.logger.debug(
             `Finished searching candidates for roleId=${roleId}, found ${items?.length} items`,
           );
@@ -417,7 +407,7 @@ export class SearchService {
           this.logger.debug(`Formatting candidates for roleId=${roleId}`);
           const formatted = await this.geminiService.formatCandidates(
             items,
-            dto,
+            filters,
           );
           subscriber.next({
             type: 'stage',
@@ -436,9 +426,8 @@ export class SearchService {
           });
           this.logger.debug(`Saving candidates for roleId=${roleId}`);
           const saved = await this.saveCandidateMatches(
-            filter.role_id,
-            filter.uid,
-            dto,
+            roleId,
+            filters,
             formatted,
           );
           subscriber.next({
@@ -463,13 +452,15 @@ export class SearchService {
     });
   }
 
-  private async getRoleFilter(roleId: string): Promise<StoredFilter> {
-    const filter = await this.prisma.role_filters.findFirst({
+  private async getRoleFilters(
+    roleId: string,
+  ): Promise<(role_filters & { children: role_filter_child[] })[]> {
+    const rows = await this.prisma.role_filters.findMany({
       where: { role_id: roleId, archived: false },
-      include: { filter_location_cities: true },
+      include: { children: true },
     });
 
-    if (!filter) {
+    if (rows.length === 0) {
       throw new RequestException(
         'Role filter not found',
         HttpStatus.NOT_FOUND,
@@ -477,71 +468,12 @@ export class SearchService {
       );
     }
 
-    return filter;
-  }
-
-  // Adapts a saved role_filters row (+ its filter_location_cities) back into
-  // the RoleFilterDto shape GoogleSearchService/GeminiService already work
-  // with, so those services don't need to know about the Prisma entity.
-  private toRoleFilterDto(filter: StoredFilter): RoleFilterDto {
-    return {
-      country_code: filter.country_code ?? '',
-      remote_work: filter.remote_work ?? false,
-      work_authorization_required: filter.work_authorization_required ?? false,
-      experience_min_yrs: filter.experience_min_yrs ?? 0,
-      experience_max_yrs: filter.experience_max_yrs ?? 0,
-      title: filter.title,
-      alternative_titles: filter.alternative_titles,
-      title_levels: filter.title_levels,
-      roles: filter.roles,
-      current_role_min_yrs: filter.current_role_min_yrs,
-      current_role_max_yrs: filter.current_role_max_yrs,
-      current_role_tenure_yrs: filter.current_role_tenure_yrs,
-      required_skills: filter.required_skills,
-      optional_skills: filter.optional_skills,
-      education_levels: filter.education_levels,
-      education_institution: filter.education_institution,
-      education_excluded_institutions: filter.education_excluded_institutions,
-      education_graduation_min_yr: this.dateToYear(
-        filter.education_graduation_min_yr,
-      ),
-      education_graduation_max_yr: this.dateToYear(
-        filter.education_graduation_max_yr,
-      ),
-      required_languages: filter.required_languages,
-      optional_languages: filter.optional_languages,
-      career_growth: filter.career_growth,
-      security_clearance_required: filter.security_clearance_required,
-      diversity: filter.diversity,
-      other_experience: filter.other_experience,
-      sites: filter.sites,
-      industry: filter.industry ?? undefined,
-      metadata: (filter.metadata as unknown as RoleFilterMetadataDto) ?? {
-        complete: false,
-        refined_prompt: '',
-        original_prompt: '',
-      },
-      // filter_companies is a structured relation on role_filters
-      // (type/company_names/dates) that doesn't map onto RoleFilterDto's
-      // flat string[] shape, and isn't used by the search query builder —
-      // left empty here rather than guessing a mapping.
-      filter_companies: [],
-      filter_location_cities: filter.filter_location_cities.map((city) => ({
-        name: city.name,
-        state: city.state ?? '',
-        country_code: city.country_code ?? '',
-      })),
-    };
-  }
-
-  private dateToYear(date: Date | null): number | null {
-    return date === null ? null : date.getUTCFullYear();
+    return rows;
   }
 
   private async saveCandidateMatches(
     roleId: string,
-    filterId: string,
-    dto: RoleFilterDto,
+    filters: ParsedRoleFilters,
     result: { matches: GeminiCandidateMatch[]; tokensUsed: number },
   ): Promise<role_result[]> {
     const tokensPerMatch = result.matches.length
@@ -552,12 +484,11 @@ export class SearchService {
     for (const match of result.matches) {
       const candidateRecord = await this.upsertCandidate(match.candidate);
       const scoreResult = this.candidateScoringService.scoreCandidate(
-        dto,
+        filters,
         candidateRecord,
       );
       const roleResult = await this.upsertRoleResult(
         roleId,
-        filterId,
         candidateRecord.uid,
         match,
         tokensPerMatch,
@@ -566,8 +497,11 @@ export class SearchService {
       roleResults.push(roleResult);
     }
 
-    await this.prisma.role_filters.update({
-      where: { uid: filterId },
+    // Stamping search_run_date updates every filter row for this role_id —
+    // role_id isn't a unique key (a role now has many filter rows), so this
+    // uses updateMany rather than update.
+    await this.prisma.role_filters.updateMany({
+      where: { role_id: roleId },
       data: { search_run_date: new Date() },
     });
 
@@ -631,7 +565,6 @@ export class SearchService {
 
   private async upsertRoleResult(
     roleId: string,
-    filterId: string,
     candidateUid: string,
     match: GeminiCandidateMatch,
     tokensUsed: number,
@@ -643,13 +576,14 @@ export class SearchService {
 
     const data = {
       role_id: roleId,
-      filter_id: filterId,
+      filter_id: null,
       candidate_uid: candidateUid,
       summary: match.summary,
       reasoning: match.reasoning,
       skills_matched: match.skills_matched,
       ai_score: match.score,
-      score: scoreResult.score,
+      score: scoreResult.disqualified ? 0 : scoreResult.score,
+      disqualified: scoreResult.disqualified,
       tokens_used: tokensUsed,
     };
 
@@ -682,6 +616,7 @@ export class SearchService {
     await this.prisma.role_result_score_breakdown.createMany({
       data: breakdown.map((entry) => ({
         role_result_id: roleResultId,
+        role_filter_id: entry.filterId,
         category: entry.category,
         weight: entry.weight,
         applicable: entry.applicable,

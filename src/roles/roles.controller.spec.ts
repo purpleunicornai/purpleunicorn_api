@@ -308,18 +308,14 @@ describe('RolesController', () => {
       const results = [{ uid: 'result-1', tokens_used: 100 }];
       searchService.search.mockResolvedValue(results as any);
 
-      const result = await controller.fixedSearch(
-        'role-1',
-        { filterId: 'filter-1' },
-        buildAuth(),
-      );
+      const result = await controller.fixedSearch('role-1', {}, buildAuth());
 
       expect(rolesService.getRole).toHaveBeenCalledWith(
         'role-1',
         'org-1',
         'user-1',
       );
-      expect(searchService.search).toHaveBeenCalledWith('filter-1', role);
+      expect(searchService.search).toHaveBeenCalledWith('role-1', role);
       expect(result).toBe(results);
     });
 
@@ -332,11 +328,7 @@ describe('RolesController', () => {
       ];
       searchService.search.mockResolvedValue(results as any);
 
-      await controller.fixedSearch(
-        'role-1',
-        { filterId: 'filter-1' },
-        buildAuth(),
-      );
+      await controller.fixedSearch('role-1', {}, buildAuth());
 
       expect(logsService.log).toHaveBeenCalledWith({
         organization_id: 'org-1',

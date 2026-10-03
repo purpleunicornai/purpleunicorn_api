@@ -10,6 +10,7 @@ model role_result {
   role_filter            role_filters?                 @relation(fields: [filter_id], references: [uid])
   // AI Summary and scoring fields
   score                  Int?
+  disqualified           Boolean?                      @default(false)
   ai_score               Int?
   reasoning              String?
   skills_matched         String[]

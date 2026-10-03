@@ -165,7 +165,7 @@ export class RolesController {
   ) {
     const orgId = requireOrgId(auth);
     const role = await this.rolesService.getRole(roleId, orgId, auth.userId);
-    const results = await this.searchService.search(body.filterId, role);
+    const results = await this.searchService.search(roleId, role);
 
     void this.logsService.log({
       organization_id: orgId,
