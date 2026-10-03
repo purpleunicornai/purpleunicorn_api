@@ -1,14 +1,17 @@
 model role_result_score_breakdown {
-  uid            String      @id @unique @default(uuid()) @db.Uuid
-  created        DateTime    @default(now())
-  updated        DateTime    @updatedAt
-  role_result_id String      @db.Uuid
-  role_result    role_result @relation(fields: [role_result_id], references: [uid])
+  uid            String        @id @unique @default(uuid()) @db.Uuid
+  created        DateTime      @default(now())
+  updated        DateTime      @updatedAt
+  role_result_id String        @db.Uuid
+  role_result    role_result   @relation(fields: [role_result_id], references: [uid])
+  role_filter_id String?       @db.Uuid
+  role_filter    role_filters? @relation(fields: [role_filter_id], references: [uid])
   category       String
-  weight         Int         @default(0)
-  applicable     Boolean     @default(false)
-  score          Int         @default(0)
+  weight         Int           @default(0)
+  applicable     Boolean       @default(false)
+  score          Int           @default(0)
   metadata       Json?
 
   @@index([role_result_id])
+  @@index([role_filter_id])
 }

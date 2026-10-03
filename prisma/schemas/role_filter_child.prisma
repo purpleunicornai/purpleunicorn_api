@@ -1,0 +1,13 @@
+model role_filter_child {
+  uid        String       @id @unique @default(uuid()) @db.Uuid
+  created    DateTime     @default(now())
+  updated    DateTime     @updatedAt
+  parent_uid String       @db.Uuid
+  parent     role_filters @relation(fields: [parent_uid], references: [uid])
+  title      String
+  value      String?
+  list_value String[]
+  boolean    Boolean      @default(false)
+
+  @@index([parent_uid])
+}
