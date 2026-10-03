@@ -5,6 +5,7 @@ import { RequestException } from '../common/exception/core/ExceptionBase';
 import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
 import { RoleFilterDto } from './dto/role_filter.dto';
 import { Prisma, role_filters, roles } from '../generated/prisma/client';
+import { RoleFilterPriority } from '../generated/prisma/enums';
 
 const ROLE_WITH_DETAILS_INCLUDE = {
   project: {
@@ -112,7 +113,40 @@ export class RolesService {
     isFirst: boolean;
   }> {
     await this.getRole(roleId, orgId, userId);
-    throw new Error('not yet implemented — see Task 4');
+
+    // Archive previous filters to mark them as superseded, so we can keep a
+    // history of filter sets for the role.
+    const { count } = await this.prisma.role_filters.updateMany({
+      where: { role_id: roleId },
+      data: { archived: true, archived_at: new Date() },
+    });
+
+    const filters = await Promise.all(
+      dto.filters.map((item) =>
+        this.prisma.role_filters.create({
+          data: {
+            role_id: roleId,
+            category: item.category,
+            value: item.value,
+            list_value: item.list_value,
+            priority: item.priority.toUpperCase() as RoleFilterPriority,
+            non_negotiable: item.non_negotiable ?? false,
+            metadata: {},
+            children: {
+              create: (item.children ?? []).map((child) => ({
+                title: child.title,
+                value: child.value,
+                list_value: child.list_value,
+                boolean: child.boolean_value,
+              })),
+            },
+          },
+          include: { children: true },
+        }),
+      ),
+    );
+
+    return { filters, isFirst: count === 0 };
   }
 
   async update(

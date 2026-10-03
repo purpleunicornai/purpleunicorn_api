@@ -235,6 +235,169 @@ describe('RolesService', () => {
     });
   });
 
+  describe('createFilter', () => {
+    it('checks the role is visible to the caller, then archives previous filters and saves the new ones', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
+      const dto = buildRoleFilterDto({
+        filters: [
+          {
+            category: 'skills',
+            list_value: ['React', 'Node.js'],
+            priority: 'essential',
+          },
+        ],
+      });
+
+      const result = await service.createFilter(
+        'role-1',
+        dto,
+        'org-1',
+        'user-1',
+      );
+
+      expect(projectsService.findOneForUser).toHaveBeenCalledWith(
+        'project-1',
+        'org-1',
+        'user-1',
+      );
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1' },
+        data: { archived: true, archived_at: expect.any(Date) },
+      });
+      expect(prisma.role_filters.create).toHaveBeenCalledWith({
+        data: {
+          role_id: 'role-1',
+          category: 'skills',
+          value: undefined,
+          list_value: ['React', 'Node.js'],
+          priority: 'ESSENTIAL',
+          non_negotiable: false,
+          metadata: {},
+          children: { create: [] },
+        },
+        include: { children: true },
+      });
+      expect(result).toEqual({ filters: [{ uid: 'filter-1' }], isFirst: true });
+    });
+
+    it('reports isFirst false when previous filters existed for the role', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.updateMany.mockResolvedValue({ count: 3 });
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-2' });
+
+      const result = await service.createFilter(
+        'role-1',
+        buildRoleFilterDto(),
+        'org-1',
+        'user-1',
+      );
+
+      expect(result.isFirst).toBe(false);
+    });
+
+    it('creates one role_filters row per filter item in the dto', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create
+        .mockResolvedValueOnce({ uid: 'filter-1' })
+        .mockResolvedValueOnce({ uid: 'filter-2' });
+      const dto = buildRoleFilterDto({
+        filters: [
+          {
+            category: 'job_titles',
+            list_value: ['Head of Engineering'],
+            priority: 'essential',
+          },
+          {
+            category: 'job_titles',
+            list_value: ['Tech Lead'],
+            priority: 'optional',
+          },
+        ],
+      });
+
+      const result = await service.createFilter(
+        'role-1',
+        dto,
+        'org-1',
+        'user-1',
+      );
+
+      expect(prisma.role_filters.create).toHaveBeenCalledTimes(2);
+      expect(result.filters).toEqual([
+        { uid: 'filter-1' },
+        { uid: 'filter-2' },
+      ]);
+    });
+
+    it('nest-creates children, mapping boolean_value to the boolean column', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
+      const dto = buildRoleFilterDto({
+        filters: [
+          {
+            category: 'location',
+            value: 'ZA',
+            priority: 'essential',
+            children: [
+              { title: 'province', value: 'GP' },
+              { title: 'remote_work', boolean_value: true },
+            ],
+          },
+        ],
+      });
+
+      await service.createFilter('role-1', dto, 'org-1', 'user-1');
+
+      const data = prisma.role_filters.create.mock.calls[0][0].data;
+      expect(data.children).toEqual({
+        create: [
+          {
+            title: 'province',
+            value: 'GP',
+            list_value: undefined,
+            boolean: undefined,
+          },
+          {
+            title: 'remote_work',
+            value: undefined,
+            list_value: undefined,
+            boolean: true,
+          },
+        ],
+      });
+    });
+
+    it('defaults non_negotiable to false and lowercases priority into the stored enum', async () => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
+      const dto = buildRoleFilterDto({
+        filters: [
+          { category: 'industry', value: 'finance', priority: 'optional' },
+        ],
+      });
+
+      await service.createFilter('role-1', dto, 'org-1', 'user-1');
+
+      const data = prisma.role_filters.create.mock.calls[0][0].data;
+      expect(data.priority).toBe('OPTIONAL');
+      expect(data.non_negotiable).toBe(false);
+    });
+
+    it('throws a 404 RequestException when the role does not exist', async () => {
+      prisma.roles.findFirst.mockResolvedValue(null);
+
+      const error = await captureError(
+        service.createFilter('role-1', buildRoleFilterDto(), 'org-1', 'user-1'),
+      );
+
+      expect(error).toBeInstanceOf(RequestException);
+      expect(error.message).toBe('Role not found');
+      expect(error.getStatus()).toBe(404);
+      expect(prisma.role_filters.create).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getRoleResult', () => {
     it("fetches a role_result scoped to the caller's organization, including its candidate and their experience/education/sources", async () => {
       const result = {
