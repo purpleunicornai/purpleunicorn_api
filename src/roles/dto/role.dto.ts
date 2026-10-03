@@ -66,7 +66,7 @@ export class RoleFilterChildResponseDto {
   list_value?: string[];
 
   @ApiProperty({ required: false })
-  @Expose()
+  @Expose({ name: 'boolean' })
   @IsOptional()
   @IsBoolean()
   boolean_value?: boolean;
@@ -175,6 +175,15 @@ export class RoleResultScoreBreakdownDto {
   @Expose()
   @IsInt()
   score: number;
+
+  @ApiProperty({
+    description: 'The role_filters row this breakdown entry was scored against',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsUUID()
+  role_filter_id?: string;
 }
 
 export class RoleResultSummaryDto {
@@ -323,6 +332,16 @@ export class RoleResultSummaryDto {
   @ValidateNested({ each: true })
   @Type(() => RoleResultScoreBreakdownDto)
   score_breakdown?: RoleResultScoreBreakdownDto[];
+
+  @ApiProperty({
+    description:
+      'True when the candidate failed a non-negotiable filter and was excluded from ranking',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  disqualified?: boolean;
 }
 
 export class RoleDto {

@@ -3,6 +3,7 @@ import { Expose, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
+  IsIn,
   IsOptional,
   IsString,
   ValidateNested,
@@ -76,6 +77,15 @@ export class FilterItemDto {
   })
   @Expose()
   @IsString()
+  @IsIn([
+    'location',
+    'job_titles',
+    'skills',
+    'languages',
+    'industry',
+    'companies',
+    'education',
+  ])
   category: string;
 
   @ApiProperty({
@@ -107,6 +117,7 @@ export class FilterItemDto {
   })
   @Expose()
   @IsString()
+  @IsIn(['essential', 'optional'])
   priority: string;
 
   @ApiProperty({

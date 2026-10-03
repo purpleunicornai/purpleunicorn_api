@@ -3,7 +3,7 @@ model role_filter_child {
   created    DateTime     @default(now())
   updated    DateTime     @updatedAt
   parent_uid String       @db.Uuid
-  parent     role_filters @relation(fields: [parent_uid], references: [uid])
+  parent     role_filters @relation(fields: [parent_uid], references: [uid], onDelete: Cascade)
   title      String
   value      String?
   list_value String[]
