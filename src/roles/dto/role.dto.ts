@@ -4,7 +4,6 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
-  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -12,7 +11,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CandidateDto } from '../../common/dto/candidate.dto';
-import { CompanyFilterType } from '../../generated/prisma/enums';
 
 export class CreateRoleDto {
   @ApiProperty({
@@ -50,259 +48,88 @@ export class RoleProjectSummaryDto {
   name: string;
 }
 
-export class RoleFilterCompanyDto {
+export class RoleFilterChildResponseDto {
   @ApiProperty({ description: 'Unique identifier (UUID v4)' })
   @Expose()
   @IsUUID()
   uid: string;
 
-  @ApiProperty({ description: 'Record creation timestamp' })
-  @Expose()
-  @IsDateString()
-  created: string;
-
-  @ApiProperty({ description: 'Record last updated timestamp' })
-  @Expose()
-  @IsDateString()
-  updated: string;
-
-  @ApiProperty({
-    description: 'Whether this is a current, past, or excluded company',
-    enum: CompanyFilterType,
-  })
-  @Expose()
-  @IsEnum(CompanyFilterType)
-  type: CompanyFilterType;
-
-  @ApiProperty({ description: 'Company names', type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  company_names: string[];
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsDateString()
-  start_date?: string;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsDateString()
-  end_date?: string;
-}
-
-export class RoleFilterLocationCityDto {
-  @ApiProperty({ description: 'Unique identifier (UUID v4)' })
-  @Expose()
-  @IsUUID()
-  uid: string;
-
-  @ApiProperty({ description: 'Record creation timestamp' })
-  @Expose()
-  @IsDateString()
-  created: string;
-
-  @ApiProperty({ description: 'Record last updated timestamp' })
-  @Expose()
-  @IsDateString()
-  updated: string;
-
-  @ApiProperty({ description: 'City name' })
-  @Expose()
-  @IsString()
-  name: string;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  state?: string;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  country_code?: string;
-}
-
-export class RoleFilterSummaryDto {
-  @ApiProperty({ description: 'Unique identifier (UUID v4)' })
-  @Expose()
-  @IsUUID()
-  uid: string;
-
-  @ApiProperty({ description: 'Record creation timestamp' })
-  @Expose()
-  @IsDateString()
-  created: string;
-
-  @ApiProperty({ description: 'Record last updated timestamp' })
-  @Expose()
-  @IsDateString()
-  updated: string;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  country_code?: string;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  industry?: string;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsBoolean()
-  remote_work?: boolean;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsBoolean()
-  work_authorization_required?: boolean;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsInt()
-  experience_min_yrs?: number;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  @IsOptional()
-  @IsInt()
-  experience_max_yrs?: number;
-
-  @ApiProperty()
+  @ApiProperty({ description: 'Open-ended label, interpreted per-category' })
   @Expose()
   @IsString()
   title: string;
 
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  alternative_titles: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  title_levels: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  roles: string[];
-
-  @ApiProperty()
-  @Expose()
-  @IsInt()
-  current_role_min_yrs: number;
-
-  @ApiProperty()
-  @Expose()
-  @IsInt()
-  current_role_max_yrs: number;
-
-  @ApiProperty()
-  @Expose()
-  @IsInt()
-  current_role_tenure_yrs: number;
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  required_skills: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  optional_skills: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  education_levels: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  education_institution: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  education_excluded_institutions: string[];
-
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ required: false })
   @Expose()
   @IsOptional()
-  @IsDateString()
-  education_graduation_min_yr?: string | null;
+  @IsString()
+  value?: string;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: [String], required: false })
   @Expose()
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  list_value?: string[];
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  boolean_value?: boolean;
+}
+
+export class RoleFilterResponseDto {
+  @ApiProperty({ description: 'Unique identifier (UUID v4)' })
+  @Expose()
+  @IsUUID()
+  uid: string;
+
+  @ApiProperty({ description: 'Record creation timestamp' })
+  @Expose()
   @IsDateString()
-  education_graduation_max_yr?: string | null;
+  created: string;
 
-  @ApiProperty({ type: [String] })
+  @ApiProperty({ description: 'Record last updated timestamp' })
   @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  required_languages: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  optional_languages: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  career_growth: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  security_clearance_required: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  diversity: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  other_experience: string[];
-
-  @ApiProperty({ type: [String] })
-  @Expose()
-  @IsArray()
-  @IsString({ each: true })
-  sites: string[];
+  @IsDateString()
+  updated: string;
 
   @ApiProperty({
-    description: 'Whether this filter has been superseded by a newer one',
+    description:
+      'Fixed category: location, job_titles, skills, languages, industry, companies, or education',
+  })
+  @Expose()
+  @IsString()
+  category: string;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  value?: string;
+
+  @ApiProperty({ type: [String] })
+  @Expose()
+  @IsArray()
+  @IsString({ each: true })
+  list_value: string[];
+
+  @ApiProperty({ description: '"ESSENTIAL" or "OPTIONAL"' })
+  @Expose()
+  @IsString()
+  priority: string;
+
+  @ApiProperty({
+    description:
+      'If true, a candidate who does not fully match this filter is disqualified',
+  })
+  @Expose()
+  @IsBoolean()
+  non_negotiable: boolean;
+
+  @ApiProperty({
+    description: 'Whether this filter has been superseded by a newer set',
   })
   @Expose()
   @IsBoolean()
@@ -310,7 +137,7 @@ export class RoleFilterSummaryDto {
 
   @ApiProperty({
     description:
-      'When a search was last run against this filter — unset until the user has run a search on it',
+      'When a search was last run against this filter set — unset until the user has run a search on it',
     required: false,
   })
   @Expose()
@@ -318,19 +145,12 @@ export class RoleFilterSummaryDto {
   @IsDateString()
   search_run_date?: string;
 
-  @ApiProperty({ type: () => [RoleFilterCompanyDto] })
+  @ApiProperty({ type: () => [RoleFilterChildResponseDto] })
   @Expose()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => RoleFilterCompanyDto)
-  filter_companies: RoleFilterCompanyDto[];
-
-  @ApiProperty({ type: () => [RoleFilterLocationCityDto] })
-  @Expose()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => RoleFilterLocationCityDto)
-  filter_location_cities: RoleFilterLocationCityDto[];
+  @Type(() => RoleFilterChildResponseDto)
+  children: RoleFilterChildResponseDto[];
 }
 
 export class RoleResultScoreBreakdownDto {
@@ -577,15 +397,15 @@ export class RoleDto {
   @ApiProperty({
     description:
       'Non-archived filter criteria for this role — only present when fetching a single role',
-    type: () => [RoleFilterSummaryDto],
+    type: () => [RoleFilterResponseDto],
     required: false,
   })
   @Expose()
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => RoleFilterSummaryDto)
-  role_filters?: RoleFilterSummaryDto[];
+  @Type(() => RoleFilterResponseDto)
+  role_filters?: RoleFilterResponseDto[];
 
   @ApiProperty({
     description:
