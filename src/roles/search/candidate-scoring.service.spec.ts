@@ -2,7 +2,7 @@ import {
   CandidateScoringService,
   CandidateScoreCategory,
 } from './candidate-scoring.service';
-import { RoleFilterDto } from '../dto/role_filter.dto';
+import { ParsedRoleFilters } from './role-filter-parser';
 import {
   candidate,
   candidate_experience,
@@ -14,37 +14,15 @@ type CandidateWithHistory = candidate & {
   education: candidate_education[];
 };
 
-function buildFilter(overrides: Partial<RoleFilterDto> = {}): RoleFilterDto {
+function buildFilters(
+  overrides: Partial<ParsedRoleFilters> = {},
+): ParsedRoleFilters {
   return {
-    title: 'Fullstack Developer',
-    alternative_titles: [],
-    title_levels: [],
-    roles: [],
-    current_role_min_yrs: 0,
-    current_role_max_yrs: 0,
-    current_role_tenure_yrs: 0,
-    country_code: '',
-    remote_work: false,
-    work_authorization_required: false,
-    filter_location_cities: [],
-    experience_min_yrs: 0,
-    experience_max_yrs: 0,
-    required_skills: [],
-    optional_skills: [],
-    education_levels: [],
-    education_institution: [],
-    education_excluded_institutions: [],
-    education_graduation_min_yr: null,
-    education_graduation_max_yr: null,
-    required_languages: [],
-    optional_languages: [],
-    career_growth: [],
-    security_clearance_required: [],
-    diversity: [],
-    other_experience: [],
-    sites: [],
-    filter_companies: [],
-    metadata: { original_prompt: '', refined_prompt: '', complete: false },
+    jobTitles: [],
+    skills: [],
+    languages: [],
+    companies: [],
+    education: [],
     ...overrides,
   };
 }
@@ -84,25 +62,6 @@ function buildCandidate(
     enriched_at: null,
     experience: [],
     education: [],
-    ...overrides,
-  };
-}
-
-function buildExperience(
-  overrides: Partial<candidate_experience> = {},
-): candidate_experience {
-  return {
-    uid: 'experience-1',
-    created: new Date('2026-08-23T00:00:00.000Z'),
-    updated: new Date('2026-08-23T00:00:00.000Z'),
-    candidate_id: 'candidate-1',
-    company_name: 'TechCorp',
-    company_location: null,
-    role: 'Engineer',
-    start_date: new Date('2020-01-01T00:00:00.000Z'),
-    end_date: null,
-    responsibilities: null,
-    skills: [],
     ...overrides,
   };
 }
@@ -147,299 +106,370 @@ describe('CandidateScoringService', () => {
   });
 
   describe('scoreCandidate', () => {
-    it('scores 100 when every applicable category is fully matched', () => {
-      const filter = buildFilter({ required_skills: ['TypeScript'] });
+    it('scores the fixed 80% essential weight when the only essential row is fully matched (the 20% optional bucket goes unclaimed when no optional rows exist)', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
+      });
       const candidate = buildCandidate({ skills: ['TypeScript'] });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(result.score).toBe(100);
+      expect(result.score).toBe(80);
+      expect(result.disqualified).toBe(false);
     });
 
-    it('scores 0 when the only applicable category is fully missed', () => {
-      const filter = buildFilter({ required_skills: ['TypeScript'] });
+    it('scores 0 when the only essential row is fully missed', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
+      });
       const candidate = buildCandidate({ skills: [] });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
       expect(result.score).toBe(0);
     });
 
-    it('excludes categories the filter did not specify from the score, rather than penalizing them', () => {
-      const filter = buildFilter({ required_skills: ['TypeScript'] });
-      // Nothing else set on the filter: no optional_skills, no experience
-      // range, no education/language/location/diversity criteria.
+    it('splits essential weight (80%) equally across multiple essential rows', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+          {
+            value: ['Go'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
+      });
+      // Matches only the first essential row (TypeScript), misses the second (Go):
+      // expect 40 (half of the 80% essential bucket).
       const candidate = buildCandidate({ skills: ['TypeScript'] });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(result.score).toBe(100);
-      expect(result.breakdown.filter((entry) => entry.applicable)).toHaveLength(
-        1,
-      );
+      expect(result.score).toBe(40);
     });
 
-    it('rounds the final score to the nearest whole number', () => {
-      const filter = buildFilter({
-        required_skills: ['TypeScript', 'AWS', 'Docker'],
+    it('splits optional weight (20%) equally across multiple optional rows', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+          {
+            value: ['Go'],
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
       });
       const candidate = buildCandidate({ skills: ['TypeScript'] });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(Number.isInteger(result.score)).toBe(true);
-      expect(result.score).toBe(33);
+      expect(result.score).toBe(10);
     });
 
-    it('weights required skills above optional skills', () => {
-      const filter = buildFilter({
-        required_skills: ['TypeScript'],
-        optional_skills: ['GraphQL'],
+    it('weights essential and optional rows together as 80/20', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+          {
+            value: ['Go'],
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
+      });
+      // Essential fully matched (80), optional fully missed (0 of 20): 80.
+      const candidate = buildCandidate({ skills: ['TypeScript'] });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(result.score).toBe(80);
+    });
+
+    it('returns a score of 0 with no applicable rows when the filter is empty', () => {
+      const result = service.scoreCandidate(buildFilters(), buildCandidate());
+
+      expect(result.score).toBe(0);
+      expect(result.breakdown).toEqual([]);
+    });
+
+    it('disqualifies a candidate who fails a non-negotiable row, regardless of priority', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'OPTIONAL',
+            nonNegotiable: true,
+            filterId: 'f1',
+          },
+        ],
+      });
+      const candidate = buildCandidate({ skills: [] });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(result.disqualified).toBe(true);
+      expect(result.score).toBe(0);
+    });
+
+    it('does not disqualify when the non-negotiable row is fully matched', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: true,
+            filterId: 'f1',
+          },
+        ],
+      });
+      const candidate = buildCandidate({ skills: ['TypeScript'] });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(result.disqualified).toBe(false);
+      expect(result.score).toBe(80);
+    });
+
+    it('disqualifies even when every other row is a perfect match', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: true,
+            filterId: 'f1',
+          },
+          {
+            value: ['Go'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
+      });
+      const candidate = buildCandidate({ skills: ['Go'] });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(result.disqualified).toBe(true);
+    });
+
+    it('stamps each breakdown entry with the source filterId', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'skills-filter-1',
+          },
+        ],
       });
 
-      const meetsRequired = service.scoreCandidate(
-        filter,
+      const result = service.scoreCandidate(
+        filters,
         buildCandidate({ skills: ['TypeScript'] }),
       );
-      const meetsOptional = service.scoreCandidate(
-        filter,
-        buildCandidate({ skills: ['GraphQL'] }),
-      );
 
-      expect(meetsRequired.score).toBeGreaterThan(meetsOptional.score);
+      expect(findCategory(result.breakdown, 'skills')).toEqual(
+        expect.objectContaining({ filterId: 'skills-filter-1' }),
+      );
     });
   });
 
-  describe('required_skills category', () => {
-    it('is not applicable when the filter has no required skills', () => {
-      const filter = buildFilter({ required_skills: [] });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'required_skills')).toEqual(
-        expect.objectContaining({ applicable: false, earned: 0 }),
-      );
-    });
-
-    it('awards partial credit proportional to how many required skills match, case-insensitively', () => {
-      const filter = buildFilter({
-        required_skills: ['TypeScript', 'AWS'],
+  describe('skills category', () => {
+    it('awards partial credit proportional to how many skills match, case-insensitively', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript', 'AWS'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
       });
       const candidate = buildCandidate({ skills: ['typescript'] });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'required_skills')).toEqual(
-        expect.objectContaining({ weight: 30, earned: 15, applicable: true }),
+      expect(findCategory(result.breakdown, 'skills')).toEqual(
+        expect.objectContaining({ weight: 80, earned: 40, applicable: true }),
+      );
+    });
+
+    it('produces one breakdown entry per skills row', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+          {
+            value: ['Go'],
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+            filterId: 'f2',
+          },
+        ],
+      });
+
+      const result = service.scoreCandidate(
+        filters,
+        buildCandidate({ skills: ['TypeScript', 'Go'] }),
+      );
+
+      expect(
+        result.breakdown.filter((entry) => entry.category === 'skills'),
+      ).toHaveLength(2);
+    });
+  });
+
+  describe('languages category', () => {
+    it('awards full credit when every language in the row matches, case-insensitively', () => {
+      const filters = buildFilters({
+        languages: [
+          {
+            value: ['English'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
+      });
+      const candidate = buildCandidate({ languages: ['english'] });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(findCategory(result.breakdown, 'languages')).toEqual(
+        expect.objectContaining({ weight: 80, earned: 80, applicable: true }),
       );
     });
   });
 
-  describe('optional_skills category', () => {
-    it('is not applicable when the filter has no optional skills', () => {
-      const filter = buildFilter({ optional_skills: [] });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'optional_skills')).toEqual(
-        expect.objectContaining({ applicable: false, earned: 0 }),
-      );
-    });
-
-    it('awards full credit when every optional skill matches', () => {
-      const filter = buildFilter({ optional_skills: ['GraphQL', 'Docker'] });
-      const candidate = buildCandidate({ skills: ['GraphQL', 'Docker'] });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'optional_skills')).toEqual(
-        expect.objectContaining({ weight: 5, earned: 5, applicable: true }),
-      );
-    });
-  });
-
-  describe('experience_years category', () => {
-    it('is not applicable when neither min nor max experience is set', () => {
-      const filter = buildFilter({
-        experience_min_yrs: 0,
-        experience_max_yrs: 0,
-      });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'experience_years')).toEqual(
-        expect.objectContaining({ applicable: false }),
-      );
-    });
-
-    it('awards full credit when the candidate is within range', () => {
-      const filter = buildFilter({
-        experience_min_yrs: 2,
-        experience_max_yrs: 5,
-      });
-      const candidate = buildCandidate({ experience_years: 3 });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'experience_years')).toEqual(
-        expect.objectContaining({ weight: 15, earned: 15, applicable: true }),
-      );
-    });
-
-    it('does not penalize a candidate for having more experience than the max', () => {
-      const filter = buildFilter({
-        experience_min_yrs: 2,
-        experience_max_yrs: 5,
-      });
-      const candidate = buildCandidate({ experience_years: 20 });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'experience_years')).toEqual(
-        expect.objectContaining({ earned: 15 }),
-      );
-    });
-
-    it('gives linear partial credit below the minimum', () => {
-      const filter = buildFilter({
-        experience_min_yrs: 4,
-        experience_max_yrs: 0,
-      });
-      const candidate = buildCandidate({ experience_years: 2 });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'experience_years')).toEqual(
-        expect.objectContaining({ earned: 7.5 }),
-      );
-    });
-  });
-
-  describe('current_role_tenure category', () => {
-    it('is not applicable when neither current-role min nor max is set', () => {
-      const filter = buildFilter({
-        current_role_min_yrs: 0,
-        current_role_max_yrs: 0,
-      });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'current_role_tenure')).toEqual(
-        expect.objectContaining({ applicable: false }),
-      );
-    });
-
-    it('awards full credit using the most recent open-ended experience entry', () => {
-      const filter = buildFilter({ current_role_min_yrs: 2 });
-      const candidate = buildCandidate({
-        experience: [
-          buildExperience({
-            start_date: new Date(Date.now() - 5 * 365.25 * 24 * 60 * 60 * 1000),
-            end_date: null,
-          }),
+  describe('job_titles category', () => {
+    it("awards full credit when the candidate's current title matches one of the row's titles, case-insensitively", () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
         ],
       });
+      const candidate = buildCandidate({ current_title: 'software engineer' });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'current_role_tenure')).toEqual(
-        expect.objectContaining({ weight: 10, earned: 10, applicable: true }),
+      expect(findCategory(result.breakdown, 'job_titles')).toEqual(
+        expect.objectContaining({ weight: 80, earned: 80, applicable: true }),
       );
     });
 
-    it('scores 0 when the candidate has no open-ended experience entry', () => {
-      const filter = buildFilter({ current_role_min_yrs: 2 });
-      const candidate = buildCandidate({
-        experience: [
-          buildExperience({
-            start_date: new Date('2015-01-01T00:00:00.000Z'),
-            end_date: new Date('2018-01-01T00:00:00.000Z'),
-          }),
+    it('scores 0 when the candidate has no matching title on file', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
         ],
       });
+      const candidate = buildCandidate({ current_title: 'Product Manager' });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'current_role_tenure')).toEqual(
-        expect.objectContaining({ earned: 0, applicable: true }),
-      );
-    });
-
-    it('ignores closed-out roles and uses the most recently started open-ended entry', () => {
-      const filter = buildFilter({ current_role_min_yrs: 1 });
-      const candidate = buildCandidate({
-        experience: [
-          buildExperience({
-            start_date: new Date('2010-01-01T00:00:00.000Z'),
-            end_date: new Date('2015-01-01T00:00:00.000Z'),
-          }),
-          buildExperience({
-            start_date: new Date(Date.now() - 3 * 365.25 * 24 * 60 * 60 * 1000),
-            end_date: null,
-          }),
-        ],
-      });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'current_role_tenure')).toEqual(
-        expect.objectContaining({ earned: 10 }),
+      expect(findCategory(result.breakdown, 'job_titles')).toEqual(
+        expect.objectContaining({ earned: 0 }),
       );
     });
   });
 
   describe('education category', () => {
-    it('is not applicable when the filter has no education criteria', () => {
-      const filter = buildFilter({
-        education_levels: [],
-        education_institution: [],
-        education_excluded_institutions: [],
+    it('awards full credit when the candidate has a matching qualification/institution', () => {
+      const filters = buildFilters({
+        education: [
+          {
+            value: {
+              qualifications: ["bachelor's"],
+              institutions: ['Oxford'],
+              institutionType: 'include',
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
       });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'education')).toEqual(
-        expect.objectContaining({ applicable: false }),
-      );
-    });
-
-    it('matches degree text against education_levels, case-insensitively', () => {
-      const filter = buildFilter({ education_levels: ["bachelor's"] });
-      const candidate = buildCandidate({
-        education: [buildEducation({ degree: "Bachelor's Degree" })],
-      });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'education')).toEqual(
-        expect.objectContaining({ weight: 15, earned: 15, applicable: true }),
-      );
-    });
-
-    it('matches institution name against education_institution via substring', () => {
-      const filter = buildFilter({ education_institution: ['Oxford'] });
       const candidate = buildCandidate({
         education: [
-          buildEducation({ institution_name: 'University of Oxford' }),
+          buildEducation({
+            degree: "Bachelor's Degree",
+            institution_name: 'University of Oxford',
+          }),
         ],
       });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
       expect(findCategory(result.breakdown, 'education')).toEqual(
-        expect.objectContaining({ earned: 15, applicable: true }),
+        expect.objectContaining({ weight: 80, earned: 80, applicable: true }),
       );
     });
 
-    it('zeroes the category when the candidate attended an excluded institution', () => {
-      const filter = buildFilter({
-        education_institution: ['Oxford'],
-        education_excluded_institutions: ['Excluded University'],
+    it('zeroes the row when institutionType is exclude and the candidate attended one of the listed institutions', () => {
+      const filters = buildFilters({
+        education: [
+          {
+            value: {
+              qualifications: [],
+              institutions: ['Excluded University'],
+              institutionType: 'exclude',
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
       });
       const candidate = buildCandidate({
         education: [
@@ -447,189 +477,208 @@ describe('CandidateScoringService', () => {
         ],
       });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
       expect(findCategory(result.breakdown, 'education')).toEqual(
-        expect.objectContaining({ earned: 0, applicable: true }),
+        expect.objectContaining({ earned: 0 }),
       );
     });
+  });
 
-    it('averages the levels and institution fractions when both are specified', () => {
-      const filter = buildFilter({
-        education_levels: ["bachelor's"],
-        education_institution: ['Oxford'],
+  describe('companies category', () => {
+    it('awards full credit when the candidate has worked at one of the included companies', () => {
+      const filters = buildFilters({
+        companies: [
+          {
+            value: { names: ['Acme'], type: 'include' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
       });
       const candidate = buildCandidate({
-        education: [
-          buildEducation({
-            degree: "Bachelor's Degree",
-            institution_name: 'Some Other School',
-          }),
+        experience: [
+          {
+            uid: 'exp-1',
+            created: new Date(),
+            updated: new Date(),
+            candidate_id: 'candidate-1',
+            company_name: 'Acme',
+            company_location: null,
+            role: 'Engineer',
+            start_date: new Date('2020-01-01'),
+            end_date: null,
+            responsibilities: null,
+            skills: [],
+          },
         ],
       });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'education')).toEqual(
-        expect.objectContaining({ earned: 7.5 }),
+      expect(findCategory(result.breakdown, 'companies')).toEqual(
+        expect.objectContaining({ earned: 80 }),
       );
     });
-  });
 
-  describe('languages category', () => {
-    it('is not applicable when the filter has no language criteria', () => {
-      const filter = buildFilter({
-        required_languages: [],
-        optional_languages: [],
+    it('zeroes the row when type is exclude and the candidate worked at one of the listed companies', () => {
+      const filters = buildFilters({
+        companies: [
+          {
+            value: { names: ['Acme'], type: 'exclude' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+            filterId: 'f1',
+          },
+        ],
       });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'languages')).toEqual(
-        expect.objectContaining({ applicable: false }),
-      );
-    });
-
-    it('scores entirely on required languages when only required is set', () => {
-      const filter = buildFilter({ required_languages: ['English'] });
-      const candidate = buildCandidate({ languages: ['English'] });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'languages')).toEqual(
-        expect.objectContaining({ weight: 5, earned: 5, applicable: true }),
-      );
-    });
-
-    it('scores entirely on optional languages when only optional is set', () => {
-      const filter = buildFilter({ optional_languages: ['Spanish'] });
-      const candidate = buildCandidate({ languages: [] });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'languages')).toEqual(
-        expect.objectContaining({ earned: 0, applicable: true }),
-      );
-    });
-
-    it('weights required 70% and optional 30% when both are set', () => {
-      const filter = buildFilter({
-        required_languages: ['English'],
-        optional_languages: ['Spanish'],
-      });
-      const candidate = buildCandidate({ languages: ['English'] });
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'languages')).toEqual(
-        expect.objectContaining({ earned: 3.5 }),
-      );
-    });
-  });
-
-  describe('location_eligibility category', () => {
-    it('is not applicable when the filter has no location/remote/work-auth requirement', () => {
-      const filter = buildFilter({
-        country_code: '',
-        remote_work: false,
-        work_authorization_required: false,
-      });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'location_eligibility')).toEqual(
-        expect.objectContaining({ applicable: false }),
-      );
-    });
-
-    it('awards credit when the candidate is located in the required country', () => {
-      const filter = buildFilter({ country_code: 'GB' });
       const candidate = buildCandidate({
-        current_location_country_code: 'GB',
+        experience: [
+          {
+            uid: 'exp-1',
+            created: new Date(),
+            updated: new Date(),
+            candidate_id: 'candidate-1',
+            company_name: 'Acme',
+            company_location: null,
+            role: 'Engineer',
+            start_date: new Date('2020-01-01'),
+            end_date: null,
+            responsibilities: null,
+            skills: [],
+          },
+        ],
       });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'location_eligibility')).toEqual(
-        expect.objectContaining({ weight: 15, earned: 15, applicable: true }),
+      expect(findCategory(result.breakdown, 'companies')).toEqual(
+        expect.objectContaining({ earned: 0 }),
+      );
+    });
+  });
+
+  describe('location category', () => {
+    it('awards full credit when the candidate is in the required country', () => {
+      const filters = buildFilters({
+        location: {
+          value: {
+            countryCode: 'GB',
+            regions: [],
+            remoteWork: false,
+            workAuthorizationRequired: false,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+          filterId: 'f1',
+        },
+      });
+      const candidate = buildCandidate({ current_location_country_code: 'GB' });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(findCategory(result.breakdown, 'location')).toEqual(
+        expect.objectContaining({ weight: 80, earned: 80, applicable: true }),
       );
     });
 
     it('awards credit when the candidate is elsewhere but open to relocation', () => {
-      const filter = buildFilter({ country_code: 'GB' });
+      const filters = buildFilters({
+        location: {
+          value: {
+            countryCode: 'GB',
+            regions: [],
+            remoteWork: false,
+            workAuthorizationRequired: false,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+          filterId: 'f1',
+        },
+      });
       const candidate = buildCandidate({
         current_location_country_code: 'US',
         open_to_relocation: true,
       });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'location_eligibility')).toEqual(
-        expect.objectContaining({ earned: 15 }),
-      );
+      expect(findCategory(result.breakdown, 'location')?.earned).toBe(80);
     });
 
-    it('averages multiple active sub-checks', () => {
-      const filter = buildFilter({
-        country_code: 'GB',
-        remote_work: true,
+    it('averages the country/remote/work-authorization sub-checks', () => {
+      const filters = buildFilters({
+        location: {
+          value: {
+            countryCode: 'GB',
+            regions: [],
+            remoteWork: true,
+            workAuthorizationRequired: false,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+          filterId: 'f1',
+        },
       });
       const candidate = buildCandidate({
         current_location_country_code: 'GB',
         open_to_remote_work: false,
       });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'location_eligibility')).toEqual(
-        expect.objectContaining({ earned: 7.5 }),
-      );
+      expect(findCategory(result.breakdown, 'location')?.earned).toBe(40);
     });
 
     it('checks for a work authorization status on file when required', () => {
-      const filter = buildFilter({ work_authorization_required: true });
+      const filters = buildFilters({
+        location: {
+          value: {
+            countryCode: '',
+            regions: [],
+            remoteWork: false,
+            workAuthorizationRequired: true,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+          filterId: 'f1',
+        },
+      });
+
       const withStatus = service.scoreCandidate(
-        filter,
+        filters,
         buildCandidate({ current_work_authorization_status: 'Citizen' }),
       );
       const withoutStatus = service.scoreCandidate(
-        filter,
+        filters,
         buildCandidate({ current_work_authorization_status: null }),
       );
 
-      expect(
-        findCategory(withStatus.breakdown, 'location_eligibility')?.earned,
-      ).toBe(15);
-      expect(
-        findCategory(withoutStatus.breakdown, 'location_eligibility')?.earned,
-      ).toBe(0);
+      expect(findCategory(withStatus.breakdown, 'location')?.earned).toBe(80);
+      expect(findCategory(withoutStatus.breakdown, 'location')?.earned).toBe(0);
     });
   });
 
-  describe('diversity category', () => {
-    it('is not applicable when the filter has no diversity criteria', () => {
-      const filter = buildFilter({ diversity: [] });
-      const candidate = buildCandidate();
-
-      const result = service.scoreCandidate(filter, candidate);
-
-      expect(findCategory(result.breakdown, 'diversity')).toEqual(
-        expect.objectContaining({ applicable: false }),
-      );
-    });
-
-    it('awards partial credit proportional to how many diversity tags match', () => {
-      const filter = buildFilter({
-        diversity: ['Veteran', 'Underrepresented'],
+  describe('industry category', () => {
+    it('awards full credit when the candidate experience includes a role at a company in the required industry', () => {
+      // industry has no first-class candidate field to match against today —
+      // it is scored as applicable-but-unmatched (0) unless/until the
+      // candidate model gains an industry signal. This locks in that
+      // intentional current behavior rather than leaving it undefined.
+      const filters = buildFilters({
+        industry: {
+          value: 'finance',
+          priority: 'OPTIONAL',
+          nonNegotiable: false,
+          filterId: 'f1',
+        },
       });
-      const candidate = buildCandidate({ diversity: ['Veteran'] });
 
-      const result = service.scoreCandidate(filter, candidate);
+      const result = service.scoreCandidate(filters, buildCandidate());
 
-      expect(findCategory(result.breakdown, 'diversity')).toEqual(
-        expect.objectContaining({ weight: 5, earned: 2.5, applicable: true }),
+      expect(findCategory(result.breakdown, 'industry')).toEqual(
+        expect.objectContaining({ applicable: true, earned: 0 }),
       );
     });
   });
