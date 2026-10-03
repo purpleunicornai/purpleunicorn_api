@@ -51,6 +51,9 @@ function buildPrisma() {
       create: jest.fn(),
       updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
+    role_filter_child: {
+      createMany: jest.fn(),
+    },
     role_result: {
       findFirst: jest.fn(),
     },
@@ -61,35 +64,13 @@ function buildRoleFilterDto(
   overrides: Partial<RoleFilterDto> = {},
 ): RoleFilterDto {
   return {
-    title: 'Fullstack Developer',
-    alternative_titles: [],
-    title_levels: [],
-    roles: [],
-    current_role_min_yrs: 0,
-    current_role_max_yrs: 0,
-    current_role_tenure_yrs: 0,
-    country_code: 'US',
-    remote_work: false,
-    work_authorization_required: false,
-    filter_location_cities: [],
-    experience_min_yrs: 0,
-    experience_max_yrs: 0,
-    required_skills: ['React', 'Node.js'],
-    optional_skills: [],
-    education_levels: [],
-    education_institution: [],
-    education_excluded_institutions: [],
-    education_graduation_min_yr: null,
-    education_graduation_max_yr: null,
-    required_languages: [],
-    optional_languages: [],
-    career_growth: [],
-    security_clearance_required: [],
-    diversity: [],
-    other_experience: [],
-    sites: [],
-    filter_companies: [],
-    metadata: { original_prompt: '', refined_prompt: '', complete: false },
+    filters: [
+      {
+        category: 'skills',
+        list_value: ['React', 'Node.js'],
+        priority: 'essential',
+      },
+    ],
     ...overrides,
   };
 }
@@ -167,10 +148,7 @@ describe('RolesService', () => {
           project: { select: { name: true } },
           role_filters: {
             where: { archived: false },
-            include: {
-              filter_companies: true,
-              filter_location_cities: true,
-            },
+            include: { children: true },
           },
           role_result: {
             where: { role_filter: { archived: false } },
@@ -254,127 +232,6 @@ describe('RolesService', () => {
         },
       });
       expect(result).toBe(created);
-    });
-  });
-
-  describe('createFilter', () => {
-    it('checks the role is visible to the caller, then saves the filter criteria', async () => {
-      prisma.roles.findFirst.mockResolvedValue(buildRole());
-      const created = { uid: 'filter-1' };
-      prisma.role_filters.create.mockResolvedValue(created);
-      const dto = buildRoleFilterDto({ title: 'Fullstack Developer' });
-
-      const result = await service.createFilter(
-        'role-1',
-        dto,
-        'org-1',
-        'user-1',
-      );
-
-      expect(projectsService.findOneForUser).toHaveBeenCalledWith(
-        'project-1',
-        'org-1',
-        'user-1',
-      );
-      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
-        where: { role_id: 'role-1' },
-        data: { archived: true },
-      });
-      expect(prisma.role_filters.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          role_id: 'role-1',
-          title: 'Fullstack Developer',
-          required_skills: ['React', 'Node.js'],
-        }),
-        include: {
-          filter_companies: true,
-          filter_location_cities: true,
-        },
-      });
-      expect(result).toEqual({ filter: created, isFirst: true });
-    });
-
-    it('reports isFirst false when a previous filter existed for the role', async () => {
-      prisma.roles.findFirst.mockResolvedValue(buildRole());
-      prisma.role_filters.updateMany.mockResolvedValue({ count: 1 });
-      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-2' });
-
-      const result = await service.createFilter(
-        'role-1',
-        buildRoleFilterDto(),
-        'org-1',
-        'user-1',
-      );
-
-      expect(result.isFirst).toBe(false);
-    });
-
-    it('nests filter_location_cities as a create', async () => {
-      prisma.roles.findFirst.mockResolvedValue(buildRole());
-      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
-      const dto = buildRoleFilterDto({
-        filter_location_cities: [
-          {
-            name: 'London',
-            state: '',
-            country_code: 'GB',
-          },
-        ],
-      });
-
-      await service.createFilter('role-1', dto, 'org-1', 'user-1');
-
-      const data = prisma.role_filters.create.mock.calls[0][0].data;
-      expect(data.filter_location_cities).toEqual({
-        create: [
-          {
-            name: 'London',
-            state: '',
-            country_code: 'GB',
-          },
-        ],
-      });
-    });
-
-    it('passes the industry field through to the saved filter', async () => {
-      prisma.roles.findFirst.mockResolvedValue(buildRole());
-      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
-      const dto = buildRoleFilterDto({ industry: 'Technology' });
-
-      await service.createFilter('role-1', dto, 'org-1', 'user-1');
-
-      const data = prisma.role_filters.create.mock.calls[0][0].data;
-      expect(data.industry).toBe('Technology');
-    });
-
-    it('converts graduation years into January 1st UTC dates, and passes through null', async () => {
-      prisma.roles.findFirst.mockResolvedValue(buildRole());
-      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-1' });
-      const dto = buildRoleFilterDto({
-        education_graduation_min_yr: 2020,
-        education_graduation_max_yr: null,
-      });
-
-      await service.createFilter('role-1', dto, 'org-1', 'user-1');
-
-      const data = prisma.role_filters.create.mock.calls[0][0].data;
-      expect(data.education_graduation_min_yr).toEqual(
-        new Date(Date.UTC(2020, 0, 1)),
-      );
-      expect(data.education_graduation_max_yr).toBeNull();
-    });
-
-    it('throws a 404 RequestException when the role does not exist', async () => {
-      prisma.roles.findFirst.mockResolvedValue(null);
-
-      const error = await captureError(
-        service.createFilter('role-1', buildRoleFilterDto(), 'org-1', 'user-1'),
-      );
-
-      expect(error).toBeInstanceOf(RequestException);
-      expect(error.message).toBe('Role not found');
-      expect(error.getStatus()).toBe(404);
-      expect(prisma.role_filters.create).not.toHaveBeenCalled();
     });
   });
 

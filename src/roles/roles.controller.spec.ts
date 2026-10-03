@@ -231,13 +231,17 @@ describe('RolesController', () => {
   });
 
   describe('createFilter', () => {
-    it('saves the filter criteria for the role and returns just the filter', async () => {
-      const created = { uid: 'filter-1', title: 'Fullstack Developer' };
+    it('saves the filter criteria for the role and returns the filters', async () => {
+      const created = [{ uid: 'filter-1', category: 'skills' }];
       rolesService.createFilter.mockResolvedValue({
-        filter: created,
+        filters: created,
         isFirst: true,
       } as any);
-      const body = { title: 'Fullstack Developer' };
+      const body = {
+        filters: [
+          { category: 'skills', list_value: ['React'], priority: 'essential' },
+        ],
+      };
 
       const result = await controller.createFilter(
         'role-1',
@@ -254,16 +258,15 @@ describe('RolesController', () => {
       expect(result).toBe(created);
     });
 
-    it('logs ROLE_FILTERS_CREATED when this is the first filter for the role', async () => {
-      const created = { uid: 'filter-1', title: 'Fullstack Developer' };
+    it('logs ROLE_FILTERS_CREATED when this is the first set of filters for the role', async () => {
       rolesService.createFilter.mockResolvedValue({
-        filter: created,
+        filters: [{ uid: 'filter-1' }],
         isFirst: true,
       } as any);
 
       await controller.createFilter(
         'role-1',
-        { title: 'Fullstack Developer' } as any,
+        { filters: [] } as any,
         buildAuth(),
       );
 
@@ -272,21 +275,19 @@ describe('RolesController', () => {
         user_id: 'user-1',
         type: 'ROLE_FILTERS_CREATED',
         role_id: 'role-1',
-        role_filter_id: 'filter-1',
-        message: 'Created search filters for role "Fullstack Developer"',
+        message: 'Created search filters for role',
       });
     });
 
-    it('logs ROLE_FILTERS_UPDATED when a previous filter existed for the role', async () => {
-      const created = { uid: 'filter-2', title: 'Fullstack Developer' };
+    it('logs ROLE_FILTERS_UPDATED when previous filters existed for the role', async () => {
       rolesService.createFilter.mockResolvedValue({
-        filter: created,
+        filters: [{ uid: 'filter-2' }],
         isFirst: false,
       } as any);
 
       await controller.createFilter(
         'role-1',
-        { title: 'Fullstack Developer' } as any,
+        { filters: [] } as any,
         buildAuth(),
       );
 
@@ -295,8 +296,7 @@ describe('RolesController', () => {
         user_id: 'user-1',
         type: 'ROLE_FILTERS_UPDATED',
         role_id: 'role-1',
-        role_filter_id: 'filter-2',
-        message: 'Updated search filters for role "Fullstack Developer"',
+        message: 'Updated search filters for role',
       });
     });
   });

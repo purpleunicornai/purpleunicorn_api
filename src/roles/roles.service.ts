@@ -5,7 +5,6 @@ import { RequestException } from '../common/exception/core/ExceptionBase';
 import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
 import { RoleFilterDto } from './dto/role_filter.dto';
 import { Prisma, role_filters, roles } from '../generated/prisma/client';
-import { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
 
 const ROLE_WITH_DETAILS_INCLUDE = {
   project: {
@@ -18,8 +17,7 @@ const ROLE_WITH_DETAILS_INCLUDE = {
       archived: false,
     },
     include: {
-      filter_companies: true,
-      filter_location_cities: true,
+      children: true,
     },
   },
   role_result: {
@@ -99,7 +97,7 @@ export class RolesService {
   }
 
   // Returns whether this is the role's first-ever filter alongside the
-  // created row — the archiving updateMany's `count` tells us that for
+  // created rows — the archiving updateMany's `count` tells us that for
   // free, so callers (the controller, for audit logging) don't need a
   // separate existence check.
   async createFilter(
@@ -108,90 +106,13 @@ export class RolesService {
     orgId: string,
     userId: string,
   ): Promise<{
-    filter: role_filters & {
-      filter_companies: Prisma.filter_companiesGetPayload<object>[];
-      filter_location_cities: Prisma.filter_location_citiesGetPayload<object>[];
-    };
+    filters: (role_filters & {
+      children: Prisma.role_filter_childGetPayload<object>[];
+    })[];
     isFirst: boolean;
   }> {
     await this.getRole(roleId, orgId, userId);
-
-    // Archive previous filters to mark them as archived, so we can keep a history of filters for the role.
-    const { count } = await this.prisma.role_filters.updateMany({
-      where: {
-        role_id: roleId,
-      },
-      data: {
-        archived: true,
-      },
-    });
-
-    const filter = await this.prisma.role_filters.create({
-      data: {
-        role_id: roleId,
-        country_code: dto.country_code,
-        remote_work: dto.remote_work,
-        work_authorization_required: dto.work_authorization_required,
-        experience_min_yrs: dto.experience_min_yrs,
-        experience_max_yrs: dto.experience_max_yrs,
-        title: dto.title,
-        alternative_titles: dto.alternative_titles,
-        title_levels: dto.title_levels,
-        roles: dto.roles,
-        current_role_min_yrs: dto.current_role_min_yrs,
-        current_role_max_yrs: dto.current_role_max_yrs,
-        current_role_tenure_yrs: dto.current_role_tenure_yrs,
-        required_skills: dto.required_skills,
-        optional_skills: dto.optional_skills,
-        education_levels: dto.education_levels,
-        education_institution: dto.education_institution,
-        education_excluded_institutions: dto.education_excluded_institutions,
-        education_graduation_min_yr: this.yearToDate(
-          dto.education_graduation_min_yr,
-        ),
-        education_graduation_max_yr: this.yearToDate(
-          dto.education_graduation_max_yr,
-        ),
-        required_languages: dto.required_languages,
-        optional_languages: dto.optional_languages,
-        career_growth: dto.career_growth,
-        security_clearance_required: dto.security_clearance_required,
-        diversity: dto.diversity,
-        other_experience: dto.other_experience,
-        sites: dto.sites,
-        industry: dto.industry,
-        metadata: dto.metadata as unknown as InputJsonValue,
-        filter_companies: {
-          create: dto.filter_companies.map((company) => ({
-            type: company.type,
-            company_names: company.company_names,
-            start_date: company.start_date,
-            end_date: company.end_date,
-          })),
-        },
-        filter_location_cities: {
-          create: dto.filter_location_cities.map((city) => ({
-            name: city.name,
-            state: city.state,
-            country_code: city.country_code,
-          })),
-        },
-      },
-      include: {
-        filter_companies: true,
-        filter_location_cities: true,
-      },
-    });
-
-    return { filter, isFirst: count === 0 };
-  }
-
-  // education_graduation_min_yr/max_yr are years (e.g. 2020) in RoleFilterDto
-  // but DateTime? columns in role_filters — stored as Jan 1st UTC of that year.
-  private yearToDate(year: number | null | undefined): Date | null {
-    return year === null || year === undefined
-      ? null
-      : new Date(Date.UTC(year, 0, 1));
+    throw new Error('not yet implemented — see Task 4');
   }
 
   async update(
@@ -250,6 +171,7 @@ export class RolesService {
 
     return result;
   }
+
   private async findRoleOrThrow(id: string): Promise<roles> {
     const role = await this.prisma.roles.findFirst({
       where: { uid: id },
@@ -285,5 +207,29 @@ export class RolesService {
         'FORBIDDEN',
       );
     }
+  }
+
+  async shortlistCandidate(
+    resultId: string,
+    shortlist: boolean,
+    orgId: string,
+  ) {
+    const response = await this.prisma.role_result.update({
+      where: {
+        uid: resultId,
+      },
+      data: {
+        shortlist: shortlist,
+      },
+    });
+    await this.prisma.organization_log.create({
+      data: {
+        type: shortlist ? 'CANDIDATE_SHORTLISTED' : 'CANDIDATE_UNSHORTLISTED',
+        message: `Candidate ${shortlist ? 'shortlisted' : 'unshortlisted'} for role result ${resultId}`,
+        role_result_id: resultId,
+        organization_id: orgId,
+      },
+    });
+    return response;
   }
 }

@@ -18,7 +18,7 @@ import { Observable, from } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
-import { RoleFilterDto, RoleFilterResponseDto } from './dto/role_filter.dto';
+import { RoleFilterDto } from './dto/role_filter.dto';
 import {
   CreateRoleDto,
   RoleDto,
@@ -33,6 +33,7 @@ import { RequestException } from '../common/exception/core/ExceptionBase';
 import { Serialize } from '../common/interceptors/serialize.interceptor';
 import { LogsService } from '../common/logs/logs.service';
 import { role_result } from '../generated/prisma/client';
+import { requireOrgId } from '../common/utils/organizationUtils';
 
 @ApiTags('Roles')
 @ApiBearerAuth('bearer')
@@ -60,7 +61,7 @@ export class RolesController {
         'PROJECT_ID_REQUIRED',
       );
     }
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
     return this.rolesService.findAllForProject(projectId, orgId, auth.userId);
   }
 
@@ -70,7 +71,7 @@ export class RolesController {
     @Param('id') id: string,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
     return this.rolesService.findOne(id, orgId, auth.userId);
   }
 
@@ -80,7 +81,7 @@ export class RolesController {
     @Body() body: CreateRoleDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
     const role = await this.rolesService.create(body, auth.userId, orgId);
 
     void this.logsService.log({
@@ -101,7 +102,7 @@ export class RolesController {
     @Body() body: UpdateRoleDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
     const role = await this.rolesService.update(id, body, auth.userId, orgId);
 
     void this.logsService.log({
@@ -117,7 +118,7 @@ export class RolesController {
 
   @Delete(':id')
   async remove(@Param('id') id: string, @CurrentAuth() auth: ClerkAuthContext) {
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
     const role = await this.rolesService.remove(id, auth.userId, orgId);
 
     void this.logsService.log({
@@ -132,14 +133,13 @@ export class RolesController {
   }
 
   @Post('/:roleId/filters')
-  @Serialize(RoleFilterResponseDto)
   async createFilter(
     @Param('roleId') roleId: string,
     @Body() body: RoleFilterDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
-    const orgId = this.requireOrgId(auth);
-    const { filter, isFirst } = await this.rolesService.createFilter(
+    const orgId = requireOrgId(auth);
+    const { filters, isFirst } = await this.rolesService.createFilter(
       roleId,
       body,
       orgId,
@@ -151,11 +151,10 @@ export class RolesController {
       user_id: auth.userId,
       type: isFirst ? 'ROLE_FILTERS_CREATED' : 'ROLE_FILTERS_UPDATED',
       role_id: roleId,
-      role_filter_id: filter.uid,
-      message: `${isFirst ? 'Created' : 'Updated'} search filters for role "${filter.title}"`,
+      message: `${isFirst ? 'Created' : 'Updated'} search filters for role`,
     });
 
-    return filter;
+    return filters;
   }
 
   @Post('/:roleId/fixed-search')
@@ -164,7 +163,7 @@ export class RolesController {
     @Body() body: RunSearchDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
     const role = await this.rolesService.getRole(roleId, orgId, auth.userId);
     const results = await this.searchService.search(body.filterId, role);
 
@@ -185,7 +184,7 @@ export class RolesController {
     @Param('roleId') roleId: string,
     @CurrentAuth() auth: ClerkAuthContext,
   ): Observable<MessageEvent> {
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
 
     return from(this.rolesService.getRole(roleId, orgId, auth.userId)).pipe(
       switchMap((role) =>
@@ -216,7 +215,7 @@ export class RolesController {
     @CurrentAuth() auth: ClerkAuthContext,
     @Query('refresh') refresh?: string,
   ) {
-    const orgId = this.requireOrgId(auth);
+    const orgId = requireOrgId(auth);
     // check if the user can access the role first
     await this.rolesService.getRole(roleId, orgId, auth.userId);
     const result = await this.rolesService.getRoleResult(resultId, orgId);
@@ -266,14 +265,21 @@ export class RolesController {
     return results.reduce((sum, result) => sum + (result.tokens_used ?? 0), 0);
   }
 
-  private requireOrgId(auth: ClerkAuthContext): string {
-    if (!auth.orgId) {
-      throw new RequestException(
-        'No active organization selected',
-        HttpStatus.BAD_REQUEST,
-        'NO_ACTIVE_ORGANIZATION',
-      );
-    }
-    return auth.orgId;
+  @Post('/:roleId/result/:resultId/shortlist')
+  async shortlistCandidate(
+    @Param('roleId') roleId: string,
+    @Param('resultId') resultId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+    @Body() body: { shortlist: boolean },
+  ) {
+    const orgId = requireOrgId(auth);
+    // check if the user can access the role first
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    const result = await this.rolesService.shortlistCandidate(
+      resultId,
+      body.shortlist,
+      orgId,
+    );
+    return result;
   }
 }
