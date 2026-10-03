@@ -17,6 +17,8 @@ enum OrganizationLogType {
   // Candidate
   CANDIDATE_DEEP_SEARCH
   CANDIDATE_ROCKET_REACH_SEARCH
+  CANDIDATE_SHORTLISTED
+  CANDIDATE_UNSHORTLISTED
   // Subscription
   SUBSCRIPTION_PURCHASED
   SUBSCRIPTION_RENUED
@@ -49,6 +51,8 @@ model organization_log {
   subscription    organization_subscription? @relation("SubscriptionLogs", fields: [subscription_id], references: [uid], onDelete: Cascade)
   credits_id      String?                    @db.Uuid
   credits         organization_credits?      @relation("CreditsLogs", fields: [credits_id], references: [uid], onDelete: Cascade)
+  candidate_id    String?                    @db.Uuid
+  candidate       candidate?                 @relation("CandidateLogs", fields: [candidate_id], references: [uid], onDelete: Cascade)
 
   // organization_id is a Clerk org id, not a local FK — every log lookup is
   // scoped to it, most often ordered by recency, so it's indexed both alone

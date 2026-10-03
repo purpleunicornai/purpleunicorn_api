@@ -400,6 +400,7 @@ export type candidateWhereInput = {
   role_results?: Prisma.Role_resultListRelationFilter
   education?: Prisma.Candidate_educationListRelationFilter
   sources?: Prisma.Candidate_sourceListRelationFilter
+  organization_logs?: Prisma.Organization_logListRelationFilter
 }
 
 export type candidateOrderByWithRelationInput = {
@@ -436,6 +437,7 @@ export type candidateOrderByWithRelationInput = {
   role_results?: Prisma.role_resultOrderByRelationAggregateInput
   education?: Prisma.candidate_educationOrderByRelationAggregateInput
   sources?: Prisma.candidate_sourceOrderByRelationAggregateInput
+  organization_logs?: Prisma.organization_logOrderByRelationAggregateInput
 }
 
 export type candidateWhereUniqueInput = Prisma.AtLeast<{
@@ -475,6 +477,7 @@ export type candidateWhereUniqueInput = Prisma.AtLeast<{
   role_results?: Prisma.Role_resultListRelationFilter
   education?: Prisma.Candidate_educationListRelationFilter
   sources?: Prisma.Candidate_sourceListRelationFilter
+  organization_logs?: Prisma.Organization_logListRelationFilter
 }, "uid" | "uid">
 
 export type candidateOrderByWithAggregationInput = {
@@ -583,6 +586,7 @@ export type candidateCreateInput = {
   role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateInput = {
@@ -619,6 +623,7 @@ export type candidateUncheckedCreateInput = {
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUpdateInput = {
@@ -655,6 +660,7 @@ export type candidateUpdateInput = {
   role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateInput = {
@@ -691,6 +697,7 @@ export type candidateUncheckedUpdateInput = {
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateCreateManyInput = {
@@ -1019,6 +1026,22 @@ export type candidateUpdateOneRequiredWithoutSourcesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.candidateUpdateToOneWithWhereWithoutSourcesInput, Prisma.candidateUpdateWithoutSourcesInput>, Prisma.candidateUncheckedUpdateWithoutSourcesInput>
 }
 
+export type candidateCreateNestedOneWithoutOrganization_logsInput = {
+  create?: Prisma.XOR<Prisma.candidateCreateWithoutOrganization_logsInput, Prisma.candidateUncheckedCreateWithoutOrganization_logsInput>
+  connectOrCreate?: Prisma.candidateCreateOrConnectWithoutOrganization_logsInput
+  connect?: Prisma.candidateWhereUniqueInput
+}
+
+export type candidateUpdateOneWithoutOrganization_logsNestedInput = {
+  create?: Prisma.XOR<Prisma.candidateCreateWithoutOrganization_logsInput, Prisma.candidateUncheckedCreateWithoutOrganization_logsInput>
+  connectOrCreate?: Prisma.candidateCreateOrConnectWithoutOrganization_logsInput
+  upsert?: Prisma.candidateUpsertWithoutOrganization_logsInput
+  disconnect?: Prisma.candidateWhereInput | boolean
+  delete?: Prisma.candidateWhereInput | boolean
+  connect?: Prisma.candidateWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.candidateUpdateToOneWithWhereWithoutOrganization_logsInput, Prisma.candidateUpdateWithoutOrganization_logsInput>, Prisma.candidateUncheckedUpdateWithoutOrganization_logsInput>
+}
+
 export type candidateCreateNestedOneWithoutRole_resultsInput = {
   create?: Prisma.XOR<Prisma.candidateCreateWithoutRole_resultsInput, Prisma.candidateUncheckedCreateWithoutRole_resultsInput>
   connectOrCreate?: Prisma.candidateCreateOrConnectWithoutRole_resultsInput
@@ -1068,6 +1091,7 @@ export type candidateCreateWithoutEducationInput = {
   experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateWithoutEducationInput = {
@@ -1103,6 +1127,7 @@ export type candidateUncheckedCreateWithoutEducationInput = {
   experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateCreateOrConnectWithoutEducationInput = {
@@ -1154,6 +1179,7 @@ export type candidateUpdateWithoutEducationInput = {
   experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateWithoutEducationInput = {
@@ -1189,6 +1215,7 @@ export type candidateUncheckedUpdateWithoutEducationInput = {
   experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateCreateWithoutExperienceInput = {
@@ -1224,6 +1251,7 @@ export type candidateCreateWithoutExperienceInput = {
   role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateWithoutExperienceInput = {
@@ -1259,6 +1287,7 @@ export type candidateUncheckedCreateWithoutExperienceInput = {
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateCreateOrConnectWithoutExperienceInput = {
@@ -1310,6 +1339,7 @@ export type candidateUpdateWithoutExperienceInput = {
   role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateWithoutExperienceInput = {
@@ -1345,6 +1375,7 @@ export type candidateUncheckedUpdateWithoutExperienceInput = {
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateCreateWithoutSourcesInput = {
@@ -1380,6 +1411,7 @@ export type candidateCreateWithoutSourcesInput = {
   experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateWithoutSourcesInput = {
@@ -1415,6 +1447,7 @@ export type candidateUncheckedCreateWithoutSourcesInput = {
   experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateCreateOrConnectWithoutSourcesInput = {
@@ -1466,6 +1499,7 @@ export type candidateUpdateWithoutSourcesInput = {
   experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateWithoutSourcesInput = {
@@ -1501,6 +1535,167 @@ export type candidateUncheckedUpdateWithoutSourcesInput = {
   experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUncheckedUpdateManyWithoutCandidateNestedInput
+}
+
+export type candidateCreateWithoutOrganization_logsInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  phone?: string | null
+  country_calling_code?: string | null
+  contact_info_last_updated?: Date | string | null
+  rocketreach_profile_id?: string | null
+  current_location_city?: string | null
+  current_location_country_code?: string | null
+  current_location_postal_code?: string | null
+  open_to_relocation?: boolean | null
+  open_to_remote_work?: boolean | null
+  current_work_authorization_status?: string | null
+  experience_years?: number | null
+  experience_roles?: Prisma.candidateCreateexperience_rolesInput | string[]
+  current_title?: string | null
+  current_company?: string | null
+  current_salary?: number | null
+  current_salary_currency?: string | null
+  current_role_start_date?: Date | string | null
+  skills?: Prisma.candidateCreateskillsInput | string[]
+  languages?: Prisma.candidateCreatelanguagesInput | string[]
+  diversity?: Prisma.candidateCreatediversityInput | string[]
+  summary?: string | null
+  image_url?: string | null
+  enriched_at?: Date | string | null
+  experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
+  role_results?: Prisma.role_resultCreateNestedManyWithoutCandidateInput
+  education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
+}
+
+export type candidateUncheckedCreateWithoutOrganization_logsInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  phone?: string | null
+  country_calling_code?: string | null
+  contact_info_last_updated?: Date | string | null
+  rocketreach_profile_id?: string | null
+  current_location_city?: string | null
+  current_location_country_code?: string | null
+  current_location_postal_code?: string | null
+  open_to_relocation?: boolean | null
+  open_to_remote_work?: boolean | null
+  current_work_authorization_status?: string | null
+  experience_years?: number | null
+  experience_roles?: Prisma.candidateCreateexperience_rolesInput | string[]
+  current_title?: string | null
+  current_company?: string | null
+  current_salary?: number | null
+  current_salary_currency?: string | null
+  current_role_start_date?: Date | string | null
+  skills?: Prisma.candidateCreateskillsInput | string[]
+  languages?: Prisma.candidateCreatelanguagesInput | string[]
+  diversity?: Prisma.candidateCreatediversityInput | string[]
+  summary?: string | null
+  image_url?: string | null
+  enriched_at?: Date | string | null
+  experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
+  role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutCandidateInput
+  education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
+  sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
+}
+
+export type candidateCreateOrConnectWithoutOrganization_logsInput = {
+  where: Prisma.candidateWhereUniqueInput
+  create: Prisma.XOR<Prisma.candidateCreateWithoutOrganization_logsInput, Prisma.candidateUncheckedCreateWithoutOrganization_logsInput>
+}
+
+export type candidateUpsertWithoutOrganization_logsInput = {
+  update: Prisma.XOR<Prisma.candidateUpdateWithoutOrganization_logsInput, Prisma.candidateUncheckedUpdateWithoutOrganization_logsInput>
+  create: Prisma.XOR<Prisma.candidateCreateWithoutOrganization_logsInput, Prisma.candidateUncheckedCreateWithoutOrganization_logsInput>
+  where?: Prisma.candidateWhereInput
+}
+
+export type candidateUpdateToOneWithWhereWithoutOrganization_logsInput = {
+  where?: Prisma.candidateWhereInput
+  data: Prisma.XOR<Prisma.candidateUpdateWithoutOrganization_logsInput, Prisma.candidateUncheckedUpdateWithoutOrganization_logsInput>
+}
+
+export type candidateUpdateWithoutOrganization_logsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country_calling_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contact_info_last_updated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rocketreach_profile_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  open_to_relocation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  open_to_remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  current_work_authorization_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  experience_years?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  experience_roles?: Prisma.candidateUpdateexperience_rolesInput | string[]
+  current_title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_salary?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  current_salary_currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_role_start_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  skills?: Prisma.candidateUpdateskillsInput | string[]
+  languages?: Prisma.candidateUpdatelanguagesInput | string[]
+  diversity?: Prisma.candidateUpdatediversityInput | string[]
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
+  role_results?: Prisma.role_resultUpdateManyWithoutCandidateNestedInput
+  education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
+}
+
+export type candidateUncheckedUpdateWithoutOrganization_logsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  first_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  last_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country_calling_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contact_info_last_updated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rocketreach_profile_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_location_postal_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  open_to_relocation?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  open_to_remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  current_work_authorization_status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  experience_years?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  experience_roles?: Prisma.candidateUpdateexperience_rolesInput | string[]
+  current_title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_company?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_salary?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  current_salary_currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  current_role_start_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  skills?: Prisma.candidateUpdateskillsInput | string[]
+  languages?: Prisma.candidateUpdatelanguagesInput | string[]
+  diversity?: Prisma.candidateUpdatediversityInput | string[]
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image_url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enriched_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
+  role_results?: Prisma.role_resultUncheckedUpdateManyWithoutCandidateNestedInput
+  education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
+  sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateCreateWithoutRole_resultsInput = {
@@ -1536,6 +1731,7 @@ export type candidateCreateWithoutRole_resultsInput = {
   experience?: Prisma.candidate_experienceCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateUncheckedCreateWithoutRole_resultsInput = {
@@ -1571,6 +1767,7 @@ export type candidateUncheckedCreateWithoutRole_resultsInput = {
   experience?: Prisma.candidate_experienceUncheckedCreateNestedManyWithoutCandidateInput
   education?: Prisma.candidate_educationUncheckedCreateNestedManyWithoutCandidateInput
   sources?: Prisma.candidate_sourceUncheckedCreateNestedManyWithoutCandidateInput
+  organization_logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutCandidateInput
 }
 
 export type candidateCreateOrConnectWithoutRole_resultsInput = {
@@ -1622,6 +1819,7 @@ export type candidateUpdateWithoutRole_resultsInput = {
   experience?: Prisma.candidate_experienceUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUpdateManyWithoutCandidateNestedInput
 }
 
 export type candidateUncheckedUpdateWithoutRole_resultsInput = {
@@ -1657,6 +1855,7 @@ export type candidateUncheckedUpdateWithoutRole_resultsInput = {
   experience?: Prisma.candidate_experienceUncheckedUpdateManyWithoutCandidateNestedInput
   education?: Prisma.candidate_educationUncheckedUpdateManyWithoutCandidateNestedInput
   sources?: Prisma.candidate_sourceUncheckedUpdateManyWithoutCandidateNestedInput
+  organization_logs?: Prisma.organization_logUncheckedUpdateManyWithoutCandidateNestedInput
 }
 
 
@@ -1669,6 +1868,7 @@ export type CandidateCountOutputType = {
   role_results: number
   education: number
   sources: number
+  organization_logs: number
 }
 
 export type CandidateCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1676,6 +1876,7 @@ export type CandidateCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensi
   role_results?: boolean | CandidateCountOutputTypeCountRole_resultsArgs
   education?: boolean | CandidateCountOutputTypeCountEducationArgs
   sources?: boolean | CandidateCountOutputTypeCountSourcesArgs
+  organization_logs?: boolean | CandidateCountOutputTypeCountOrganization_logsArgs
 }
 
 /**
@@ -1716,6 +1917,13 @@ export type CandidateCountOutputTypeCountSourcesArgs<ExtArgs extends runtime.Typ
   where?: Prisma.candidate_sourceWhereInput
 }
 
+/**
+ * CandidateCountOutputType without action
+ */
+export type CandidateCountOutputTypeCountOrganization_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.organization_logWhereInput
+}
+
 
 export type candidateSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   uid?: boolean
@@ -1751,6 +1959,7 @@ export type candidateSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   role_results?: boolean | Prisma.candidate$role_resultsArgs<ExtArgs>
   education?: boolean | Prisma.candidate$educationArgs<ExtArgs>
   sources?: boolean | Prisma.candidate$sourcesArgs<ExtArgs>
+  organization_logs?: boolean | Prisma.candidate$organization_logsArgs<ExtArgs>
   _count?: boolean | Prisma.CandidateCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["candidate"]>
 
@@ -1856,6 +2065,7 @@ export type candidateInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   role_results?: boolean | Prisma.candidate$role_resultsArgs<ExtArgs>
   education?: boolean | Prisma.candidate$educationArgs<ExtArgs>
   sources?: boolean | Prisma.candidate$sourcesArgs<ExtArgs>
+  organization_logs?: boolean | Prisma.candidate$organization_logsArgs<ExtArgs>
   _count?: boolean | Prisma.CandidateCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type candidateIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1868,6 +2078,7 @@ export type $candidatePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     role_results: Prisma.$role_resultPayload<ExtArgs>[]
     education: Prisma.$candidate_educationPayload<ExtArgs>[]
     sources: Prisma.$candidate_sourcePayload<ExtArgs>[]
+    organization_logs: Prisma.$organization_logPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
@@ -2297,6 +2508,7 @@ export interface Prisma__candidateClient<T, Null = never, ExtArgs extends runtim
   role_results<T extends Prisma.candidate$role_resultsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$role_resultsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_resultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   education<T extends Prisma.candidate$educationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$educationArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$candidate_educationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sources<T extends Prisma.candidate$sourcesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$sourcesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$candidate_sourcePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  organization_logs<T extends Prisma.candidate$organization_logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.candidate$organization_logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$organization_logPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2841,6 +3053,30 @@ export type candidate$sourcesArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.Candidate_sourceScalarFieldEnum | Prisma.Candidate_sourceScalarFieldEnum[]
+}
+
+/**
+ * candidate.organization_logs
+ */
+export type candidate$organization_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the organization_log
+   */
+  select?: Prisma.organization_logSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the organization_log
+   */
+  omit?: Prisma.organization_logOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.organization_logInclude<ExtArgs> | null
+  where?: Prisma.organization_logWhereInput
+  orderBy?: Prisma.organization_logOrderByWithRelationInput | Prisma.organization_logOrderByWithRelationInput[]
+  cursor?: Prisma.organization_logWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Organization_logScalarFieldEnum | Prisma.Organization_logScalarFieldEnum[]
 }
 
 /**

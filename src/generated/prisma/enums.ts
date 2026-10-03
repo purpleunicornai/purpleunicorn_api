@@ -30,15 +30,6 @@ export const SourceType = {
 export type SourceType = (typeof SourceType)[keyof typeof SourceType]
 
 
-export const CompanyFilterType = {
-  CURRENT: 'CURRENT',
-  PAST: 'PAST',
-  EXCLUDED: 'EXCLUDED'
-} as const
-
-export type CompanyFilterType = (typeof CompanyFilterType)[keyof typeof CompanyFilterType]
-
-
 export const OrganizationCreditsType = {
   AI_TOKENS: 'AI_TOKENS',
   ROCKET_REACH: 'ROCKET_REACH',
@@ -73,6 +64,8 @@ export const OrganizationLogType = {
   ROLE_SEARCH: 'ROLE_SEARCH',
   CANDIDATE_DEEP_SEARCH: 'CANDIDATE_DEEP_SEARCH',
   CANDIDATE_ROCKET_REACH_SEARCH: 'CANDIDATE_ROCKET_REACH_SEARCH',
+  CANDIDATE_SHORTLISTED: 'CANDIDATE_SHORTLISTED',
+  CANDIDATE_UNSHORTLISTED: 'CANDIDATE_UNSHORTLISTED',
   SUBSCRIPTION_PURCHASED: 'SUBSCRIPTION_PURCHASED',
   SUBSCRIPTION_RENUED: 'SUBSCRIPTION_RENUED',
   SUBSCRIPTION_CANCELLED: 'SUBSCRIPTION_CANCELLED',
@@ -92,3 +85,11 @@ export const ProjectVisibility = {
 } as const
 
 export type ProjectVisibility = (typeof ProjectVisibility)[keyof typeof ProjectVisibility]
+
+
+export const RoleFilterPriority = {
+  ESSENTIAL: 'ESSENTIAL',
+  OPTIONAL: 'OPTIONAL'
+} as const
+
+export type RoleFilterPriority = (typeof RoleFilterPriority)[keyof typeof RoleFilterPriority]

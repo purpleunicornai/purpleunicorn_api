@@ -55,12 +55,11 @@ export const ModelName = {
   candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   candidate_source: 'candidate_source',
-  filter_companies: 'filter_companies',
-  filter_location_cities: 'filter_location_cities',
   organization_credits: 'organization_credits',
   organization_log: 'organization_log',
   organization_subscription: 'organization_subscription',
   projects: 'projects',
+  role_filter_child: 'role_filter_child',
   role_filters: 'role_filters',
   role_result: 'role_result',
   role_result_score_breakdown: 'role_result_score_breakdown',
@@ -169,33 +168,6 @@ export const Candidate_sourceScalarFieldEnum = {
 export type Candidate_sourceScalarFieldEnum = (typeof Candidate_sourceScalarFieldEnum)[keyof typeof Candidate_sourceScalarFieldEnum]
 
 
-export const Filter_companiesScalarFieldEnum = {
-  uid: 'uid',
-  created: 'created',
-  updated: 'updated',
-  role_filters_id: 'role_filters_id',
-  type: 'type',
-  company_names: 'company_names',
-  start_date: 'start_date',
-  end_date: 'end_date'
-} as const
-
-export type Filter_companiesScalarFieldEnum = (typeof Filter_companiesScalarFieldEnum)[keyof typeof Filter_companiesScalarFieldEnum]
-
-
-export const Filter_location_citiesScalarFieldEnum = {
-  uid: 'uid',
-  created: 'created',
-  updated: 'updated',
-  role_filters_id: 'role_filters_id',
-  name: 'name',
-  state: 'state',
-  country_code: 'country_code'
-} as const
-
-export type Filter_location_citiesScalarFieldEnum = (typeof Filter_location_citiesScalarFieldEnum)[keyof typeof Filter_location_citiesScalarFieldEnum]
-
-
 export const Organization_creditsScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -223,7 +195,8 @@ export const Organization_logScalarFieldEnum = {
   role_filter_id: 'role_filter_id',
   role_result_id: 'role_result_id',
   subscription_id: 'subscription_id',
-  credits_id: 'credits_id'
+  credits_id: 'credits_id',
+  candidate_id: 'candidate_id'
 } as const
 
 export type Organization_logScalarFieldEnum = (typeof Organization_logScalarFieldEnum)[keyof typeof Organization_logScalarFieldEnum]
@@ -260,41 +233,34 @@ export const ProjectsScalarFieldEnum = {
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
 
 
+export const Role_filter_childScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  parent_uid: 'parent_uid',
+  title: 'title',
+  value: 'value',
+  list_value: 'list_value',
+  boolean: 'boolean'
+} as const
+
+export type Role_filter_childScalarFieldEnum = (typeof Role_filter_childScalarFieldEnum)[keyof typeof Role_filter_childScalarFieldEnum]
+
+
 export const Role_filtersScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
   updated: 'updated',
   role_id: 'role_id',
-  country_code: 'country_code',
-  remote_work: 'remote_work',
-  work_authorization_required: 'work_authorization_required',
-  experience_min_yrs: 'experience_min_yrs',
-  experience_max_yrs: 'experience_max_yrs',
-  title: 'title',
-  alternative_titles: 'alternative_titles',
-  title_levels: 'title_levels',
-  roles: 'roles',
-  current_role_min_yrs: 'current_role_min_yrs',
-  current_role_max_yrs: 'current_role_max_yrs',
-  current_role_tenure_yrs: 'current_role_tenure_yrs',
-  required_skills: 'required_skills',
-  optional_skills: 'optional_skills',
-  education_levels: 'education_levels',
-  education_institution: 'education_institution',
-  education_excluded_institutions: 'education_excluded_institutions',
-  education_graduation_min_yr: 'education_graduation_min_yr',
-  education_graduation_max_yr: 'education_graduation_max_yr',
-  required_languages: 'required_languages',
-  optional_languages: 'optional_languages',
-  career_growth: 'career_growth',
-  security_clearance_required: 'security_clearance_required',
-  diversity: 'diversity',
-  other_experience: 'other_experience',
-  sites: 'sites',
-  metadata: 'metadata',
+  category: 'category',
+  value: 'value',
+  list_value: 'list_value',
+  priority: 'priority',
+  non_negotiable: 'non_negotiable',
   archived: 'archived',
-  industry: 'industry',
-  search_run_date: 'search_run_date'
+  archived_at: 'archived_at',
+  search_run_date: 'search_run_date',
+  metadata: 'metadata'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -308,6 +274,7 @@ export const Role_resultScalarFieldEnum = {
   role_id: 'role_id',
   filter_id: 'filter_id',
   score: 'score',
+  disqualified: 'disqualified',
   ai_score: 'ai_score',
   reasoning: 'reasoning',
   skills_matched: 'skills_matched',
@@ -333,6 +300,7 @@ export const Role_result_score_breakdownScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   role_result_id: 'role_result_id',
+  role_filter_id: 'role_filter_id',
   category: 'category',
   weight: 'weight',
   applicable: 'applicable',

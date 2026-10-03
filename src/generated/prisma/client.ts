@@ -60,16 +60,6 @@ export type candidate_experience = Prisma.candidate_experienceModel
  */
 export type candidate_source = Prisma.candidate_sourceModel
 /**
- * Model filter_companies
- * 
- */
-export type filter_companies = Prisma.filter_companiesModel
-/**
- * Model filter_location_cities
- * 
- */
-export type filter_location_cities = Prisma.filter_location_citiesModel
-/**
  * Model organization_credits
  * 
  */
@@ -89,6 +79,11 @@ export type organization_subscription = Prisma.organization_subscriptionModel
  * 
  */
 export type projects = Prisma.projectsModel
+/**
+ * Model role_filter_child
+ * 
+ */
+export type role_filter_child = Prisma.role_filter_childModel
 /**
  * Model role_filters
  * 

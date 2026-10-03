@@ -41,6 +41,7 @@ export type Role_result_score_breakdownMinAggregateOutputType = {
   created: Date | null
   updated: Date | null
   role_result_id: string | null
+  role_filter_id: string | null
   category: string | null
   weight: number | null
   applicable: boolean | null
@@ -52,6 +53,7 @@ export type Role_result_score_breakdownMaxAggregateOutputType = {
   created: Date | null
   updated: Date | null
   role_result_id: string | null
+  role_filter_id: string | null
   category: string | null
   weight: number | null
   applicable: boolean | null
@@ -63,6 +65,7 @@ export type Role_result_score_breakdownCountAggregateOutputType = {
   created: number
   updated: number
   role_result_id: number
+  role_filter_id: number
   category: number
   weight: number
   applicable: number
@@ -87,6 +90,7 @@ export type Role_result_score_breakdownMinAggregateInputType = {
   created?: true
   updated?: true
   role_result_id?: true
+  role_filter_id?: true
   category?: true
   weight?: true
   applicable?: true
@@ -98,6 +102,7 @@ export type Role_result_score_breakdownMaxAggregateInputType = {
   created?: true
   updated?: true
   role_result_id?: true
+  role_filter_id?: true
   category?: true
   weight?: true
   applicable?: true
@@ -109,6 +114,7 @@ export type Role_result_score_breakdownCountAggregateInputType = {
   created?: true
   updated?: true
   role_result_id?: true
+  role_filter_id?: true
   category?: true
   weight?: true
   applicable?: true
@@ -208,6 +214,7 @@ export type Role_result_score_breakdownGroupByOutputType = {
   created: Date
   updated: Date
   role_result_id: string
+  role_filter_id: string | null
   category: string
   weight: number
   applicable: boolean
@@ -243,12 +250,14 @@ export type role_result_score_breakdownWhereInput = {
   created?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
   updated?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
   role_result_id?: Prisma.UuidFilter<"role_result_score_breakdown"> | string
+  role_filter_id?: Prisma.UuidNullableFilter<"role_result_score_breakdown"> | string | null
   category?: Prisma.StringFilter<"role_result_score_breakdown"> | string
   weight?: Prisma.IntFilter<"role_result_score_breakdown"> | number
   applicable?: Prisma.BoolFilter<"role_result_score_breakdown"> | boolean
   score?: Prisma.IntFilter<"role_result_score_breakdown"> | number
   metadata?: Prisma.JsonNullableFilter<"role_result_score_breakdown">
   role_result?: Prisma.XOR<Prisma.Role_resultScalarRelationFilter, Prisma.role_resultWhereInput>
+  role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
 }
 
 export type role_result_score_breakdownOrderByWithRelationInput = {
@@ -256,12 +265,14 @@ export type role_result_score_breakdownOrderByWithRelationInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_result_id?: Prisma.SortOrder
+  role_filter_id?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   applicable?: Prisma.SortOrder
   score?: Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   role_result?: Prisma.role_resultOrderByWithRelationInput
+  role_filter?: Prisma.role_filtersOrderByWithRelationInput
 }
 
 export type role_result_score_breakdownWhereUniqueInput = Prisma.AtLeast<{
@@ -272,12 +283,14 @@ export type role_result_score_breakdownWhereUniqueInput = Prisma.AtLeast<{
   created?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
   updated?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
   role_result_id?: Prisma.UuidFilter<"role_result_score_breakdown"> | string
+  role_filter_id?: Prisma.UuidNullableFilter<"role_result_score_breakdown"> | string | null
   category?: Prisma.StringFilter<"role_result_score_breakdown"> | string
   weight?: Prisma.IntFilter<"role_result_score_breakdown"> | number
   applicable?: Prisma.BoolFilter<"role_result_score_breakdown"> | boolean
   score?: Prisma.IntFilter<"role_result_score_breakdown"> | number
   metadata?: Prisma.JsonNullableFilter<"role_result_score_breakdown">
   role_result?: Prisma.XOR<Prisma.Role_resultScalarRelationFilter, Prisma.role_resultWhereInput>
+  role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
 }, "uid" | "uid">
 
 export type role_result_score_breakdownOrderByWithAggregationInput = {
@@ -285,6 +298,7 @@ export type role_result_score_breakdownOrderByWithAggregationInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_result_id?: Prisma.SortOrder
+  role_filter_id?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   applicable?: Prisma.SortOrder
@@ -305,6 +319,7 @@ export type role_result_score_breakdownScalarWhereWithAggregatesInput = {
   created?: Prisma.DateTimeWithAggregatesFilter<"role_result_score_breakdown"> | Date | string
   updated?: Prisma.DateTimeWithAggregatesFilter<"role_result_score_breakdown"> | Date | string
   role_result_id?: Prisma.UuidWithAggregatesFilter<"role_result_score_breakdown"> | string
+  role_filter_id?: Prisma.UuidNullableWithAggregatesFilter<"role_result_score_breakdown"> | string | null
   category?: Prisma.StringWithAggregatesFilter<"role_result_score_breakdown"> | string
   weight?: Prisma.IntWithAggregatesFilter<"role_result_score_breakdown"> | number
   applicable?: Prisma.BoolWithAggregatesFilter<"role_result_score_breakdown"> | boolean
@@ -322,6 +337,7 @@ export type role_result_score_breakdownCreateInput = {
   score?: number
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role_result: Prisma.role_resultCreateNestedOneWithoutScore_breakdownInput
+  role_filter?: Prisma.role_filtersCreateNestedOneWithoutScore_breakdownsInput
 }
 
 export type role_result_score_breakdownUncheckedCreateInput = {
@@ -329,6 +345,7 @@ export type role_result_score_breakdownUncheckedCreateInput = {
   created?: Date | string
   updated?: Date | string
   role_result_id: string
+  role_filter_id?: string | null
   category: string
   weight?: number
   applicable?: boolean
@@ -346,6 +363,7 @@ export type role_result_score_breakdownUpdateInput = {
   score?: Prisma.IntFieldUpdateOperationsInput | number
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role_result?: Prisma.role_resultUpdateOneRequiredWithoutScore_breakdownNestedInput
+  role_filter?: Prisma.role_filtersUpdateOneWithoutScore_breakdownsNestedInput
 }
 
 export type role_result_score_breakdownUncheckedUpdateInput = {
@@ -353,6 +371,7 @@ export type role_result_score_breakdownUncheckedUpdateInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role_result_id?: Prisma.StringFieldUpdateOperationsInput | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.IntFieldUpdateOperationsInput | number
   applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -365,6 +384,7 @@ export type role_result_score_breakdownCreateManyInput = {
   created?: Date | string
   updated?: Date | string
   role_result_id: string
+  role_filter_id?: string | null
   category: string
   weight?: number
   applicable?: boolean
@@ -388,6 +408,7 @@ export type role_result_score_breakdownUncheckedUpdateManyInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role_result_id?: Prisma.StringFieldUpdateOperationsInput | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.IntFieldUpdateOperationsInput | number
   applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -410,6 +431,7 @@ export type role_result_score_breakdownCountOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_result_id?: Prisma.SortOrder
+  role_filter_id?: Prisma.SortOrder
   category?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   applicable?: Prisma.SortOrder
@@ -427,6 +449,7 @@ export type role_result_score_breakdownMaxOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_result_id?: Prisma.SortOrder
+  role_filter_id?: Prisma.SortOrder
   category?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   applicable?: Prisma.SortOrder
@@ -438,6 +461,7 @@ export type role_result_score_breakdownMinOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_result_id?: Prisma.SortOrder
+  role_filter_id?: Prisma.SortOrder
   category?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   applicable?: Prisma.SortOrder
@@ -447,6 +471,48 @@ export type role_result_score_breakdownMinOrderByAggregateInput = {
 export type role_result_score_breakdownSumOrderByAggregateInput = {
   weight?: Prisma.SortOrder
   score?: Prisma.SortOrder
+}
+
+export type role_result_score_breakdownCreateNestedManyWithoutRole_filterInput = {
+  create?: Prisma.XOR<Prisma.role_result_score_breakdownCreateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput> | Prisma.role_result_score_breakdownCreateWithoutRole_filterInput[] | Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput[]
+  connectOrCreate?: Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput | Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput[]
+  createMany?: Prisma.role_result_score_breakdownCreateManyRole_filterInputEnvelope
+  connect?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+}
+
+export type role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput = {
+  create?: Prisma.XOR<Prisma.role_result_score_breakdownCreateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput> | Prisma.role_result_score_breakdownCreateWithoutRole_filterInput[] | Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput[]
+  connectOrCreate?: Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput | Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput[]
+  createMany?: Prisma.role_result_score_breakdownCreateManyRole_filterInputEnvelope
+  connect?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+}
+
+export type role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput = {
+  create?: Prisma.XOR<Prisma.role_result_score_breakdownCreateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput> | Prisma.role_result_score_breakdownCreateWithoutRole_filterInput[] | Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput[]
+  connectOrCreate?: Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput | Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput[]
+  upsert?: Prisma.role_result_score_breakdownUpsertWithWhereUniqueWithoutRole_filterInput | Prisma.role_result_score_breakdownUpsertWithWhereUniqueWithoutRole_filterInput[]
+  createMany?: Prisma.role_result_score_breakdownCreateManyRole_filterInputEnvelope
+  set?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  disconnect?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  delete?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  connect?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  update?: Prisma.role_result_score_breakdownUpdateWithWhereUniqueWithoutRole_filterInput | Prisma.role_result_score_breakdownUpdateWithWhereUniqueWithoutRole_filterInput[]
+  updateMany?: Prisma.role_result_score_breakdownUpdateManyWithWhereWithoutRole_filterInput | Prisma.role_result_score_breakdownUpdateManyWithWhereWithoutRole_filterInput[]
+  deleteMany?: Prisma.role_result_score_breakdownScalarWhereInput | Prisma.role_result_score_breakdownScalarWhereInput[]
+}
+
+export type role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput = {
+  create?: Prisma.XOR<Prisma.role_result_score_breakdownCreateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput> | Prisma.role_result_score_breakdownCreateWithoutRole_filterInput[] | Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput[]
+  connectOrCreate?: Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput | Prisma.role_result_score_breakdownCreateOrConnectWithoutRole_filterInput[]
+  upsert?: Prisma.role_result_score_breakdownUpsertWithWhereUniqueWithoutRole_filterInput | Prisma.role_result_score_breakdownUpsertWithWhereUniqueWithoutRole_filterInput[]
+  createMany?: Prisma.role_result_score_breakdownCreateManyRole_filterInputEnvelope
+  set?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  disconnect?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  delete?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  connect?: Prisma.role_result_score_breakdownWhereUniqueInput | Prisma.role_result_score_breakdownWhereUniqueInput[]
+  update?: Prisma.role_result_score_breakdownUpdateWithWhereUniqueWithoutRole_filterInput | Prisma.role_result_score_breakdownUpdateWithWhereUniqueWithoutRole_filterInput[]
+  updateMany?: Prisma.role_result_score_breakdownUpdateManyWithWhereWithoutRole_filterInput | Prisma.role_result_score_breakdownUpdateManyWithWhereWithoutRole_filterInput[]
+  deleteMany?: Prisma.role_result_score_breakdownScalarWhereInput | Prisma.role_result_score_breakdownScalarWhereInput[]
 }
 
 export type role_result_score_breakdownCreateNestedManyWithoutRole_resultInput = {
@@ -491,6 +557,72 @@ export type role_result_score_breakdownUncheckedUpdateManyWithoutRole_resultNest
   deleteMany?: Prisma.role_result_score_breakdownScalarWhereInput | Prisma.role_result_score_breakdownScalarWhereInput[]
 }
 
+export type role_result_score_breakdownCreateWithoutRole_filterInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  category: string
+  weight?: number
+  applicable?: boolean
+  score?: number
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role_result: Prisma.role_resultCreateNestedOneWithoutScore_breakdownInput
+}
+
+export type role_result_score_breakdownUncheckedCreateWithoutRole_filterInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  role_result_id: string
+  category: string
+  weight?: number
+  applicable?: boolean
+  score?: number
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type role_result_score_breakdownCreateOrConnectWithoutRole_filterInput = {
+  where: Prisma.role_result_score_breakdownWhereUniqueInput
+  create: Prisma.XOR<Prisma.role_result_score_breakdownCreateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput>
+}
+
+export type role_result_score_breakdownCreateManyRole_filterInputEnvelope = {
+  data: Prisma.role_result_score_breakdownCreateManyRole_filterInput | Prisma.role_result_score_breakdownCreateManyRole_filterInput[]
+  skipDuplicates?: boolean
+}
+
+export type role_result_score_breakdownUpsertWithWhereUniqueWithoutRole_filterInput = {
+  where: Prisma.role_result_score_breakdownWhereUniqueInput
+  update: Prisma.XOR<Prisma.role_result_score_breakdownUpdateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedUpdateWithoutRole_filterInput>
+  create: Prisma.XOR<Prisma.role_result_score_breakdownCreateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedCreateWithoutRole_filterInput>
+}
+
+export type role_result_score_breakdownUpdateWithWhereUniqueWithoutRole_filterInput = {
+  where: Prisma.role_result_score_breakdownWhereUniqueInput
+  data: Prisma.XOR<Prisma.role_result_score_breakdownUpdateWithoutRole_filterInput, Prisma.role_result_score_breakdownUncheckedUpdateWithoutRole_filterInput>
+}
+
+export type role_result_score_breakdownUpdateManyWithWhereWithoutRole_filterInput = {
+  where: Prisma.role_result_score_breakdownScalarWhereInput
+  data: Prisma.XOR<Prisma.role_result_score_breakdownUpdateManyMutationInput, Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterInput>
+}
+
+export type role_result_score_breakdownScalarWhereInput = {
+  AND?: Prisma.role_result_score_breakdownScalarWhereInput | Prisma.role_result_score_breakdownScalarWhereInput[]
+  OR?: Prisma.role_result_score_breakdownScalarWhereInput[]
+  NOT?: Prisma.role_result_score_breakdownScalarWhereInput | Prisma.role_result_score_breakdownScalarWhereInput[]
+  uid?: Prisma.UuidFilter<"role_result_score_breakdown"> | string
+  created?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
+  updated?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
+  role_result_id?: Prisma.UuidFilter<"role_result_score_breakdown"> | string
+  role_filter_id?: Prisma.UuidNullableFilter<"role_result_score_breakdown"> | string | null
+  category?: Prisma.StringFilter<"role_result_score_breakdown"> | string
+  weight?: Prisma.IntFilter<"role_result_score_breakdown"> | number
+  applicable?: Prisma.BoolFilter<"role_result_score_breakdown"> | boolean
+  score?: Prisma.IntFilter<"role_result_score_breakdown"> | number
+  metadata?: Prisma.JsonNullableFilter<"role_result_score_breakdown">
+}
+
 export type role_result_score_breakdownCreateWithoutRole_resultInput = {
   uid?: string
   created?: Date | string
@@ -500,12 +632,14 @@ export type role_result_score_breakdownCreateWithoutRole_resultInput = {
   applicable?: boolean
   score?: number
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role_filter?: Prisma.role_filtersCreateNestedOneWithoutScore_breakdownsInput
 }
 
 export type role_result_score_breakdownUncheckedCreateWithoutRole_resultInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
+  role_filter_id?: string | null
   category: string
   weight?: number
   applicable?: boolean
@@ -539,25 +673,59 @@ export type role_result_score_breakdownUpdateManyWithWhereWithoutRole_resultInpu
   data: Prisma.XOR<Prisma.role_result_score_breakdownUpdateManyMutationInput, Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_resultInput>
 }
 
-export type role_result_score_breakdownScalarWhereInput = {
-  AND?: Prisma.role_result_score_breakdownScalarWhereInput | Prisma.role_result_score_breakdownScalarWhereInput[]
-  OR?: Prisma.role_result_score_breakdownScalarWhereInput[]
-  NOT?: Prisma.role_result_score_breakdownScalarWhereInput | Prisma.role_result_score_breakdownScalarWhereInput[]
-  uid?: Prisma.UuidFilter<"role_result_score_breakdown"> | string
-  created?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
-  updated?: Prisma.DateTimeFilter<"role_result_score_breakdown"> | Date | string
-  role_result_id?: Prisma.UuidFilter<"role_result_score_breakdown"> | string
-  category?: Prisma.StringFilter<"role_result_score_breakdown"> | string
-  weight?: Prisma.IntFilter<"role_result_score_breakdown"> | number
-  applicable?: Prisma.BoolFilter<"role_result_score_breakdown"> | boolean
-  score?: Prisma.IntFilter<"role_result_score_breakdown"> | number
-  metadata?: Prisma.JsonNullableFilter<"role_result_score_breakdown">
+export type role_result_score_breakdownCreateManyRole_filterInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  role_result_id: string
+  category: string
+  weight?: number
+  applicable?: boolean
+  score?: number
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type role_result_score_breakdownUpdateWithoutRole_filterInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  score?: Prisma.IntFieldUpdateOperationsInput | number
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role_result?: Prisma.role_resultUpdateOneRequiredWithoutScore_breakdownNestedInput
+}
+
+export type role_result_score_breakdownUncheckedUpdateWithoutRole_filterInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_result_id?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  score?: Prisma.IntFieldUpdateOperationsInput | number
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_result_id?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  score?: Prisma.IntFieldUpdateOperationsInput | number
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_result_score_breakdownCreateManyRole_resultInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
+  role_filter_id?: string | null
   category: string
   weight?: number
   applicable?: boolean
@@ -574,12 +742,14 @@ export type role_result_score_breakdownUpdateWithoutRole_resultInput = {
   applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   score?: Prisma.IntFieldUpdateOperationsInput | number
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role_filter?: Prisma.role_filtersUpdateOneWithoutScore_breakdownsNestedInput
 }
 
 export type role_result_score_breakdownUncheckedUpdateWithoutRole_resultInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.IntFieldUpdateOperationsInput | number
   applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -591,6 +761,7 @@ export type role_result_score_breakdownUncheckedUpdateManyWithoutRole_resultInpu
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.IntFieldUpdateOperationsInput | number
   applicable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -605,12 +776,14 @@ export type role_result_score_breakdownSelect<ExtArgs extends runtime.Types.Exte
   created?: boolean
   updated?: boolean
   role_result_id?: boolean
+  role_filter_id?: boolean
   category?: boolean
   weight?: boolean
   applicable?: boolean
   score?: boolean
   metadata?: boolean
   role_result?: boolean | Prisma.role_resultDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs>
 }, ExtArgs["result"]["role_result_score_breakdown"]>
 
 export type role_result_score_breakdownSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -618,12 +791,14 @@ export type role_result_score_breakdownSelectCreateManyAndReturn<ExtArgs extends
   created?: boolean
   updated?: boolean
   role_result_id?: boolean
+  role_filter_id?: boolean
   category?: boolean
   weight?: boolean
   applicable?: boolean
   score?: boolean
   metadata?: boolean
   role_result?: boolean | Prisma.role_resultDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs>
 }, ExtArgs["result"]["role_result_score_breakdown"]>
 
 export type role_result_score_breakdownSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -631,12 +806,14 @@ export type role_result_score_breakdownSelectUpdateManyAndReturn<ExtArgs extends
   created?: boolean
   updated?: boolean
   role_result_id?: boolean
+  role_filter_id?: boolean
   category?: boolean
   weight?: boolean
   applicable?: boolean
   score?: boolean
   metadata?: boolean
   role_result?: boolean | Prisma.role_resultDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs>
 }, ExtArgs["result"]["role_result_score_breakdown"]>
 
 export type role_result_score_breakdownSelectScalar = {
@@ -644,6 +821,7 @@ export type role_result_score_breakdownSelectScalar = {
   created?: boolean
   updated?: boolean
   role_result_id?: boolean
+  role_filter_id?: boolean
   category?: boolean
   weight?: boolean
   applicable?: boolean
@@ -651,27 +829,32 @@ export type role_result_score_breakdownSelectScalar = {
   metadata?: boolean
 }
 
-export type role_result_score_breakdownOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_result_id" | "category" | "weight" | "applicable" | "score" | "metadata", ExtArgs["result"]["role_result_score_breakdown"]>
+export type role_result_score_breakdownOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_result_id" | "role_filter_id" | "category" | "weight" | "applicable" | "score" | "metadata", ExtArgs["result"]["role_result_score_breakdown"]>
 export type role_result_score_breakdownInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role_result?: boolean | Prisma.role_resultDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs>
 }
 export type role_result_score_breakdownIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role_result?: boolean | Prisma.role_resultDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs>
 }
 export type role_result_score_breakdownIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role_result?: boolean | Prisma.role_resultDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs>
 }
 
 export type $role_result_score_breakdownPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "role_result_score_breakdown"
   objects: {
     role_result: Prisma.$role_resultPayload<ExtArgs>
+    role_filter: Prisma.$role_filtersPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
     created: Date
     updated: Date
     role_result_id: string
+    role_filter_id: string | null
     category: string
     weight: number
     applicable: boolean
@@ -1072,6 +1255,7 @@ readonly fields: role_result_score_breakdownFieldRefs;
 export interface Prisma__role_result_score_breakdownClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   role_result<T extends Prisma.role_resultDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_resultDefaultArgs<ExtArgs>>): Prisma.Prisma__role_resultClient<runtime.Types.Result.GetResult<Prisma.$role_resultPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  role_filter<T extends Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_result_score_breakdown$role_filterArgs<ExtArgs>>): Prisma.Prisma__role_filtersClient<runtime.Types.Result.GetResult<Prisma.$role_filtersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1105,6 +1289,7 @@ export interface role_result_score_breakdownFieldRefs {
   readonly created: Prisma.FieldRef<"role_result_score_breakdown", 'DateTime'>
   readonly updated: Prisma.FieldRef<"role_result_score_breakdown", 'DateTime'>
   readonly role_result_id: Prisma.FieldRef<"role_result_score_breakdown", 'String'>
+  readonly role_filter_id: Prisma.FieldRef<"role_result_score_breakdown", 'String'>
   readonly category: Prisma.FieldRef<"role_result_score_breakdown", 'String'>
   readonly weight: Prisma.FieldRef<"role_result_score_breakdown", 'Int'>
   readonly applicable: Prisma.FieldRef<"role_result_score_breakdown", 'Boolean'>
@@ -1508,6 +1693,25 @@ export type role_result_score_breakdownDeleteManyArgs<ExtArgs extends runtime.Ty
    * Limit how many role_result_score_breakdowns to delete.
    */
   limit?: number
+}
+
+/**
+ * role_result_score_breakdown.role_filter
+ */
+export type role_result_score_breakdown$role_filterArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the role_filters
+   */
+  select?: Prisma.role_filtersSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the role_filters
+   */
+  omit?: Prisma.role_filtersOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.role_filtersInclude<ExtArgs> | null
+  where?: Prisma.role_filtersWhereInput
 }
 
 /**

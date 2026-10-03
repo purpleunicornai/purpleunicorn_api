@@ -20,26 +20,8 @@ export type role_filtersModel = runtime.Types.Result.DefaultSelection<Prisma.$ro
 
 export type AggregateRole_filters = {
   _count: Role_filtersCountAggregateOutputType | null
-  _avg: Role_filtersAvgAggregateOutputType | null
-  _sum: Role_filtersSumAggregateOutputType | null
   _min: Role_filtersMinAggregateOutputType | null
   _max: Role_filtersMaxAggregateOutputType | null
-}
-
-export type Role_filtersAvgAggregateOutputType = {
-  experience_min_yrs: number | null
-  experience_max_yrs: number | null
-  current_role_min_yrs: number | null
-  current_role_max_yrs: number | null
-  current_role_tenure_yrs: number | null
-}
-
-export type Role_filtersSumAggregateOutputType = {
-  experience_min_yrs: number | null
-  experience_max_yrs: number | null
-  current_role_min_yrs: number | null
-  current_role_max_yrs: number | null
-  current_role_tenure_yrs: number | null
 }
 
 export type Role_filtersMinAggregateOutputType = {
@@ -47,19 +29,12 @@ export type Role_filtersMinAggregateOutputType = {
   created: Date | null
   updated: Date | null
   role_id: string | null
-  country_code: string | null
-  remote_work: boolean | null
-  work_authorization_required: boolean | null
-  experience_min_yrs: number | null
-  experience_max_yrs: number | null
-  title: string | null
-  current_role_min_yrs: number | null
-  current_role_max_yrs: number | null
-  current_role_tenure_yrs: number | null
-  education_graduation_min_yr: Date | null
-  education_graduation_max_yr: Date | null
+  category: string | null
+  value: string | null
+  priority: $Enums.RoleFilterPriority | null
+  non_negotiable: boolean | null
   archived: boolean | null
-  industry: string | null
+  archived_at: Date | null
   search_run_date: Date | null
 }
 
@@ -68,19 +43,12 @@ export type Role_filtersMaxAggregateOutputType = {
   created: Date | null
   updated: Date | null
   role_id: string | null
-  country_code: string | null
-  remote_work: boolean | null
-  work_authorization_required: boolean | null
-  experience_min_yrs: number | null
-  experience_max_yrs: number | null
-  title: string | null
-  current_role_min_yrs: number | null
-  current_role_max_yrs: number | null
-  current_role_tenure_yrs: number | null
-  education_graduation_min_yr: Date | null
-  education_graduation_max_yr: Date | null
+  category: string | null
+  value: string | null
+  priority: $Enums.RoleFilterPriority | null
+  non_negotiable: boolean | null
   archived: boolean | null
-  industry: string | null
+  archived_at: Date | null
   search_run_date: Date | null
 }
 
@@ -89,74 +57,30 @@ export type Role_filtersCountAggregateOutputType = {
   created: number
   updated: number
   role_id: number
-  country_code: number
-  remote_work: number
-  work_authorization_required: number
-  experience_min_yrs: number
-  experience_max_yrs: number
-  title: number
-  alternative_titles: number
-  title_levels: number
-  roles: number
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills: number
-  optional_skills: number
-  education_levels: number
-  education_institution: number
-  education_excluded_institutions: number
-  education_graduation_min_yr: number
-  education_graduation_max_yr: number
-  required_languages: number
-  optional_languages: number
-  career_growth: number
-  security_clearance_required: number
-  diversity: number
-  other_experience: number
-  sites: number
-  metadata: number
+  category: number
+  value: number
+  list_value: number
+  priority: number
+  non_negotiable: number
   archived: number
-  industry: number
+  archived_at: number
   search_run_date: number
+  metadata: number
   _all: number
 }
 
-
-export type Role_filtersAvgAggregateInputType = {
-  experience_min_yrs?: true
-  experience_max_yrs?: true
-  current_role_min_yrs?: true
-  current_role_max_yrs?: true
-  current_role_tenure_yrs?: true
-}
-
-export type Role_filtersSumAggregateInputType = {
-  experience_min_yrs?: true
-  experience_max_yrs?: true
-  current_role_min_yrs?: true
-  current_role_max_yrs?: true
-  current_role_tenure_yrs?: true
-}
 
 export type Role_filtersMinAggregateInputType = {
   uid?: true
   created?: true
   updated?: true
   role_id?: true
-  country_code?: true
-  remote_work?: true
-  work_authorization_required?: true
-  experience_min_yrs?: true
-  experience_max_yrs?: true
-  title?: true
-  current_role_min_yrs?: true
-  current_role_max_yrs?: true
-  current_role_tenure_yrs?: true
-  education_graduation_min_yr?: true
-  education_graduation_max_yr?: true
+  category?: true
+  value?: true
+  priority?: true
+  non_negotiable?: true
   archived?: true
-  industry?: true
+  archived_at?: true
   search_run_date?: true
 }
 
@@ -165,19 +89,12 @@ export type Role_filtersMaxAggregateInputType = {
   created?: true
   updated?: true
   role_id?: true
-  country_code?: true
-  remote_work?: true
-  work_authorization_required?: true
-  experience_min_yrs?: true
-  experience_max_yrs?: true
-  title?: true
-  current_role_min_yrs?: true
-  current_role_max_yrs?: true
-  current_role_tenure_yrs?: true
-  education_graduation_min_yr?: true
-  education_graduation_max_yr?: true
+  category?: true
+  value?: true
+  priority?: true
+  non_negotiable?: true
   archived?: true
-  industry?: true
+  archived_at?: true
   search_run_date?: true
 }
 
@@ -186,36 +103,15 @@ export type Role_filtersCountAggregateInputType = {
   created?: true
   updated?: true
   role_id?: true
-  country_code?: true
-  remote_work?: true
-  work_authorization_required?: true
-  experience_min_yrs?: true
-  experience_max_yrs?: true
-  title?: true
-  alternative_titles?: true
-  title_levels?: true
-  roles?: true
-  current_role_min_yrs?: true
-  current_role_max_yrs?: true
-  current_role_tenure_yrs?: true
-  required_skills?: true
-  optional_skills?: true
-  education_levels?: true
-  education_institution?: true
-  education_excluded_institutions?: true
-  education_graduation_min_yr?: true
-  education_graduation_max_yr?: true
-  required_languages?: true
-  optional_languages?: true
-  career_growth?: true
-  security_clearance_required?: true
-  diversity?: true
-  other_experience?: true
-  sites?: true
-  metadata?: true
+  category?: true
+  value?: true
+  list_value?: true
+  priority?: true
+  non_negotiable?: true
   archived?: true
-  industry?: true
+  archived_at?: true
   search_run_date?: true
+  metadata?: true
   _all?: true
 }
 
@@ -257,18 +153,6 @@ export type Role_filtersAggregateArgs<ExtArgs extends runtime.Types.Extensions.I
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: Role_filtersAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: Role_filtersSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: Role_filtersMinAggregateInputType
@@ -299,8 +183,6 @@ export type role_filtersGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   _count?: Role_filtersCountAggregateInputType | true
-  _avg?: Role_filtersAvgAggregateInputType
-  _sum?: Role_filtersSumAggregateInputType
   _min?: Role_filtersMinAggregateInputType
   _max?: Role_filtersMaxAggregateInputType
 }
@@ -310,39 +192,16 @@ export type Role_filtersGroupByOutputType = {
   created: Date
   updated: Date
   role_id: string
-  country_code: string | null
-  remote_work: boolean | null
-  work_authorization_required: boolean | null
-  experience_min_yrs: number | null
-  experience_max_yrs: number | null
-  title: string
-  alternative_titles: string[]
-  title_levels: string[]
-  roles: string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills: string[]
-  optional_skills: string[]
-  education_levels: string[]
-  education_institution: string[]
-  education_excluded_institutions: string[]
-  education_graduation_min_yr: Date | null
-  education_graduation_max_yr: Date | null
-  required_languages: string[]
-  optional_languages: string[]
-  career_growth: string[]
-  security_clearance_required: string[]
-  diversity: string[]
-  other_experience: string[]
-  sites: string[]
-  metadata: runtime.JsonValue | null
+  category: string
+  value: string | null
+  list_value: string[]
+  priority: $Enums.RoleFilterPriority
+  non_negotiable: boolean
   archived: boolean
-  industry: string | null
+  archived_at: Date | null
   search_run_date: Date | null
+  metadata: runtime.JsonValue | null
   _count: Role_filtersCountAggregateOutputType | null
-  _avg: Role_filtersAvgAggregateOutputType | null
-  _sum: Role_filtersSumAggregateOutputType | null
   _min: Role_filtersMinAggregateOutputType | null
   _max: Role_filtersMaxAggregateOutputType | null
 }
@@ -370,40 +229,19 @@ export type role_filtersWhereInput = {
   created?: Prisma.DateTimeFilter<"role_filters"> | Date | string
   updated?: Prisma.DateTimeFilter<"role_filters"> | Date | string
   role_id?: Prisma.UuidFilter<"role_filters"> | string
-  country_code?: Prisma.StringNullableFilter<"role_filters"> | string | null
-  remote_work?: Prisma.BoolNullableFilter<"role_filters"> | boolean | null
-  work_authorization_required?: Prisma.BoolNullableFilter<"role_filters"> | boolean | null
-  experience_min_yrs?: Prisma.IntNullableFilter<"role_filters"> | number | null
-  experience_max_yrs?: Prisma.IntNullableFilter<"role_filters"> | number | null
-  title?: Prisma.StringFilter<"role_filters"> | string
-  alternative_titles?: Prisma.StringNullableListFilter<"role_filters">
-  title_levels?: Prisma.StringNullableListFilter<"role_filters">
-  roles?: Prisma.StringNullableListFilter<"role_filters">
-  current_role_min_yrs?: Prisma.IntFilter<"role_filters"> | number
-  current_role_max_yrs?: Prisma.IntFilter<"role_filters"> | number
-  current_role_tenure_yrs?: Prisma.IntFilter<"role_filters"> | number
-  required_skills?: Prisma.StringNullableListFilter<"role_filters">
-  optional_skills?: Prisma.StringNullableListFilter<"role_filters">
-  education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_institution?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
-  education_graduation_min_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
-  education_graduation_max_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
-  required_languages?: Prisma.StringNullableListFilter<"role_filters">
-  optional_languages?: Prisma.StringNullableListFilter<"role_filters">
-  career_growth?: Prisma.StringNullableListFilter<"role_filters">
-  security_clearance_required?: Prisma.StringNullableListFilter<"role_filters">
-  diversity?: Prisma.StringNullableListFilter<"role_filters">
-  other_experience?: Prisma.StringNullableListFilter<"role_filters">
-  sites?: Prisma.StringNullableListFilter<"role_filters">
-  metadata?: Prisma.JsonNullableFilter<"role_filters">
+  category?: Prisma.StringFilter<"role_filters"> | string
+  value?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  list_value?: Prisma.StringNullableListFilter<"role_filters">
+  priority?: Prisma.EnumRoleFilterPriorityFilter<"role_filters"> | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFilter<"role_filters"> | boolean
   archived?: Prisma.BoolFilter<"role_filters"> | boolean
-  industry?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  archived_at?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
+  metadata?: Prisma.JsonNullableFilter<"role_filters">
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
-  filter_companies?: Prisma.Filter_companiesListRelationFilter
-  filter_location_cities?: Prisma.Filter_location_citiesListRelationFilter
+  children?: Prisma.Role_filter_childListRelationFilter
   role_results?: Prisma.Role_resultListRelationFilter
+  score_breakdowns?: Prisma.Role_result_score_breakdownListRelationFilter
   logs?: Prisma.Organization_logListRelationFilter
 }
 
@@ -412,40 +250,19 @@ export type role_filtersOrderByWithRelationInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_id?: Prisma.SortOrder
-  country_code?: Prisma.SortOrderInput | Prisma.SortOrder
-  remote_work?: Prisma.SortOrderInput | Prisma.SortOrder
-  work_authorization_required?: Prisma.SortOrderInput | Prisma.SortOrder
-  experience_min_yrs?: Prisma.SortOrderInput | Prisma.SortOrder
-  experience_max_yrs?: Prisma.SortOrderInput | Prisma.SortOrder
-  title?: Prisma.SortOrder
-  alternative_titles?: Prisma.SortOrder
-  title_levels?: Prisma.SortOrder
-  roles?: Prisma.SortOrder
-  current_role_min_yrs?: Prisma.SortOrder
-  current_role_max_yrs?: Prisma.SortOrder
-  current_role_tenure_yrs?: Prisma.SortOrder
-  required_skills?: Prisma.SortOrder
-  optional_skills?: Prisma.SortOrder
-  education_levels?: Prisma.SortOrder
-  education_institution?: Prisma.SortOrder
-  education_excluded_institutions?: Prisma.SortOrder
-  education_graduation_min_yr?: Prisma.SortOrderInput | Prisma.SortOrder
-  education_graduation_max_yr?: Prisma.SortOrderInput | Prisma.SortOrder
-  required_languages?: Prisma.SortOrder
-  optional_languages?: Prisma.SortOrder
-  career_growth?: Prisma.SortOrder
-  security_clearance_required?: Prisma.SortOrder
-  diversity?: Prisma.SortOrder
-  other_experience?: Prisma.SortOrder
-  sites?: Prisma.SortOrder
-  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  category?: Prisma.SortOrder
+  value?: Prisma.SortOrderInput | Prisma.SortOrder
+  list_value?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  non_negotiable?: Prisma.SortOrder
   archived?: Prisma.SortOrder
-  industry?: Prisma.SortOrderInput | Prisma.SortOrder
+  archived_at?: Prisma.SortOrderInput | Prisma.SortOrder
   search_run_date?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.rolesOrderByWithRelationInput
-  filter_companies?: Prisma.filter_companiesOrderByRelationAggregateInput
-  filter_location_cities?: Prisma.filter_location_citiesOrderByRelationAggregateInput
+  children?: Prisma.role_filter_childOrderByRelationAggregateInput
   role_results?: Prisma.role_resultOrderByRelationAggregateInput
+  score_breakdowns?: Prisma.role_result_score_breakdownOrderByRelationAggregateInput
   logs?: Prisma.organization_logOrderByRelationAggregateInput
 }
 
@@ -457,40 +274,19 @@ export type role_filtersWhereUniqueInput = Prisma.AtLeast<{
   created?: Prisma.DateTimeFilter<"role_filters"> | Date | string
   updated?: Prisma.DateTimeFilter<"role_filters"> | Date | string
   role_id?: Prisma.UuidFilter<"role_filters"> | string
-  country_code?: Prisma.StringNullableFilter<"role_filters"> | string | null
-  remote_work?: Prisma.BoolNullableFilter<"role_filters"> | boolean | null
-  work_authorization_required?: Prisma.BoolNullableFilter<"role_filters"> | boolean | null
-  experience_min_yrs?: Prisma.IntNullableFilter<"role_filters"> | number | null
-  experience_max_yrs?: Prisma.IntNullableFilter<"role_filters"> | number | null
-  title?: Prisma.StringFilter<"role_filters"> | string
-  alternative_titles?: Prisma.StringNullableListFilter<"role_filters">
-  title_levels?: Prisma.StringNullableListFilter<"role_filters">
-  roles?: Prisma.StringNullableListFilter<"role_filters">
-  current_role_min_yrs?: Prisma.IntFilter<"role_filters"> | number
-  current_role_max_yrs?: Prisma.IntFilter<"role_filters"> | number
-  current_role_tenure_yrs?: Prisma.IntFilter<"role_filters"> | number
-  required_skills?: Prisma.StringNullableListFilter<"role_filters">
-  optional_skills?: Prisma.StringNullableListFilter<"role_filters">
-  education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_institution?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
-  education_graduation_min_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
-  education_graduation_max_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
-  required_languages?: Prisma.StringNullableListFilter<"role_filters">
-  optional_languages?: Prisma.StringNullableListFilter<"role_filters">
-  career_growth?: Prisma.StringNullableListFilter<"role_filters">
-  security_clearance_required?: Prisma.StringNullableListFilter<"role_filters">
-  diversity?: Prisma.StringNullableListFilter<"role_filters">
-  other_experience?: Prisma.StringNullableListFilter<"role_filters">
-  sites?: Prisma.StringNullableListFilter<"role_filters">
-  metadata?: Prisma.JsonNullableFilter<"role_filters">
+  category?: Prisma.StringFilter<"role_filters"> | string
+  value?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  list_value?: Prisma.StringNullableListFilter<"role_filters">
+  priority?: Prisma.EnumRoleFilterPriorityFilter<"role_filters"> | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFilter<"role_filters"> | boolean
   archived?: Prisma.BoolFilter<"role_filters"> | boolean
-  industry?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  archived_at?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
+  metadata?: Prisma.JsonNullableFilter<"role_filters">
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
-  filter_companies?: Prisma.Filter_companiesListRelationFilter
-  filter_location_cities?: Prisma.Filter_location_citiesListRelationFilter
+  children?: Prisma.Role_filter_childListRelationFilter
   role_results?: Prisma.Role_resultListRelationFilter
+  score_breakdowns?: Prisma.Role_result_score_breakdownListRelationFilter
   logs?: Prisma.Organization_logListRelationFilter
 }, "uid" | "uid">
 
@@ -499,41 +295,18 @@ export type role_filtersOrderByWithAggregationInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_id?: Prisma.SortOrder
-  country_code?: Prisma.SortOrderInput | Prisma.SortOrder
-  remote_work?: Prisma.SortOrderInput | Prisma.SortOrder
-  work_authorization_required?: Prisma.SortOrderInput | Prisma.SortOrder
-  experience_min_yrs?: Prisma.SortOrderInput | Prisma.SortOrder
-  experience_max_yrs?: Prisma.SortOrderInput | Prisma.SortOrder
-  title?: Prisma.SortOrder
-  alternative_titles?: Prisma.SortOrder
-  title_levels?: Prisma.SortOrder
-  roles?: Prisma.SortOrder
-  current_role_min_yrs?: Prisma.SortOrder
-  current_role_max_yrs?: Prisma.SortOrder
-  current_role_tenure_yrs?: Prisma.SortOrder
-  required_skills?: Prisma.SortOrder
-  optional_skills?: Prisma.SortOrder
-  education_levels?: Prisma.SortOrder
-  education_institution?: Prisma.SortOrder
-  education_excluded_institutions?: Prisma.SortOrder
-  education_graduation_min_yr?: Prisma.SortOrderInput | Prisma.SortOrder
-  education_graduation_max_yr?: Prisma.SortOrderInput | Prisma.SortOrder
-  required_languages?: Prisma.SortOrder
-  optional_languages?: Prisma.SortOrder
-  career_growth?: Prisma.SortOrder
-  security_clearance_required?: Prisma.SortOrder
-  diversity?: Prisma.SortOrder
-  other_experience?: Prisma.SortOrder
-  sites?: Prisma.SortOrder
-  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  category?: Prisma.SortOrder
+  value?: Prisma.SortOrderInput | Prisma.SortOrder
+  list_value?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  non_negotiable?: Prisma.SortOrder
   archived?: Prisma.SortOrder
-  industry?: Prisma.SortOrderInput | Prisma.SortOrder
+  archived_at?: Prisma.SortOrderInput | Prisma.SortOrder
   search_run_date?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.role_filtersCountOrderByAggregateInput
-  _avg?: Prisma.role_filtersAvgOrderByAggregateInput
   _max?: Prisma.role_filtersMaxOrderByAggregateInput
   _min?: Prisma.role_filtersMinOrderByAggregateInput
-  _sum?: Prisma.role_filtersSumOrderByAggregateInput
 }
 
 export type role_filtersScalarWhereWithAggregatesInput = {
@@ -544,76 +317,34 @@ export type role_filtersScalarWhereWithAggregatesInput = {
   created?: Prisma.DateTimeWithAggregatesFilter<"role_filters"> | Date | string
   updated?: Prisma.DateTimeWithAggregatesFilter<"role_filters"> | Date | string
   role_id?: Prisma.UuidWithAggregatesFilter<"role_filters"> | string
-  country_code?: Prisma.StringNullableWithAggregatesFilter<"role_filters"> | string | null
-  remote_work?: Prisma.BoolNullableWithAggregatesFilter<"role_filters"> | boolean | null
-  work_authorization_required?: Prisma.BoolNullableWithAggregatesFilter<"role_filters"> | boolean | null
-  experience_min_yrs?: Prisma.IntNullableWithAggregatesFilter<"role_filters"> | number | null
-  experience_max_yrs?: Prisma.IntNullableWithAggregatesFilter<"role_filters"> | number | null
-  title?: Prisma.StringWithAggregatesFilter<"role_filters"> | string
-  alternative_titles?: Prisma.StringNullableListFilter<"role_filters">
-  title_levels?: Prisma.StringNullableListFilter<"role_filters">
-  roles?: Prisma.StringNullableListFilter<"role_filters">
-  current_role_min_yrs?: Prisma.IntWithAggregatesFilter<"role_filters"> | number
-  current_role_max_yrs?: Prisma.IntWithAggregatesFilter<"role_filters"> | number
-  current_role_tenure_yrs?: Prisma.IntWithAggregatesFilter<"role_filters"> | number
-  required_skills?: Prisma.StringNullableListFilter<"role_filters">
-  optional_skills?: Prisma.StringNullableListFilter<"role_filters">
-  education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_institution?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
-  education_graduation_min_yr?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
-  education_graduation_max_yr?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
-  required_languages?: Prisma.StringNullableListFilter<"role_filters">
-  optional_languages?: Prisma.StringNullableListFilter<"role_filters">
-  career_growth?: Prisma.StringNullableListFilter<"role_filters">
-  security_clearance_required?: Prisma.StringNullableListFilter<"role_filters">
-  diversity?: Prisma.StringNullableListFilter<"role_filters">
-  other_experience?: Prisma.StringNullableListFilter<"role_filters">
-  sites?: Prisma.StringNullableListFilter<"role_filters">
-  metadata?: Prisma.JsonNullableWithAggregatesFilter<"role_filters">
+  category?: Prisma.StringWithAggregatesFilter<"role_filters"> | string
+  value?: Prisma.StringNullableWithAggregatesFilter<"role_filters"> | string | null
+  list_value?: Prisma.StringNullableListFilter<"role_filters">
+  priority?: Prisma.EnumRoleFilterPriorityWithAggregatesFilter<"role_filters"> | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolWithAggregatesFilter<"role_filters"> | boolean
   archived?: Prisma.BoolWithAggregatesFilter<"role_filters"> | boolean
-  industry?: Prisma.StringNullableWithAggregatesFilter<"role_filters"> | string | null
+  archived_at?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
+  metadata?: Prisma.JsonNullableWithAggregatesFilter<"role_filters">
 }
 
 export type role_filtersCreateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
-  filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
+  children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
 }
 
@@ -622,39 +353,18 @@ export type role_filtersUncheckedCreateInput = {
   created?: Date | string
   updated?: Date | string
   role_id: string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedCreateNestedManyWithoutParentInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
 }
 
@@ -662,40 +372,19 @@ export type role_filtersUpdateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
-  filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
+  children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
 }
 
@@ -704,39 +393,18 @@ export type role_filtersUncheckedUpdateInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedUpdateManyWithoutParentNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
 }
 
@@ -745,72 +413,30 @@ export type role_filtersCreateManyInput = {
   created?: Date | string
   updated?: Date | string
   role_id: string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_filtersUpdateManyMutationInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_filtersUncheckedUpdateManyInput = {
@@ -818,41 +444,15 @@ export type role_filtersUncheckedUpdateManyInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-}
-
-export type Role_filtersScalarRelationFilter = {
-  is?: Prisma.role_filtersWhereInput
-  isNot?: Prisma.role_filtersWhereInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type Role_filtersNullableScalarRelationFilter = {
@@ -860,49 +460,25 @@ export type Role_filtersNullableScalarRelationFilter = {
   isNot?: Prisma.role_filtersWhereInput | null
 }
 
+export type Role_filtersScalarRelationFilter = {
+  is?: Prisma.role_filtersWhereInput
+  isNot?: Prisma.role_filtersWhereInput
+}
+
 export type role_filtersCountOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_id?: Prisma.SortOrder
-  country_code?: Prisma.SortOrder
-  remote_work?: Prisma.SortOrder
-  work_authorization_required?: Prisma.SortOrder
-  experience_min_yrs?: Prisma.SortOrder
-  experience_max_yrs?: Prisma.SortOrder
-  title?: Prisma.SortOrder
-  alternative_titles?: Prisma.SortOrder
-  title_levels?: Prisma.SortOrder
-  roles?: Prisma.SortOrder
-  current_role_min_yrs?: Prisma.SortOrder
-  current_role_max_yrs?: Prisma.SortOrder
-  current_role_tenure_yrs?: Prisma.SortOrder
-  required_skills?: Prisma.SortOrder
-  optional_skills?: Prisma.SortOrder
-  education_levels?: Prisma.SortOrder
-  education_institution?: Prisma.SortOrder
-  education_excluded_institutions?: Prisma.SortOrder
-  education_graduation_min_yr?: Prisma.SortOrder
-  education_graduation_max_yr?: Prisma.SortOrder
-  required_languages?: Prisma.SortOrder
-  optional_languages?: Prisma.SortOrder
-  career_growth?: Prisma.SortOrder
-  security_clearance_required?: Prisma.SortOrder
-  diversity?: Prisma.SortOrder
-  other_experience?: Prisma.SortOrder
-  sites?: Prisma.SortOrder
-  metadata?: Prisma.SortOrder
+  category?: Prisma.SortOrder
+  value?: Prisma.SortOrder
+  list_value?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  non_negotiable?: Prisma.SortOrder
   archived?: Prisma.SortOrder
-  industry?: Prisma.SortOrder
+  archived_at?: Prisma.SortOrder
   search_run_date?: Prisma.SortOrder
-}
-
-export type role_filtersAvgOrderByAggregateInput = {
-  experience_min_yrs?: Prisma.SortOrder
-  experience_max_yrs?: Prisma.SortOrder
-  current_role_min_yrs?: Prisma.SortOrder
-  current_role_max_yrs?: Prisma.SortOrder
-  current_role_tenure_yrs?: Prisma.SortOrder
+  metadata?: Prisma.SortOrder
 }
 
 export type role_filtersMaxOrderByAggregateInput = {
@@ -910,19 +486,12 @@ export type role_filtersMaxOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_id?: Prisma.SortOrder
-  country_code?: Prisma.SortOrder
-  remote_work?: Prisma.SortOrder
-  work_authorization_required?: Prisma.SortOrder
-  experience_min_yrs?: Prisma.SortOrder
-  experience_max_yrs?: Prisma.SortOrder
-  title?: Prisma.SortOrder
-  current_role_min_yrs?: Prisma.SortOrder
-  current_role_max_yrs?: Prisma.SortOrder
-  current_role_tenure_yrs?: Prisma.SortOrder
-  education_graduation_min_yr?: Prisma.SortOrder
-  education_graduation_max_yr?: Prisma.SortOrder
+  category?: Prisma.SortOrder
+  value?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  non_negotiable?: Prisma.SortOrder
   archived?: Prisma.SortOrder
-  industry?: Prisma.SortOrder
+  archived_at?: Prisma.SortOrder
   search_run_date?: Prisma.SortOrder
 }
 
@@ -931,28 +500,13 @@ export type role_filtersMinOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_id?: Prisma.SortOrder
-  country_code?: Prisma.SortOrder
-  remote_work?: Prisma.SortOrder
-  work_authorization_required?: Prisma.SortOrder
-  experience_min_yrs?: Prisma.SortOrder
-  experience_max_yrs?: Prisma.SortOrder
-  title?: Prisma.SortOrder
-  current_role_min_yrs?: Prisma.SortOrder
-  current_role_max_yrs?: Prisma.SortOrder
-  current_role_tenure_yrs?: Prisma.SortOrder
-  education_graduation_min_yr?: Prisma.SortOrder
-  education_graduation_max_yr?: Prisma.SortOrder
+  category?: Prisma.SortOrder
+  value?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  non_negotiable?: Prisma.SortOrder
   archived?: Prisma.SortOrder
-  industry?: Prisma.SortOrder
+  archived_at?: Prisma.SortOrder
   search_run_date?: Prisma.SortOrder
-}
-
-export type role_filtersSumOrderByAggregateInput = {
-  experience_min_yrs?: Prisma.SortOrder
-  experience_max_yrs?: Prisma.SortOrder
-  current_role_min_yrs?: Prisma.SortOrder
-  current_role_max_yrs?: Prisma.SortOrder
-  current_role_tenure_yrs?: Prisma.SortOrder
 }
 
 export type Role_filtersListRelationFilter = {
@@ -963,34 +517,6 @@ export type Role_filtersListRelationFilter = {
 
 export type role_filtersOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type role_filtersCreateNestedOneWithoutFilter_companiesInput = {
-  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_companiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_companiesInput>
-  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutFilter_companiesInput
-  connect?: Prisma.role_filtersWhereUniqueInput
-}
-
-export type role_filtersUpdateOneRequiredWithoutFilter_companiesNestedInput = {
-  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_companiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_companiesInput>
-  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutFilter_companiesInput
-  upsert?: Prisma.role_filtersUpsertWithoutFilter_companiesInput
-  connect?: Prisma.role_filtersWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.role_filtersUpdateToOneWithWhereWithoutFilter_companiesInput, Prisma.role_filtersUpdateWithoutFilter_companiesInput>, Prisma.role_filtersUncheckedUpdateWithoutFilter_companiesInput>
-}
-
-export type role_filtersCreateNestedOneWithoutFilter_location_citiesInput = {
-  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_location_citiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_location_citiesInput>
-  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutFilter_location_citiesInput
-  connect?: Prisma.role_filtersWhereUniqueInput
-}
-
-export type role_filtersUpdateOneRequiredWithoutFilter_location_citiesNestedInput = {
-  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_location_citiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_location_citiesInput>
-  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutFilter_location_citiesInput
-  upsert?: Prisma.role_filtersUpsertWithoutFilter_location_citiesInput
-  connect?: Prisma.role_filtersWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.role_filtersUpdateToOneWithWhereWithoutFilter_location_citiesInput, Prisma.role_filtersUpdateWithoutFilter_location_citiesInput>, Prisma.role_filtersUncheckedUpdateWithoutFilter_location_citiesInput>
 }
 
 export type role_filtersCreateNestedOneWithoutLogsInput = {
@@ -1009,139 +535,31 @@ export type role_filtersUpdateOneWithoutLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.role_filtersUpdateToOneWithWhereWithoutLogsInput, Prisma.role_filtersUpdateWithoutLogsInput>, Prisma.role_filtersUncheckedUpdateWithoutLogsInput>
 }
 
-export type role_filtersCreatealternative_titlesInput = {
+export type role_filtersCreateNestedOneWithoutChildrenInput = {
+  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutChildrenInput, Prisma.role_filtersUncheckedCreateWithoutChildrenInput>
+  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutChildrenInput
+  connect?: Prisma.role_filtersWhereUniqueInput
+}
+
+export type role_filtersUpdateOneRequiredWithoutChildrenNestedInput = {
+  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutChildrenInput, Prisma.role_filtersUncheckedCreateWithoutChildrenInput>
+  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutChildrenInput
+  upsert?: Prisma.role_filtersUpsertWithoutChildrenInput
+  connect?: Prisma.role_filtersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.role_filtersUpdateToOneWithWhereWithoutChildrenInput, Prisma.role_filtersUpdateWithoutChildrenInput>, Prisma.role_filtersUncheckedUpdateWithoutChildrenInput>
+}
+
+export type role_filtersCreatelist_valueInput = {
   set: string[]
 }
 
-export type role_filtersCreatetitle_levelsInput = {
-  set: string[]
-}
-
-export type role_filtersCreaterolesInput = {
-  set: string[]
-}
-
-export type role_filtersCreaterequired_skillsInput = {
-  set: string[]
-}
-
-export type role_filtersCreateoptional_skillsInput = {
-  set: string[]
-}
-
-export type role_filtersCreateeducation_levelsInput = {
-  set: string[]
-}
-
-export type role_filtersCreateeducation_institutionInput = {
-  set: string[]
-}
-
-export type role_filtersCreateeducation_excluded_institutionsInput = {
-  set: string[]
-}
-
-export type role_filtersCreaterequired_languagesInput = {
-  set: string[]
-}
-
-export type role_filtersCreateoptional_languagesInput = {
-  set: string[]
-}
-
-export type role_filtersCreatecareer_growthInput = {
-  set: string[]
-}
-
-export type role_filtersCreatesecurity_clearance_requiredInput = {
-  set: string[]
-}
-
-export type role_filtersCreatediversityInput = {
-  set: string[]
-}
-
-export type role_filtersCreateother_experienceInput = {
-  set: string[]
-}
-
-export type role_filtersCreatesitesInput = {
-  set: string[]
-}
-
-export type role_filtersUpdatealternative_titlesInput = {
+export type role_filtersUpdatelist_valueInput = {
   set?: string[]
   push?: string | string[]
 }
 
-export type role_filtersUpdatetitle_levelsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdaterolesInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdaterequired_skillsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdateoptional_skillsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdateeducation_levelsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdateeducation_institutionInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdateeducation_excluded_institutionsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdaterequired_languagesInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdateoptional_languagesInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdatecareer_growthInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdatesecurity_clearance_requiredInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdatediversityInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdateother_experienceInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
-export type role_filtersUpdatesitesInput = {
-  set?: string[]
-  push?: string | string[]
+export type EnumRoleFilterPriorityFieldUpdateOperationsInput = {
+  set?: $Enums.RoleFilterPriority
 }
 
 export type role_filtersCreateNestedOneWithoutRole_resultsInput = {
@@ -1158,6 +576,22 @@ export type role_filtersUpdateOneWithoutRole_resultsNestedInput = {
   delete?: Prisma.role_filtersWhereInput | boolean
   connect?: Prisma.role_filtersWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.role_filtersUpdateToOneWithWhereWithoutRole_resultsInput, Prisma.role_filtersUpdateWithoutRole_resultsInput>, Prisma.role_filtersUncheckedUpdateWithoutRole_resultsInput>
+}
+
+export type role_filtersCreateNestedOneWithoutScore_breakdownsInput = {
+  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutScore_breakdownsInput, Prisma.role_filtersUncheckedCreateWithoutScore_breakdownsInput>
+  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutScore_breakdownsInput
+  connect?: Prisma.role_filtersWhereUniqueInput
+}
+
+export type role_filtersUpdateOneWithoutScore_breakdownsNestedInput = {
+  create?: Prisma.XOR<Prisma.role_filtersCreateWithoutScore_breakdownsInput, Prisma.role_filtersUncheckedCreateWithoutScore_breakdownsInput>
+  connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutScore_breakdownsInput
+  upsert?: Prisma.role_filtersUpsertWithoutScore_breakdownsInput
+  disconnect?: Prisma.role_filtersWhereInput | boolean
+  delete?: Prisma.role_filtersWhereInput | boolean
+  connect?: Prisma.role_filtersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.role_filtersUpdateToOneWithWhereWithoutScore_breakdownsInput, Prisma.role_filtersUpdateWithoutScore_breakdownsInput>, Prisma.role_filtersUncheckedUpdateWithoutScore_breakdownsInput>
 }
 
 export type role_filtersCreateNestedManyWithoutRoleInput = {
@@ -1202,396 +636,23 @@ export type role_filtersUncheckedUpdateManyWithoutRoleNestedInput = {
   deleteMany?: Prisma.role_filtersScalarWhereInput | Prisma.role_filtersScalarWhereInput[]
 }
 
-export type role_filtersCreateWithoutFilter_companiesInput = {
-  uid?: string
-  created?: Date | string
-  updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: boolean
-  industry?: string | null
-  search_run_date?: Date | string | null
-  role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
-  role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
-  logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
-}
-
-export type role_filtersUncheckedCreateWithoutFilter_companiesInput = {
-  uid?: string
-  created?: Date | string
-  updated?: Date | string
-  role_id: string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: boolean
-  industry?: string | null
-  search_run_date?: Date | string | null
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
-  role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
-  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
-}
-
-export type role_filtersCreateOrConnectWithoutFilter_companiesInput = {
-  where: Prisma.role_filtersWhereUniqueInput
-  create: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_companiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_companiesInput>
-}
-
-export type role_filtersUpsertWithoutFilter_companiesInput = {
-  update: Prisma.XOR<Prisma.role_filtersUpdateWithoutFilter_companiesInput, Prisma.role_filtersUncheckedUpdateWithoutFilter_companiesInput>
-  create: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_companiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_companiesInput>
-  where?: Prisma.role_filtersWhereInput
-}
-
-export type role_filtersUpdateToOneWithWhereWithoutFilter_companiesInput = {
-  where?: Prisma.role_filtersWhereInput
-  data: Prisma.XOR<Prisma.role_filtersUpdateWithoutFilter_companiesInput, Prisma.role_filtersUncheckedUpdateWithoutFilter_companiesInput>
-}
-
-export type role_filtersUpdateWithoutFilter_companiesInput = {
-  uid?: Prisma.StringFieldUpdateOperationsInput | string
-  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
-  role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
-  logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
-}
-
-export type role_filtersUncheckedUpdateWithoutFilter_companiesInput = {
-  uid?: Prisma.StringFieldUpdateOperationsInput | string
-  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  role_id?: Prisma.StringFieldUpdateOperationsInput | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
-  role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
-  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
-}
-
-export type role_filtersCreateWithoutFilter_location_citiesInput = {
-  uid?: string
-  created?: Date | string
-  updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: boolean
-  industry?: string | null
-  search_run_date?: Date | string | null
-  role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
-  filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
-  role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
-  logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
-}
-
-export type role_filtersUncheckedCreateWithoutFilter_location_citiesInput = {
-  uid?: string
-  created?: Date | string
-  updated?: Date | string
-  role_id: string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: boolean
-  industry?: string | null
-  search_run_date?: Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
-  role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
-  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
-}
-
-export type role_filtersCreateOrConnectWithoutFilter_location_citiesInput = {
-  where: Prisma.role_filtersWhereUniqueInput
-  create: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_location_citiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_location_citiesInput>
-}
-
-export type role_filtersUpsertWithoutFilter_location_citiesInput = {
-  update: Prisma.XOR<Prisma.role_filtersUpdateWithoutFilter_location_citiesInput, Prisma.role_filtersUncheckedUpdateWithoutFilter_location_citiesInput>
-  create: Prisma.XOR<Prisma.role_filtersCreateWithoutFilter_location_citiesInput, Prisma.role_filtersUncheckedCreateWithoutFilter_location_citiesInput>
-  where?: Prisma.role_filtersWhereInput
-}
-
-export type role_filtersUpdateToOneWithWhereWithoutFilter_location_citiesInput = {
-  where?: Prisma.role_filtersWhereInput
-  data: Prisma.XOR<Prisma.role_filtersUpdateWithoutFilter_location_citiesInput, Prisma.role_filtersUncheckedUpdateWithoutFilter_location_citiesInput>
-}
-
-export type role_filtersUpdateWithoutFilter_location_citiesInput = {
-  uid?: Prisma.StringFieldUpdateOperationsInput | string
-  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
-  filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
-  role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
-  logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
-}
-
-export type role_filtersUncheckedUpdateWithoutFilter_location_citiesInput = {
-  uid?: Prisma.StringFieldUpdateOperationsInput | string
-  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  role_id?: Prisma.StringFieldUpdateOperationsInput | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
-  role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
-  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
-}
-
 export type role_filtersCreateWithoutLogsInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
-  filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
+  children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
 }
 
 export type role_filtersUncheckedCreateWithoutLogsInput = {
@@ -1599,39 +660,18 @@ export type role_filtersUncheckedCreateWithoutLogsInput = {
   created?: Date | string
   updated?: Date | string
   role_id: string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedCreateNestedManyWithoutParentInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
 }
 
 export type role_filtersCreateOrConnectWithoutLogsInput = {
@@ -1654,40 +694,19 @@ export type role_filtersUpdateWithoutLogsInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
-  filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
+  children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
 }
 
 export type role_filtersUncheckedUpdateWithoutLogsInput = {
@@ -1695,78 +714,128 @@ export type role_filtersUncheckedUpdateWithoutLogsInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedUpdateManyWithoutParentNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
+}
+
+export type role_filtersCreateWithoutChildrenInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
+  archived?: boolean
+  archived_at?: Date | string | null
+  search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
+  role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
+}
+
+export type role_filtersUncheckedCreateWithoutChildrenInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  role_id: string
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
+  archived?: boolean
+  archived_at?: Date | string | null
+  search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
+}
+
+export type role_filtersCreateOrConnectWithoutChildrenInput = {
+  where: Prisma.role_filtersWhereUniqueInput
+  create: Prisma.XOR<Prisma.role_filtersCreateWithoutChildrenInput, Prisma.role_filtersUncheckedCreateWithoutChildrenInput>
+}
+
+export type role_filtersUpsertWithoutChildrenInput = {
+  update: Prisma.XOR<Prisma.role_filtersUpdateWithoutChildrenInput, Prisma.role_filtersUncheckedUpdateWithoutChildrenInput>
+  create: Prisma.XOR<Prisma.role_filtersCreateWithoutChildrenInput, Prisma.role_filtersUncheckedCreateWithoutChildrenInput>
+  where?: Prisma.role_filtersWhereInput
+}
+
+export type role_filtersUpdateToOneWithWhereWithoutChildrenInput = {
+  where?: Prisma.role_filtersWhereInput
+  data: Prisma.XOR<Prisma.role_filtersUpdateWithoutChildrenInput, Prisma.role_filtersUncheckedUpdateWithoutChildrenInput>
+}
+
+export type role_filtersUpdateWithoutChildrenInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
+  role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
+}
+
+export type role_filtersUncheckedUpdateWithoutChildrenInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_id?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
 }
 
 export type role_filtersCreateWithoutRole_resultsInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
-  filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
+  children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
+  score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
 }
 
@@ -1775,38 +844,17 @@ export type role_filtersUncheckedCreateWithoutRole_resultsInput = {
   created?: Date | string
   updated?: Date | string
   role_id: string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedCreateNestedManyWithoutParentInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
 }
 
@@ -1830,39 +878,18 @@ export type role_filtersUpdateWithoutRole_resultsInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
-  filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
+  children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
 }
 
@@ -1871,38 +898,109 @@ export type role_filtersUncheckedUpdateWithoutRole_resultsInput = {
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role_id?: Prisma.StringFieldUpdateOperationsInput | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedUpdateManyWithoutParentNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
+}
+
+export type role_filtersCreateWithoutScore_breakdownsInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
+  archived?: boolean
+  archived_at?: Date | string | null
+  search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
+  children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
+  role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
+}
+
+export type role_filtersUncheckedCreateWithoutScore_breakdownsInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  role_id: string
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
+  archived?: boolean
+  archived_at?: Date | string | null
+  search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedCreateNestedManyWithoutParentInput
+  role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
+}
+
+export type role_filtersCreateOrConnectWithoutScore_breakdownsInput = {
+  where: Prisma.role_filtersWhereUniqueInput
+  create: Prisma.XOR<Prisma.role_filtersCreateWithoutScore_breakdownsInput, Prisma.role_filtersUncheckedCreateWithoutScore_breakdownsInput>
+}
+
+export type role_filtersUpsertWithoutScore_breakdownsInput = {
+  update: Prisma.XOR<Prisma.role_filtersUpdateWithoutScore_breakdownsInput, Prisma.role_filtersUncheckedUpdateWithoutScore_breakdownsInput>
+  create: Prisma.XOR<Prisma.role_filtersCreateWithoutScore_breakdownsInput, Prisma.role_filtersUncheckedCreateWithoutScore_breakdownsInput>
+  where?: Prisma.role_filtersWhereInput
+}
+
+export type role_filtersUpdateToOneWithWhereWithoutScore_breakdownsInput = {
+  where?: Prisma.role_filtersWhereInput
+  data: Prisma.XOR<Prisma.role_filtersUpdateWithoutScore_breakdownsInput, Prisma.role_filtersUncheckedUpdateWithoutScore_breakdownsInput>
+}
+
+export type role_filtersUpdateWithoutScore_breakdownsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
+  children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
+  role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
+}
+
+export type role_filtersUncheckedUpdateWithoutScore_breakdownsInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_id?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedUpdateManyWithoutParentNestedInput
+  role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
 }
 
@@ -1910,39 +1008,18 @@ export type role_filtersCreateWithoutRoleInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
-  filter_companies?: Prisma.filter_companiesCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesCreateNestedManyWithoutRole_filtersInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
 }
 
@@ -1950,39 +1027,18 @@ export type role_filtersUncheckedCreateWithoutRoleInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedCreateNestedManyWithoutRole_filtersInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedCreateNestedManyWithoutRole_filtersInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedCreateNestedManyWithoutParentInput
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
 }
 
@@ -2020,111 +1076,48 @@ export type role_filtersScalarWhereInput = {
   created?: Prisma.DateTimeFilter<"role_filters"> | Date | string
   updated?: Prisma.DateTimeFilter<"role_filters"> | Date | string
   role_id?: Prisma.UuidFilter<"role_filters"> | string
-  country_code?: Prisma.StringNullableFilter<"role_filters"> | string | null
-  remote_work?: Prisma.BoolNullableFilter<"role_filters"> | boolean | null
-  work_authorization_required?: Prisma.BoolNullableFilter<"role_filters"> | boolean | null
-  experience_min_yrs?: Prisma.IntNullableFilter<"role_filters"> | number | null
-  experience_max_yrs?: Prisma.IntNullableFilter<"role_filters"> | number | null
-  title?: Prisma.StringFilter<"role_filters"> | string
-  alternative_titles?: Prisma.StringNullableListFilter<"role_filters">
-  title_levels?: Prisma.StringNullableListFilter<"role_filters">
-  roles?: Prisma.StringNullableListFilter<"role_filters">
-  current_role_min_yrs?: Prisma.IntFilter<"role_filters"> | number
-  current_role_max_yrs?: Prisma.IntFilter<"role_filters"> | number
-  current_role_tenure_yrs?: Prisma.IntFilter<"role_filters"> | number
-  required_skills?: Prisma.StringNullableListFilter<"role_filters">
-  optional_skills?: Prisma.StringNullableListFilter<"role_filters">
-  education_levels?: Prisma.StringNullableListFilter<"role_filters">
-  education_institution?: Prisma.StringNullableListFilter<"role_filters">
-  education_excluded_institutions?: Prisma.StringNullableListFilter<"role_filters">
-  education_graduation_min_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
-  education_graduation_max_yr?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
-  required_languages?: Prisma.StringNullableListFilter<"role_filters">
-  optional_languages?: Prisma.StringNullableListFilter<"role_filters">
-  career_growth?: Prisma.StringNullableListFilter<"role_filters">
-  security_clearance_required?: Prisma.StringNullableListFilter<"role_filters">
-  diversity?: Prisma.StringNullableListFilter<"role_filters">
-  other_experience?: Prisma.StringNullableListFilter<"role_filters">
-  sites?: Prisma.StringNullableListFilter<"role_filters">
-  metadata?: Prisma.JsonNullableFilter<"role_filters">
+  category?: Prisma.StringFilter<"role_filters"> | string
+  value?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  list_value?: Prisma.StringNullableListFilter<"role_filters">
+  priority?: Prisma.EnumRoleFilterPriorityFilter<"role_filters"> | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFilter<"role_filters"> | boolean
   archived?: Prisma.BoolFilter<"role_filters"> | boolean
-  industry?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  archived_at?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
+  metadata?: Prisma.JsonNullableFilter<"role_filters">
 }
 
 export type role_filtersCreateManyRoleInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  country_code?: string | null
-  remote_work?: boolean | null
-  work_authorization_required?: boolean | null
-  experience_min_yrs?: number | null
-  experience_max_yrs?: number | null
-  title: string
-  alternative_titles?: Prisma.role_filtersCreatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersCreatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersCreaterolesInput | string[]
-  current_role_min_yrs: number
-  current_role_max_yrs: number
-  current_role_tenure_yrs: number
-  required_skills?: Prisma.role_filtersCreaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersCreateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersCreateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersCreateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersCreateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Date | string | null
-  education_graduation_max_yr?: Date | string | null
-  required_languages?: Prisma.role_filtersCreaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersCreateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersCreatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersCreatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersCreatediversityInput | string[]
-  other_experience?: Prisma.role_filtersCreateother_experienceInput | string[]
-  sites?: Prisma.role_filtersCreatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filtersCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: string | null
+  archived_at?: Date | string | null
   search_run_date?: Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type role_filtersUpdateWithoutRoleInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  filter_companies?: Prisma.filter_companiesUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUpdateManyWithoutRole_filtersNestedInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
 }
 
@@ -2132,39 +1125,18 @@ export type role_filtersUncheckedUpdateWithoutRoleInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  filter_companies?: Prisma.filter_companiesUncheckedUpdateManyWithoutRole_filtersNestedInput
-  filter_location_cities?: Prisma.filter_location_citiesUncheckedUpdateManyWithoutRole_filtersNestedInput
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  children?: Prisma.role_filter_childUncheckedUpdateManyWithoutParentNestedInput
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
+  score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
 }
 
@@ -2172,36 +1144,15 @@ export type role_filtersUncheckedUpdateManyWithoutRoleInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  country_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remote_work?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  work_authorization_required?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  experience_min_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience_max_yrs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  alternative_titles?: Prisma.role_filtersUpdatealternative_titlesInput | string[]
-  title_levels?: Prisma.role_filtersUpdatetitle_levelsInput | string[]
-  roles?: Prisma.role_filtersUpdaterolesInput | string[]
-  current_role_min_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_max_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  current_role_tenure_yrs?: Prisma.IntFieldUpdateOperationsInput | number
-  required_skills?: Prisma.role_filtersUpdaterequired_skillsInput | string[]
-  optional_skills?: Prisma.role_filtersUpdateoptional_skillsInput | string[]
-  education_levels?: Prisma.role_filtersUpdateeducation_levelsInput | string[]
-  education_institution?: Prisma.role_filtersUpdateeducation_institutionInput | string[]
-  education_excluded_institutions?: Prisma.role_filtersUpdateeducation_excluded_institutionsInput | string[]
-  education_graduation_min_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  education_graduation_max_yr?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  required_languages?: Prisma.role_filtersUpdaterequired_languagesInput | string[]
-  optional_languages?: Prisma.role_filtersUpdateoptional_languagesInput | string[]
-  career_growth?: Prisma.role_filtersUpdatecareer_growthInput | string[]
-  security_clearance_required?: Prisma.role_filtersUpdatesecurity_clearance_requiredInput | string[]
-  diversity?: Prisma.role_filtersUpdatediversityInput | string[]
-  other_experience?: Prisma.role_filtersUpdateother_experienceInput | string[]
-  sites?: Prisma.role_filtersUpdatesitesInput | string[]
-  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filtersUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 
@@ -2210,16 +1161,16 @@ export type role_filtersUncheckedUpdateManyWithoutRoleInput = {
  */
 
 export type Role_filtersCountOutputType = {
-  filter_companies: number
-  filter_location_cities: number
+  children: number
   role_results: number
+  score_breakdowns: number
   logs: number
 }
 
 export type Role_filtersCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  filter_companies?: boolean | Role_filtersCountOutputTypeCountFilter_companiesArgs
-  filter_location_cities?: boolean | Role_filtersCountOutputTypeCountFilter_location_citiesArgs
+  children?: boolean | Role_filtersCountOutputTypeCountChildrenArgs
   role_results?: boolean | Role_filtersCountOutputTypeCountRole_resultsArgs
+  score_breakdowns?: boolean | Role_filtersCountOutputTypeCountScore_breakdownsArgs
   logs?: boolean | Role_filtersCountOutputTypeCountLogsArgs
 }
 
@@ -2236,15 +1187,8 @@ export type Role_filtersCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types
 /**
  * Role_filtersCountOutputType without action
  */
-export type Role_filtersCountOutputTypeCountFilter_companiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.filter_companiesWhereInput
-}
-
-/**
- * Role_filtersCountOutputType without action
- */
-export type Role_filtersCountOutputTypeCountFilter_location_citiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.filter_location_citiesWhereInput
+export type Role_filtersCountOutputTypeCountChildrenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.role_filter_childWhereInput
 }
 
 /**
@@ -2252,6 +1196,13 @@ export type Role_filtersCountOutputTypeCountFilter_location_citiesArgs<ExtArgs e
  */
 export type Role_filtersCountOutputTypeCountRole_resultsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.role_resultWhereInput
+}
+
+/**
+ * Role_filtersCountOutputType without action
+ */
+export type Role_filtersCountOutputTypeCountScore_breakdownsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.role_result_score_breakdownWhereInput
 }
 
 /**
@@ -2267,40 +1218,19 @@ export type role_filtersSelect<ExtArgs extends runtime.Types.Extensions.Internal
   created?: boolean
   updated?: boolean
   role_id?: boolean
-  country_code?: boolean
-  remote_work?: boolean
-  work_authorization_required?: boolean
-  experience_min_yrs?: boolean
-  experience_max_yrs?: boolean
-  title?: boolean
-  alternative_titles?: boolean
-  title_levels?: boolean
-  roles?: boolean
-  current_role_min_yrs?: boolean
-  current_role_max_yrs?: boolean
-  current_role_tenure_yrs?: boolean
-  required_skills?: boolean
-  optional_skills?: boolean
-  education_levels?: boolean
-  education_institution?: boolean
-  education_excluded_institutions?: boolean
-  education_graduation_min_yr?: boolean
-  education_graduation_max_yr?: boolean
-  required_languages?: boolean
-  optional_languages?: boolean
-  career_growth?: boolean
-  security_clearance_required?: boolean
-  diversity?: boolean
-  other_experience?: boolean
-  sites?: boolean
-  metadata?: boolean
+  category?: boolean
+  value?: boolean
+  list_value?: boolean
+  priority?: boolean
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: boolean
+  archived_at?: boolean
   search_run_date?: boolean
+  metadata?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
-  filter_companies?: boolean | Prisma.role_filters$filter_companiesArgs<ExtArgs>
-  filter_location_cities?: boolean | Prisma.role_filters$filter_location_citiesArgs<ExtArgs>
+  children?: boolean | Prisma.role_filters$childrenArgs<ExtArgs>
   role_results?: boolean | Prisma.role_filters$role_resultsArgs<ExtArgs>
+  score_breakdowns?: boolean | Prisma.role_filters$score_breakdownsArgs<ExtArgs>
   logs?: boolean | Prisma.role_filters$logsArgs<ExtArgs>
   _count?: boolean | Prisma.Role_filtersCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filters"]>
@@ -2310,36 +1240,15 @@ export type role_filtersSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   created?: boolean
   updated?: boolean
   role_id?: boolean
-  country_code?: boolean
-  remote_work?: boolean
-  work_authorization_required?: boolean
-  experience_min_yrs?: boolean
-  experience_max_yrs?: boolean
-  title?: boolean
-  alternative_titles?: boolean
-  title_levels?: boolean
-  roles?: boolean
-  current_role_min_yrs?: boolean
-  current_role_max_yrs?: boolean
-  current_role_tenure_yrs?: boolean
-  required_skills?: boolean
-  optional_skills?: boolean
-  education_levels?: boolean
-  education_institution?: boolean
-  education_excluded_institutions?: boolean
-  education_graduation_min_yr?: boolean
-  education_graduation_max_yr?: boolean
-  required_languages?: boolean
-  optional_languages?: boolean
-  career_growth?: boolean
-  security_clearance_required?: boolean
-  diversity?: boolean
-  other_experience?: boolean
-  sites?: boolean
-  metadata?: boolean
+  category?: boolean
+  value?: boolean
+  list_value?: boolean
+  priority?: boolean
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: boolean
+  archived_at?: boolean
   search_run_date?: boolean
+  metadata?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filters"]>
 
@@ -2348,36 +1257,15 @@ export type role_filtersSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   created?: boolean
   updated?: boolean
   role_id?: boolean
-  country_code?: boolean
-  remote_work?: boolean
-  work_authorization_required?: boolean
-  experience_min_yrs?: boolean
-  experience_max_yrs?: boolean
-  title?: boolean
-  alternative_titles?: boolean
-  title_levels?: boolean
-  roles?: boolean
-  current_role_min_yrs?: boolean
-  current_role_max_yrs?: boolean
-  current_role_tenure_yrs?: boolean
-  required_skills?: boolean
-  optional_skills?: boolean
-  education_levels?: boolean
-  education_institution?: boolean
-  education_excluded_institutions?: boolean
-  education_graduation_min_yr?: boolean
-  education_graduation_max_yr?: boolean
-  required_languages?: boolean
-  optional_languages?: boolean
-  career_growth?: boolean
-  security_clearance_required?: boolean
-  diversity?: boolean
-  other_experience?: boolean
-  sites?: boolean
-  metadata?: boolean
+  category?: boolean
+  value?: boolean
+  list_value?: boolean
+  priority?: boolean
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: boolean
+  archived_at?: boolean
   search_run_date?: boolean
+  metadata?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filters"]>
 
@@ -2386,44 +1274,23 @@ export type role_filtersSelectScalar = {
   created?: boolean
   updated?: boolean
   role_id?: boolean
-  country_code?: boolean
-  remote_work?: boolean
-  work_authorization_required?: boolean
-  experience_min_yrs?: boolean
-  experience_max_yrs?: boolean
-  title?: boolean
-  alternative_titles?: boolean
-  title_levels?: boolean
-  roles?: boolean
-  current_role_min_yrs?: boolean
-  current_role_max_yrs?: boolean
-  current_role_tenure_yrs?: boolean
-  required_skills?: boolean
-  optional_skills?: boolean
-  education_levels?: boolean
-  education_institution?: boolean
-  education_excluded_institutions?: boolean
-  education_graduation_min_yr?: boolean
-  education_graduation_max_yr?: boolean
-  required_languages?: boolean
-  optional_languages?: boolean
-  career_growth?: boolean
-  security_clearance_required?: boolean
-  diversity?: boolean
-  other_experience?: boolean
-  sites?: boolean
-  metadata?: boolean
+  category?: boolean
+  value?: boolean
+  list_value?: boolean
+  priority?: boolean
+  non_negotiable?: boolean
   archived?: boolean
-  industry?: boolean
+  archived_at?: boolean
   search_run_date?: boolean
+  metadata?: boolean
 }
 
-export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "country_code" | "remote_work" | "work_authorization_required" | "experience_min_yrs" | "experience_max_yrs" | "title" | "alternative_titles" | "title_levels" | "roles" | "current_role_min_yrs" | "current_role_max_yrs" | "current_role_tenure_yrs" | "required_skills" | "optional_skills" | "education_levels" | "education_institution" | "education_excluded_institutions" | "education_graduation_min_yr" | "education_graduation_max_yr" | "required_languages" | "optional_languages" | "career_growth" | "security_clearance_required" | "diversity" | "other_experience" | "sites" | "metadata" | "archived" | "industry" | "search_run_date", ExtArgs["result"]["role_filters"]>
+export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "category" | "value" | "list_value" | "priority" | "non_negotiable" | "archived" | "archived_at" | "search_run_date" | "metadata", ExtArgs["result"]["role_filters"]>
 export type role_filtersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
-  filter_companies?: boolean | Prisma.role_filters$filter_companiesArgs<ExtArgs>
-  filter_location_cities?: boolean | Prisma.role_filters$filter_location_citiesArgs<ExtArgs>
+  children?: boolean | Prisma.role_filters$childrenArgs<ExtArgs>
   role_results?: boolean | Prisma.role_filters$role_resultsArgs<ExtArgs>
+  score_breakdowns?: boolean | Prisma.role_filters$score_breakdownsArgs<ExtArgs>
   logs?: boolean | Prisma.role_filters$logsArgs<ExtArgs>
   _count?: boolean | Prisma.Role_filtersCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -2438,9 +1305,9 @@ export type $role_filtersPayload<ExtArgs extends runtime.Types.Extensions.Intern
   name: "role_filters"
   objects: {
     role: Prisma.$rolesPayload<ExtArgs>
-    filter_companies: Prisma.$filter_companiesPayload<ExtArgs>[]
-    filter_location_cities: Prisma.$filter_location_citiesPayload<ExtArgs>[]
+    children: Prisma.$role_filter_childPayload<ExtArgs>[]
     role_results: Prisma.$role_resultPayload<ExtArgs>[]
+    score_breakdowns: Prisma.$role_result_score_breakdownPayload<ExtArgs>[]
     logs: Prisma.$organization_logPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -2448,36 +1315,15 @@ export type $role_filtersPayload<ExtArgs extends runtime.Types.Extensions.Intern
     created: Date
     updated: Date
     role_id: string
-    country_code: string | null
-    remote_work: boolean | null
-    work_authorization_required: boolean | null
-    experience_min_yrs: number | null
-    experience_max_yrs: number | null
-    title: string
-    alternative_titles: string[]
-    title_levels: string[]
-    roles: string[]
-    current_role_min_yrs: number
-    current_role_max_yrs: number
-    current_role_tenure_yrs: number
-    required_skills: string[]
-    optional_skills: string[]
-    education_levels: string[]
-    education_institution: string[]
-    education_excluded_institutions: string[]
-    education_graduation_min_yr: Date | null
-    education_graduation_max_yr: Date | null
-    required_languages: string[]
-    optional_languages: string[]
-    career_growth: string[]
-    security_clearance_required: string[]
-    diversity: string[]
-    other_experience: string[]
-    sites: string[]
-    metadata: runtime.JsonValue | null
+    category: string
+    value: string | null
+    list_value: string[]
+    priority: $Enums.RoleFilterPriority
+    non_negotiable: boolean
     archived: boolean
-    industry: string | null
+    archived_at: Date | null
     search_run_date: Date | null
+    metadata: runtime.JsonValue | null
   }, ExtArgs["result"]["role_filters"]>
   composites: {}
 }
@@ -2873,9 +1719,9 @@ readonly fields: role_filtersFieldRefs;
 export interface Prisma__role_filtersClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   role<T extends Prisma.rolesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.rolesDefaultArgs<ExtArgs>>): Prisma.Prisma__rolesClient<runtime.Types.Result.GetResult<Prisma.$rolesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  filter_companies<T extends Prisma.role_filters$filter_companiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filters$filter_companiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$filter_companiesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  filter_location_cities<T extends Prisma.role_filters$filter_location_citiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filters$filter_location_citiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$filter_location_citiesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  children<T extends Prisma.role_filters$childrenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filters$childrenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_filter_childPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   role_results<T extends Prisma.role_filters$role_resultsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filters$role_resultsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_resultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  score_breakdowns<T extends Prisma.role_filters$score_breakdownsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filters$score_breakdownsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_result_score_breakdownPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   logs<T extends Prisma.role_filters$logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filters$logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$organization_logPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2910,36 +1756,15 @@ export interface role_filtersFieldRefs {
   readonly created: Prisma.FieldRef<"role_filters", 'DateTime'>
   readonly updated: Prisma.FieldRef<"role_filters", 'DateTime'>
   readonly role_id: Prisma.FieldRef<"role_filters", 'String'>
-  readonly country_code: Prisma.FieldRef<"role_filters", 'String'>
-  readonly remote_work: Prisma.FieldRef<"role_filters", 'Boolean'>
-  readonly work_authorization_required: Prisma.FieldRef<"role_filters", 'Boolean'>
-  readonly experience_min_yrs: Prisma.FieldRef<"role_filters", 'Int'>
-  readonly experience_max_yrs: Prisma.FieldRef<"role_filters", 'Int'>
-  readonly title: Prisma.FieldRef<"role_filters", 'String'>
-  readonly alternative_titles: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly title_levels: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly roles: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly current_role_min_yrs: Prisma.FieldRef<"role_filters", 'Int'>
-  readonly current_role_max_yrs: Prisma.FieldRef<"role_filters", 'Int'>
-  readonly current_role_tenure_yrs: Prisma.FieldRef<"role_filters", 'Int'>
-  readonly required_skills: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly optional_skills: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly education_levels: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly education_institution: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly education_excluded_institutions: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly education_graduation_min_yr: Prisma.FieldRef<"role_filters", 'DateTime'>
-  readonly education_graduation_max_yr: Prisma.FieldRef<"role_filters", 'DateTime'>
-  readonly required_languages: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly optional_languages: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly career_growth: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly security_clearance_required: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly diversity: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly other_experience: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly sites: Prisma.FieldRef<"role_filters", 'String[]'>
-  readonly metadata: Prisma.FieldRef<"role_filters", 'Json'>
+  readonly category: Prisma.FieldRef<"role_filters", 'String'>
+  readonly value: Prisma.FieldRef<"role_filters", 'String'>
+  readonly list_value: Prisma.FieldRef<"role_filters", 'String[]'>
+  readonly priority: Prisma.FieldRef<"role_filters", 'RoleFilterPriority'>
+  readonly non_negotiable: Prisma.FieldRef<"role_filters", 'Boolean'>
   readonly archived: Prisma.FieldRef<"role_filters", 'Boolean'>
-  readonly industry: Prisma.FieldRef<"role_filters", 'String'>
+  readonly archived_at: Prisma.FieldRef<"role_filters", 'DateTime'>
   readonly search_run_date: Prisma.FieldRef<"role_filters", 'DateTime'>
+  readonly metadata: Prisma.FieldRef<"role_filters", 'Json'>
 }
     
 
@@ -3341,51 +2166,27 @@ export type role_filtersDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
- * role_filters.filter_companies
+ * role_filters.children
  */
-export type role_filters$filter_companiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type role_filters$childrenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the filter_companies
+   * Select specific fields to fetch from the role_filter_child
    */
-  select?: Prisma.filter_companiesSelect<ExtArgs> | null
+  select?: Prisma.role_filter_childSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the filter_companies
+   * Omit specific fields from the role_filter_child
    */
-  omit?: Prisma.filter_companiesOmit<ExtArgs> | null
+  omit?: Prisma.role_filter_childOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.filter_companiesInclude<ExtArgs> | null
-  where?: Prisma.filter_companiesWhereInput
-  orderBy?: Prisma.filter_companiesOrderByWithRelationInput | Prisma.filter_companiesOrderByWithRelationInput[]
-  cursor?: Prisma.filter_companiesWhereUniqueInput
+  include?: Prisma.role_filter_childInclude<ExtArgs> | null
+  where?: Prisma.role_filter_childWhereInput
+  orderBy?: Prisma.role_filter_childOrderByWithRelationInput | Prisma.role_filter_childOrderByWithRelationInput[]
+  cursor?: Prisma.role_filter_childWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.Filter_companiesScalarFieldEnum | Prisma.Filter_companiesScalarFieldEnum[]
-}
-
-/**
- * role_filters.filter_location_cities
- */
-export type role_filters$filter_location_citiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the filter_location_cities
-   */
-  select?: Prisma.filter_location_citiesSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the filter_location_cities
-   */
-  omit?: Prisma.filter_location_citiesOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.filter_location_citiesInclude<ExtArgs> | null
-  where?: Prisma.filter_location_citiesWhereInput
-  orderBy?: Prisma.filter_location_citiesOrderByWithRelationInput | Prisma.filter_location_citiesOrderByWithRelationInput[]
-  cursor?: Prisma.filter_location_citiesWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Filter_location_citiesScalarFieldEnum | Prisma.Filter_location_citiesScalarFieldEnum[]
+  distinct?: Prisma.Role_filter_childScalarFieldEnum | Prisma.Role_filter_childScalarFieldEnum[]
 }
 
 /**
@@ -3410,6 +2211,30 @@ export type role_filters$role_resultsArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.Role_resultScalarFieldEnum | Prisma.Role_resultScalarFieldEnum[]
+}
+
+/**
+ * role_filters.score_breakdowns
+ */
+export type role_filters$score_breakdownsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the role_result_score_breakdown
+   */
+  select?: Prisma.role_result_score_breakdownSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the role_result_score_breakdown
+   */
+  omit?: Prisma.role_result_score_breakdownOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.role_result_score_breakdownInclude<ExtArgs> | null
+  where?: Prisma.role_result_score_breakdownWhereInput
+  orderBy?: Prisma.role_result_score_breakdownOrderByWithRelationInput | Prisma.role_result_score_breakdownOrderByWithRelationInput[]
+  cursor?: Prisma.role_result_score_breakdownWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Role_result_score_breakdownScalarFieldEnum | Prisma.Role_result_score_breakdownScalarFieldEnum[]
 }
 
 /**

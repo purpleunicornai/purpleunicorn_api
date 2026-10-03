@@ -401,12 +401,11 @@ export const ModelName = {
   candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   candidate_source: 'candidate_source',
-  filter_companies: 'filter_companies',
-  filter_location_cities: 'filter_location_cities',
   organization_credits: 'organization_credits',
   organization_log: 'organization_log',
   organization_subscription: 'organization_subscription',
   projects: 'projects',
+  role_filter_child: 'role_filter_child',
   role_filters: 'role_filters',
   role_result: 'role_result',
   role_result_score_breakdown: 'role_result_score_breakdown',
@@ -426,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "filter_companies" | "filter_location_cities" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
+    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filter_child" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -726,154 +725,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    filter_companies: {
-      payload: Prisma.$filter_companiesPayload<ExtArgs>
-      fields: Prisma.filter_companiesFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.filter_companiesFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.filter_companiesFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>
-        }
-        findFirst: {
-          args: Prisma.filter_companiesFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.filter_companiesFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>
-        }
-        findMany: {
-          args: Prisma.filter_companiesFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>[]
-        }
-        create: {
-          args: Prisma.filter_companiesCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>
-        }
-        createMany: {
-          args: Prisma.filter_companiesCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.filter_companiesCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>[]
-        }
-        delete: {
-          args: Prisma.filter_companiesDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>
-        }
-        update: {
-          args: Prisma.filter_companiesUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>
-        }
-        deleteMany: {
-          args: Prisma.filter_companiesDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.filter_companiesUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.filter_companiesUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>[]
-        }
-        upsert: {
-          args: Prisma.filter_companiesUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_companiesPayload>
-        }
-        aggregate: {
-          args: Prisma.Filter_companiesAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateFilter_companies>
-        }
-        groupBy: {
-          args: Prisma.filter_companiesGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Filter_companiesGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.filter_companiesCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Filter_companiesCountAggregateOutputType> | number
-        }
-      }
-    }
-    filter_location_cities: {
-      payload: Prisma.$filter_location_citiesPayload<ExtArgs>
-      fields: Prisma.filter_location_citiesFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.filter_location_citiesFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.filter_location_citiesFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>
-        }
-        findFirst: {
-          args: Prisma.filter_location_citiesFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.filter_location_citiesFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>
-        }
-        findMany: {
-          args: Prisma.filter_location_citiesFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>[]
-        }
-        create: {
-          args: Prisma.filter_location_citiesCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>
-        }
-        createMany: {
-          args: Prisma.filter_location_citiesCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.filter_location_citiesCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>[]
-        }
-        delete: {
-          args: Prisma.filter_location_citiesDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>
-        }
-        update: {
-          args: Prisma.filter_location_citiesUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>
-        }
-        deleteMany: {
-          args: Prisma.filter_location_citiesDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.filter_location_citiesUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.filter_location_citiesUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>[]
-        }
-        upsert: {
-          args: Prisma.filter_location_citiesUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$filter_location_citiesPayload>
-        }
-        aggregate: {
-          args: Prisma.Filter_location_citiesAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateFilter_location_cities>
-        }
-        groupBy: {
-          args: Prisma.filter_location_citiesGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Filter_location_citiesGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.filter_location_citiesCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Filter_location_citiesCountAggregateOutputType> | number
-        }
-      }
-    }
     organization_credits: {
       payload: Prisma.$organization_creditsPayload<ExtArgs>
       fields: Prisma.organization_creditsFieldRefs
@@ -1167,6 +1018,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.projectsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ProjectsCountAggregateOutputType> | number
+        }
+      }
+    }
+    role_filter_child: {
+      payload: Prisma.$role_filter_childPayload<ExtArgs>
+      fields: Prisma.role_filter_childFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.role_filter_childFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.role_filter_childFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>
+        }
+        findFirst: {
+          args: Prisma.role_filter_childFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.role_filter_childFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>
+        }
+        findMany: {
+          args: Prisma.role_filter_childFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>[]
+        }
+        create: {
+          args: Prisma.role_filter_childCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>
+        }
+        createMany: {
+          args: Prisma.role_filter_childCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.role_filter_childCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>[]
+        }
+        delete: {
+          args: Prisma.role_filter_childDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>
+        }
+        update: {
+          args: Prisma.role_filter_childUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>
+        }
+        deleteMany: {
+          args: Prisma.role_filter_childDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.role_filter_childUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.role_filter_childUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>[]
+        }
+        upsert: {
+          args: Prisma.role_filter_childUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_childPayload>
+        }
+        aggregate: {
+          args: Prisma.Role_filter_childAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRole_filter_child>
+        }
+        groupBy: {
+          args: Prisma.role_filter_childGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Role_filter_childGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.role_filter_childCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Role_filter_childCountAggregateOutputType> | number
         }
       }
     }
@@ -1591,33 +1516,6 @@ export const Candidate_sourceScalarFieldEnum = {
 export type Candidate_sourceScalarFieldEnum = (typeof Candidate_sourceScalarFieldEnum)[keyof typeof Candidate_sourceScalarFieldEnum]
 
 
-export const Filter_companiesScalarFieldEnum = {
-  uid: 'uid',
-  created: 'created',
-  updated: 'updated',
-  role_filters_id: 'role_filters_id',
-  type: 'type',
-  company_names: 'company_names',
-  start_date: 'start_date',
-  end_date: 'end_date'
-} as const
-
-export type Filter_companiesScalarFieldEnum = (typeof Filter_companiesScalarFieldEnum)[keyof typeof Filter_companiesScalarFieldEnum]
-
-
-export const Filter_location_citiesScalarFieldEnum = {
-  uid: 'uid',
-  created: 'created',
-  updated: 'updated',
-  role_filters_id: 'role_filters_id',
-  name: 'name',
-  state: 'state',
-  country_code: 'country_code'
-} as const
-
-export type Filter_location_citiesScalarFieldEnum = (typeof Filter_location_citiesScalarFieldEnum)[keyof typeof Filter_location_citiesScalarFieldEnum]
-
-
 export const Organization_creditsScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -1645,7 +1543,8 @@ export const Organization_logScalarFieldEnum = {
   role_filter_id: 'role_filter_id',
   role_result_id: 'role_result_id',
   subscription_id: 'subscription_id',
-  credits_id: 'credits_id'
+  credits_id: 'credits_id',
+  candidate_id: 'candidate_id'
 } as const
 
 export type Organization_logScalarFieldEnum = (typeof Organization_logScalarFieldEnum)[keyof typeof Organization_logScalarFieldEnum]
@@ -1682,41 +1581,34 @@ export const ProjectsScalarFieldEnum = {
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
 
 
+export const Role_filter_childScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  parent_uid: 'parent_uid',
+  title: 'title',
+  value: 'value',
+  list_value: 'list_value',
+  boolean: 'boolean'
+} as const
+
+export type Role_filter_childScalarFieldEnum = (typeof Role_filter_childScalarFieldEnum)[keyof typeof Role_filter_childScalarFieldEnum]
+
+
 export const Role_filtersScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
   updated: 'updated',
   role_id: 'role_id',
-  country_code: 'country_code',
-  remote_work: 'remote_work',
-  work_authorization_required: 'work_authorization_required',
-  experience_min_yrs: 'experience_min_yrs',
-  experience_max_yrs: 'experience_max_yrs',
-  title: 'title',
-  alternative_titles: 'alternative_titles',
-  title_levels: 'title_levels',
-  roles: 'roles',
-  current_role_min_yrs: 'current_role_min_yrs',
-  current_role_max_yrs: 'current_role_max_yrs',
-  current_role_tenure_yrs: 'current_role_tenure_yrs',
-  required_skills: 'required_skills',
-  optional_skills: 'optional_skills',
-  education_levels: 'education_levels',
-  education_institution: 'education_institution',
-  education_excluded_institutions: 'education_excluded_institutions',
-  education_graduation_min_yr: 'education_graduation_min_yr',
-  education_graduation_max_yr: 'education_graduation_max_yr',
-  required_languages: 'required_languages',
-  optional_languages: 'optional_languages',
-  career_growth: 'career_growth',
-  security_clearance_required: 'security_clearance_required',
-  diversity: 'diversity',
-  other_experience: 'other_experience',
-  sites: 'sites',
-  metadata: 'metadata',
+  category: 'category',
+  value: 'value',
+  list_value: 'list_value',
+  priority: 'priority',
+  non_negotiable: 'non_negotiable',
   archived: 'archived',
-  industry: 'industry',
-  search_run_date: 'search_run_date'
+  archived_at: 'archived_at',
+  search_run_date: 'search_run_date',
+  metadata: 'metadata'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -1730,6 +1622,7 @@ export const Role_resultScalarFieldEnum = {
   role_id: 'role_id',
   filter_id: 'filter_id',
   score: 'score',
+  disqualified: 'disqualified',
   ai_score: 'ai_score',
   reasoning: 'reasoning',
   skills_matched: 'skills_matched',
@@ -1755,6 +1648,7 @@ export const Role_result_score_breakdownScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   role_result_id: 'role_result_id',
+  role_filter_id: 'role_filter_id',
   category: 'category',
   weight: 'weight',
   applicable: 'applicable',
@@ -1918,20 +1812,6 @@ export type ListEnumSourceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 
 
 /**
- * Reference to a field of type 'CompanyFilterType'
- */
-export type EnumCompanyFilterTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CompanyFilterType'>
-    
-
-
-/**
- * Reference to a field of type 'CompanyFilterType[]'
- */
-export type ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CompanyFilterType[]'>
-    
-
-
-/**
  * Reference to a field of type 'OrganizationCreditsType'
  */
 export type EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditsType'>
@@ -1984,6 +1864,20 @@ export type EnumProjectVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType
  * Reference to a field of type 'ProjectVisibility[]'
  */
 export type ListEnumProjectVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectVisibility[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RoleFilterPriority'
+ */
+export type EnumRoleFilterPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleFilterPriority'>
+    
+
+
+/**
+ * Reference to a field of type 'RoleFilterPriority[]'
+ */
+export type ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleFilterPriority[]'>
     
 
 
@@ -2155,12 +2049,11 @@ export type GlobalOmitConfig = {
   candidate_education?: Prisma.candidate_educationOmit
   candidate_experience?: Prisma.candidate_experienceOmit
   candidate_source?: Prisma.candidate_sourceOmit
-  filter_companies?: Prisma.filter_companiesOmit
-  filter_location_cities?: Prisma.filter_location_citiesOmit
   organization_credits?: Prisma.organization_creditsOmit
   organization_log?: Prisma.organization_logOmit
   organization_subscription?: Prisma.organization_subscriptionOmit
   projects?: Prisma.projectsOmit
+  role_filter_child?: Prisma.role_filter_childOmit
   role_filters?: Prisma.role_filtersOmit
   role_result?: Prisma.role_resultOmit
   role_result_score_breakdown?: Prisma.role_result_score_breakdownOmit

@@ -276,23 +276,6 @@ export type EnumSourceTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumSourceTypeFilter<$PrismaModel>
 }
 
-export type EnumCompanyFilterTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.CompanyFilterType | Prisma.EnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel> | $Enums.CompanyFilterType
-}
-
-export type EnumCompanyFilterTypeWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CompanyFilterType | Prisma.EnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCompanyFilterTypeWithAggregatesFilter<$PrismaModel> | $Enums.CompanyFilterType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
-}
-
 export type EnumOrganizationCreditsTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.OrganizationCreditsType | Prisma.EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
   in?: $Enums.OrganizationCreditsType[] | Prisma.ListEnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
@@ -415,6 +398,13 @@ export type EnumProjectVisibilityWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumProjectVisibilityFilter<$PrismaModel>
 }
 
+export type EnumRoleFilterPriorityFilter<$PrismaModel = never> = {
+  equals?: $Enums.RoleFilterPriority | Prisma.EnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel> | $Enums.RoleFilterPriority
+}
+
 export type JsonNullableFilter<$PrismaModel = never> =
 | Prisma.PatchUndefined<
     Prisma.Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -437,6 +427,16 @@ export type JsonNullableFilterBase<$PrismaModel = never> = {
   gt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
+}
+
+export type EnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RoleFilterPriority | Prisma.EnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel> | $Enums.RoleFilterPriority
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
 }
 
 export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
@@ -728,23 +728,6 @@ export type NestedEnumSourceTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumSourceTypeFilter<$PrismaModel>
 }
 
-export type NestedEnumCompanyFilterTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.CompanyFilterType | Prisma.EnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel> | $Enums.CompanyFilterType
-}
-
-export type NestedEnumCompanyFilterTypeWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CompanyFilterType | Prisma.EnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CompanyFilterType[] | Prisma.ListEnumCompanyFilterTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCompanyFilterTypeWithAggregatesFilter<$PrismaModel> | $Enums.CompanyFilterType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCompanyFilterTypeFilter<$PrismaModel>
-}
-
 export type NestedEnumOrganizationCreditsTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.OrganizationCreditsType | Prisma.EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
   in?: $Enums.OrganizationCreditsType[] | Prisma.ListEnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
@@ -863,6 +846,23 @@ export type NestedEnumProjectVisibilityWithAggregatesFilter<$PrismaModel = never
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumProjectVisibilityFilter<$PrismaModel>
   _max?: Prisma.NestedEnumProjectVisibilityFilter<$PrismaModel>
+}
+
+export type NestedEnumRoleFilterPriorityFilter<$PrismaModel = never> = {
+  equals?: $Enums.RoleFilterPriority | Prisma.EnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel> | $Enums.RoleFilterPriority
+}
+
+export type NestedEnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RoleFilterPriority | Prisma.EnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel> | $Enums.RoleFilterPriority
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
 }
 
 export type NestedJsonNullableFilter<$PrismaModel = never> =

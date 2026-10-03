@@ -49,6 +49,7 @@ export type Organization_logMinAggregateOutputType = {
   role_result_id: string | null
   subscription_id: string | null
   credits_id: string | null
+  candidate_id: string | null
 }
 
 export type Organization_logMaxAggregateOutputType = {
@@ -66,6 +67,7 @@ export type Organization_logMaxAggregateOutputType = {
   role_result_id: string | null
   subscription_id: string | null
   credits_id: string | null
+  candidate_id: string | null
 }
 
 export type Organization_logCountAggregateOutputType = {
@@ -83,6 +85,7 @@ export type Organization_logCountAggregateOutputType = {
   role_result_id: number
   subscription_id: number
   credits_id: number
+  candidate_id: number
   _all: number
 }
 
@@ -110,6 +113,7 @@ export type Organization_logMinAggregateInputType = {
   role_result_id?: true
   subscription_id?: true
   credits_id?: true
+  candidate_id?: true
 }
 
 export type Organization_logMaxAggregateInputType = {
@@ -127,6 +131,7 @@ export type Organization_logMaxAggregateInputType = {
   role_result_id?: true
   subscription_id?: true
   credits_id?: true
+  candidate_id?: true
 }
 
 export type Organization_logCountAggregateInputType = {
@@ -144,6 +149,7 @@ export type Organization_logCountAggregateInputType = {
   role_result_id?: true
   subscription_id?: true
   credits_id?: true
+  candidate_id?: true
   _all?: true
 }
 
@@ -248,6 +254,7 @@ export type Organization_logGroupByOutputType = {
   role_result_id: string | null
   subscription_id: string | null
   credits_id: string | null
+  candidate_id: string | null
   _count: Organization_logCountAggregateOutputType | null
   _avg: Organization_logAvgAggregateOutputType | null
   _sum: Organization_logSumAggregateOutputType | null
@@ -288,12 +295,14 @@ export type organization_logWhereInput = {
   role_result_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
   subscription_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
   credits_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  candidate_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
   project?: Prisma.XOR<Prisma.ProjectsNullableScalarRelationFilter, Prisma.projectsWhereInput> | null
   role?: Prisma.XOR<Prisma.RolesNullableScalarRelationFilter, Prisma.rolesWhereInput> | null
   role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
   role_result?: Prisma.XOR<Prisma.Role_resultNullableScalarRelationFilter, Prisma.role_resultWhereInput> | null
   subscription?: Prisma.XOR<Prisma.Organization_subscriptionNullableScalarRelationFilter, Prisma.organization_subscriptionWhereInput> | null
   credits?: Prisma.XOR<Prisma.Organization_creditsNullableScalarRelationFilter, Prisma.organization_creditsWhereInput> | null
+  candidate?: Prisma.XOR<Prisma.CandidateNullableScalarRelationFilter, Prisma.candidateWhereInput> | null
 }
 
 export type organization_logOrderByWithRelationInput = {
@@ -311,12 +320,14 @@ export type organization_logOrderByWithRelationInput = {
   role_result_id?: Prisma.SortOrderInput | Prisma.SortOrder
   subscription_id?: Prisma.SortOrderInput | Prisma.SortOrder
   credits_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  candidate_id?: Prisma.SortOrderInput | Prisma.SortOrder
   project?: Prisma.projectsOrderByWithRelationInput
   role?: Prisma.rolesOrderByWithRelationInput
   role_filter?: Prisma.role_filtersOrderByWithRelationInput
   role_result?: Prisma.role_resultOrderByWithRelationInput
   subscription?: Prisma.organization_subscriptionOrderByWithRelationInput
   credits?: Prisma.organization_creditsOrderByWithRelationInput
+  candidate?: Prisma.candidateOrderByWithRelationInput
 }
 
 export type organization_logWhereUniqueInput = Prisma.AtLeast<{
@@ -337,12 +348,14 @@ export type organization_logWhereUniqueInput = Prisma.AtLeast<{
   role_result_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
   subscription_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
   credits_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  candidate_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
   project?: Prisma.XOR<Prisma.ProjectsNullableScalarRelationFilter, Prisma.projectsWhereInput> | null
   role?: Prisma.XOR<Prisma.RolesNullableScalarRelationFilter, Prisma.rolesWhereInput> | null
   role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
   role_result?: Prisma.XOR<Prisma.Role_resultNullableScalarRelationFilter, Prisma.role_resultWhereInput> | null
   subscription?: Prisma.XOR<Prisma.Organization_subscriptionNullableScalarRelationFilter, Prisma.organization_subscriptionWhereInput> | null
   credits?: Prisma.XOR<Prisma.Organization_creditsNullableScalarRelationFilter, Prisma.organization_creditsWhereInput> | null
+  candidate?: Prisma.XOR<Prisma.CandidateNullableScalarRelationFilter, Prisma.candidateWhereInput> | null
 }, "uid" | "uid">
 
 export type organization_logOrderByWithAggregationInput = {
@@ -360,6 +373,7 @@ export type organization_logOrderByWithAggregationInput = {
   role_result_id?: Prisma.SortOrderInput | Prisma.SortOrder
   subscription_id?: Prisma.SortOrderInput | Prisma.SortOrder
   credits_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  candidate_id?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.organization_logCountOrderByAggregateInput
   _avg?: Prisma.organization_logAvgOrderByAggregateInput
   _max?: Prisma.organization_logMaxOrderByAggregateInput
@@ -385,6 +399,7 @@ export type organization_logScalarWhereWithAggregatesInput = {
   role_result_id?: Prisma.UuidNullableWithAggregatesFilter<"organization_log"> | string | null
   subscription_id?: Prisma.UuidNullableWithAggregatesFilter<"organization_log"> | string | null
   credits_id?: Prisma.UuidNullableWithAggregatesFilter<"organization_log"> | string | null
+  candidate_id?: Prisma.UuidNullableWithAggregatesFilter<"organization_log"> | string | null
 }
 
 export type organization_logCreateInput = {
@@ -402,6 +417,7 @@ export type organization_logCreateInput = {
   role_result?: Prisma.role_resultCreateNestedOneWithoutLogsInput
   subscription?: Prisma.organization_subscriptionCreateNestedOneWithoutLogsInput
   credits?: Prisma.organization_creditsCreateNestedOneWithoutLogsInput
+  candidate?: Prisma.candidateCreateNestedOneWithoutOrganization_logsInput
 }
 
 export type organization_logUncheckedCreateInput = {
@@ -419,6 +435,7 @@ export type organization_logUncheckedCreateInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateInput = {
@@ -436,6 +453,7 @@ export type organization_logUpdateInput = {
   role_result?: Prisma.role_resultUpdateOneWithoutLogsNestedInput
   subscription?: Prisma.organization_subscriptionUpdateOneWithoutLogsNestedInput
   credits?: Prisma.organization_creditsUpdateOneWithoutLogsNestedInput
+  candidate?: Prisma.candidateUpdateOneWithoutOrganization_logsNestedInput
 }
 
 export type organization_logUncheckedUpdateInput = {
@@ -453,6 +471,7 @@ export type organization_logUncheckedUpdateInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logCreateManyInput = {
@@ -470,6 +489,7 @@ export type organization_logCreateManyInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateManyMutationInput = {
@@ -498,6 +518,7 @@ export type organization_logUncheckedUpdateManyInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type Organization_logListRelationFilter = {
@@ -525,6 +546,7 @@ export type organization_logCountOrderByAggregateInput = {
   role_result_id?: Prisma.SortOrder
   subscription_id?: Prisma.SortOrder
   credits_id?: Prisma.SortOrder
+  candidate_id?: Prisma.SortOrder
 }
 
 export type organization_logAvgOrderByAggregateInput = {
@@ -546,6 +568,7 @@ export type organization_logMaxOrderByAggregateInput = {
   role_result_id?: Prisma.SortOrder
   subscription_id?: Prisma.SortOrder
   credits_id?: Prisma.SortOrder
+  candidate_id?: Prisma.SortOrder
 }
 
 export type organization_logMinOrderByAggregateInput = {
@@ -563,10 +586,53 @@ export type organization_logMinOrderByAggregateInput = {
   role_result_id?: Prisma.SortOrder
   subscription_id?: Prisma.SortOrder
   credits_id?: Prisma.SortOrder
+  candidate_id?: Prisma.SortOrder
 }
 
 export type organization_logSumOrderByAggregateInput = {
   tokens_used?: Prisma.SortOrder
+}
+
+export type organization_logCreateNestedManyWithoutCandidateInput = {
+  create?: Prisma.XOR<Prisma.organization_logCreateWithoutCandidateInput, Prisma.organization_logUncheckedCreateWithoutCandidateInput> | Prisma.organization_logCreateWithoutCandidateInput[] | Prisma.organization_logUncheckedCreateWithoutCandidateInput[]
+  connectOrCreate?: Prisma.organization_logCreateOrConnectWithoutCandidateInput | Prisma.organization_logCreateOrConnectWithoutCandidateInput[]
+  createMany?: Prisma.organization_logCreateManyCandidateInputEnvelope
+  connect?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+}
+
+export type organization_logUncheckedCreateNestedManyWithoutCandidateInput = {
+  create?: Prisma.XOR<Prisma.organization_logCreateWithoutCandidateInput, Prisma.organization_logUncheckedCreateWithoutCandidateInput> | Prisma.organization_logCreateWithoutCandidateInput[] | Prisma.organization_logUncheckedCreateWithoutCandidateInput[]
+  connectOrCreate?: Prisma.organization_logCreateOrConnectWithoutCandidateInput | Prisma.organization_logCreateOrConnectWithoutCandidateInput[]
+  createMany?: Prisma.organization_logCreateManyCandidateInputEnvelope
+  connect?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+}
+
+export type organization_logUpdateManyWithoutCandidateNestedInput = {
+  create?: Prisma.XOR<Prisma.organization_logCreateWithoutCandidateInput, Prisma.organization_logUncheckedCreateWithoutCandidateInput> | Prisma.organization_logCreateWithoutCandidateInput[] | Prisma.organization_logUncheckedCreateWithoutCandidateInput[]
+  connectOrCreate?: Prisma.organization_logCreateOrConnectWithoutCandidateInput | Prisma.organization_logCreateOrConnectWithoutCandidateInput[]
+  upsert?: Prisma.organization_logUpsertWithWhereUniqueWithoutCandidateInput | Prisma.organization_logUpsertWithWhereUniqueWithoutCandidateInput[]
+  createMany?: Prisma.organization_logCreateManyCandidateInputEnvelope
+  set?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  disconnect?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  delete?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  connect?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  update?: Prisma.organization_logUpdateWithWhereUniqueWithoutCandidateInput | Prisma.organization_logUpdateWithWhereUniqueWithoutCandidateInput[]
+  updateMany?: Prisma.organization_logUpdateManyWithWhereWithoutCandidateInput | Prisma.organization_logUpdateManyWithWhereWithoutCandidateInput[]
+  deleteMany?: Prisma.organization_logScalarWhereInput | Prisma.organization_logScalarWhereInput[]
+}
+
+export type organization_logUncheckedUpdateManyWithoutCandidateNestedInput = {
+  create?: Prisma.XOR<Prisma.organization_logCreateWithoutCandidateInput, Prisma.organization_logUncheckedCreateWithoutCandidateInput> | Prisma.organization_logCreateWithoutCandidateInput[] | Prisma.organization_logUncheckedCreateWithoutCandidateInput[]
+  connectOrCreate?: Prisma.organization_logCreateOrConnectWithoutCandidateInput | Prisma.organization_logCreateOrConnectWithoutCandidateInput[]
+  upsert?: Prisma.organization_logUpsertWithWhereUniqueWithoutCandidateInput | Prisma.organization_logUpsertWithWhereUniqueWithoutCandidateInput[]
+  createMany?: Prisma.organization_logCreateManyCandidateInputEnvelope
+  set?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  disconnect?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  delete?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  connect?: Prisma.organization_logWhereUniqueInput | Prisma.organization_logWhereUniqueInput[]
+  update?: Prisma.organization_logUpdateWithWhereUniqueWithoutCandidateInput | Prisma.organization_logUpdateWithWhereUniqueWithoutCandidateInput[]
+  updateMany?: Prisma.organization_logUpdateManyWithWhereWithoutCandidateInput | Prisma.organization_logUpdateManyWithWhereWithoutCandidateInput[]
+  deleteMany?: Prisma.organization_logScalarWhereInput | Prisma.organization_logScalarWhereInput[]
 }
 
 export type organization_logCreateNestedManyWithoutCreditsInput = {
@@ -825,6 +891,87 @@ export type organization_logUncheckedUpdateManyWithoutRoleNestedInput = {
   deleteMany?: Prisma.organization_logScalarWhereInput | Prisma.organization_logScalarWhereInput[]
 }
 
+export type organization_logCreateWithoutCandidateInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  user_id?: string | null
+  organization_id: string
+  type: $Enums.OrganizationLogType
+  message?: string | null
+  tokens_used?: number | null
+  project?: Prisma.projectsCreateNestedOneWithoutLogsInput
+  role?: Prisma.rolesCreateNestedOneWithoutLogsInput
+  role_filter?: Prisma.role_filtersCreateNestedOneWithoutLogsInput
+  role_result?: Prisma.role_resultCreateNestedOneWithoutLogsInput
+  subscription?: Prisma.organization_subscriptionCreateNestedOneWithoutLogsInput
+  credits?: Prisma.organization_creditsCreateNestedOneWithoutLogsInput
+}
+
+export type organization_logUncheckedCreateWithoutCandidateInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  user_id?: string | null
+  organization_id: string
+  type: $Enums.OrganizationLogType
+  message?: string | null
+  tokens_used?: number | null
+  project_id?: string | null
+  role_id?: string | null
+  role_filter_id?: string | null
+  role_result_id?: string | null
+  subscription_id?: string | null
+  credits_id?: string | null
+}
+
+export type organization_logCreateOrConnectWithoutCandidateInput = {
+  where: Prisma.organization_logWhereUniqueInput
+  create: Prisma.XOR<Prisma.organization_logCreateWithoutCandidateInput, Prisma.organization_logUncheckedCreateWithoutCandidateInput>
+}
+
+export type organization_logCreateManyCandidateInputEnvelope = {
+  data: Prisma.organization_logCreateManyCandidateInput | Prisma.organization_logCreateManyCandidateInput[]
+  skipDuplicates?: boolean
+}
+
+export type organization_logUpsertWithWhereUniqueWithoutCandidateInput = {
+  where: Prisma.organization_logWhereUniqueInput
+  update: Prisma.XOR<Prisma.organization_logUpdateWithoutCandidateInput, Prisma.organization_logUncheckedUpdateWithoutCandidateInput>
+  create: Prisma.XOR<Prisma.organization_logCreateWithoutCandidateInput, Prisma.organization_logUncheckedCreateWithoutCandidateInput>
+}
+
+export type organization_logUpdateWithWhereUniqueWithoutCandidateInput = {
+  where: Prisma.organization_logWhereUniqueInput
+  data: Prisma.XOR<Prisma.organization_logUpdateWithoutCandidateInput, Prisma.organization_logUncheckedUpdateWithoutCandidateInput>
+}
+
+export type organization_logUpdateManyWithWhereWithoutCandidateInput = {
+  where: Prisma.organization_logScalarWhereInput
+  data: Prisma.XOR<Prisma.organization_logUpdateManyMutationInput, Prisma.organization_logUncheckedUpdateManyWithoutCandidateInput>
+}
+
+export type organization_logScalarWhereInput = {
+  AND?: Prisma.organization_logScalarWhereInput | Prisma.organization_logScalarWhereInput[]
+  OR?: Prisma.organization_logScalarWhereInput[]
+  NOT?: Prisma.organization_logScalarWhereInput | Prisma.organization_logScalarWhereInput[]
+  uid?: Prisma.UuidFilter<"organization_log"> | string
+  created?: Prisma.DateTimeFilter<"organization_log"> | Date | string
+  updated?: Prisma.DateTimeFilter<"organization_log"> | Date | string
+  user_id?: Prisma.StringNullableFilter<"organization_log"> | string | null
+  organization_id?: Prisma.StringFilter<"organization_log"> | string
+  type?: Prisma.EnumOrganizationLogTypeFilter<"organization_log"> | $Enums.OrganizationLogType
+  message?: Prisma.StringNullableFilter<"organization_log"> | string | null
+  tokens_used?: Prisma.IntNullableFilter<"organization_log"> | number | null
+  project_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  role_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  role_filter_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  role_result_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  subscription_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  credits_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+  candidate_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
+}
+
 export type organization_logCreateWithoutCreditsInput = {
   uid?: string
   created?: Date | string
@@ -839,6 +986,7 @@ export type organization_logCreateWithoutCreditsInput = {
   role_filter?: Prisma.role_filtersCreateNestedOneWithoutLogsInput
   role_result?: Prisma.role_resultCreateNestedOneWithoutLogsInput
   subscription?: Prisma.organization_subscriptionCreateNestedOneWithoutLogsInput
+  candidate?: Prisma.candidateCreateNestedOneWithoutOrganization_logsInput
 }
 
 export type organization_logUncheckedCreateWithoutCreditsInput = {
@@ -855,6 +1003,7 @@ export type organization_logUncheckedCreateWithoutCreditsInput = {
   role_filter_id?: string | null
   role_result_id?: string | null
   subscription_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logCreateOrConnectWithoutCreditsInput = {
@@ -883,26 +1032,6 @@ export type organization_logUpdateManyWithWhereWithoutCreditsInput = {
   data: Prisma.XOR<Prisma.organization_logUpdateManyMutationInput, Prisma.organization_logUncheckedUpdateManyWithoutCreditsInput>
 }
 
-export type organization_logScalarWhereInput = {
-  AND?: Prisma.organization_logScalarWhereInput | Prisma.organization_logScalarWhereInput[]
-  OR?: Prisma.organization_logScalarWhereInput[]
-  NOT?: Prisma.organization_logScalarWhereInput | Prisma.organization_logScalarWhereInput[]
-  uid?: Prisma.UuidFilter<"organization_log"> | string
-  created?: Prisma.DateTimeFilter<"organization_log"> | Date | string
-  updated?: Prisma.DateTimeFilter<"organization_log"> | Date | string
-  user_id?: Prisma.StringNullableFilter<"organization_log"> | string | null
-  organization_id?: Prisma.StringFilter<"organization_log"> | string
-  type?: Prisma.EnumOrganizationLogTypeFilter<"organization_log"> | $Enums.OrganizationLogType
-  message?: Prisma.StringNullableFilter<"organization_log"> | string | null
-  tokens_used?: Prisma.IntNullableFilter<"organization_log"> | number | null
-  project_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
-  role_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
-  role_filter_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
-  role_result_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
-  subscription_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
-  credits_id?: Prisma.UuidNullableFilter<"organization_log"> | string | null
-}
-
 export type organization_logCreateWithoutSubscriptionInput = {
   uid?: string
   created?: Date | string
@@ -917,6 +1046,7 @@ export type organization_logCreateWithoutSubscriptionInput = {
   role_filter?: Prisma.role_filtersCreateNestedOneWithoutLogsInput
   role_result?: Prisma.role_resultCreateNestedOneWithoutLogsInput
   credits?: Prisma.organization_creditsCreateNestedOneWithoutLogsInput
+  candidate?: Prisma.candidateCreateNestedOneWithoutOrganization_logsInput
 }
 
 export type organization_logUncheckedCreateWithoutSubscriptionInput = {
@@ -933,6 +1063,7 @@ export type organization_logUncheckedCreateWithoutSubscriptionInput = {
   role_filter_id?: string | null
   role_result_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logCreateOrConnectWithoutSubscriptionInput = {
@@ -975,6 +1106,7 @@ export type organization_logCreateWithoutProjectInput = {
   role_result?: Prisma.role_resultCreateNestedOneWithoutLogsInput
   subscription?: Prisma.organization_subscriptionCreateNestedOneWithoutLogsInput
   credits?: Prisma.organization_creditsCreateNestedOneWithoutLogsInput
+  candidate?: Prisma.candidateCreateNestedOneWithoutOrganization_logsInput
 }
 
 export type organization_logUncheckedCreateWithoutProjectInput = {
@@ -991,6 +1123,7 @@ export type organization_logUncheckedCreateWithoutProjectInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logCreateOrConnectWithoutProjectInput = {
@@ -1033,6 +1166,7 @@ export type organization_logCreateWithoutRole_filterInput = {
   role_result?: Prisma.role_resultCreateNestedOneWithoutLogsInput
   subscription?: Prisma.organization_subscriptionCreateNestedOneWithoutLogsInput
   credits?: Prisma.organization_creditsCreateNestedOneWithoutLogsInput
+  candidate?: Prisma.candidateCreateNestedOneWithoutOrganization_logsInput
 }
 
 export type organization_logUncheckedCreateWithoutRole_filterInput = {
@@ -1049,6 +1183,7 @@ export type organization_logUncheckedCreateWithoutRole_filterInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logCreateOrConnectWithoutRole_filterInput = {
@@ -1091,6 +1226,7 @@ export type organization_logCreateWithoutRole_resultInput = {
   role_filter?: Prisma.role_filtersCreateNestedOneWithoutLogsInput
   subscription?: Prisma.organization_subscriptionCreateNestedOneWithoutLogsInput
   credits?: Prisma.organization_creditsCreateNestedOneWithoutLogsInput
+  candidate?: Prisma.candidateCreateNestedOneWithoutOrganization_logsInput
 }
 
 export type organization_logUncheckedCreateWithoutRole_resultInput = {
@@ -1107,6 +1243,7 @@ export type organization_logUncheckedCreateWithoutRole_resultInput = {
   role_filter_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logCreateOrConnectWithoutRole_resultInput = {
@@ -1149,6 +1286,7 @@ export type organization_logCreateWithoutRoleInput = {
   role_result?: Prisma.role_resultCreateNestedOneWithoutLogsInput
   subscription?: Prisma.organization_subscriptionCreateNestedOneWithoutLogsInput
   credits?: Prisma.organization_creditsCreateNestedOneWithoutLogsInput
+  candidate?: Prisma.candidateCreateNestedOneWithoutOrganization_logsInput
 }
 
 export type organization_logUncheckedCreateWithoutRoleInput = {
@@ -1165,6 +1303,7 @@ export type organization_logUncheckedCreateWithoutRoleInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logCreateOrConnectWithoutRoleInput = {
@@ -1193,6 +1332,74 @@ export type organization_logUpdateManyWithWhereWithoutRoleInput = {
   data: Prisma.XOR<Prisma.organization_logUpdateManyMutationInput, Prisma.organization_logUncheckedUpdateManyWithoutRoleInput>
 }
 
+export type organization_logCreateManyCandidateInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  user_id?: string | null
+  organization_id: string
+  type: $Enums.OrganizationLogType
+  message?: string | null
+  tokens_used?: number | null
+  project_id?: string | null
+  role_id?: string | null
+  role_filter_id?: string | null
+  role_result_id?: string | null
+  subscription_id?: string | null
+  credits_id?: string | null
+}
+
+export type organization_logUpdateWithoutCandidateInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organization_id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumOrganizationLogTypeFieldUpdateOperationsInput | $Enums.OrganizationLogType
+  message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  project?: Prisma.projectsUpdateOneWithoutLogsNestedInput
+  role?: Prisma.rolesUpdateOneWithoutLogsNestedInput
+  role_filter?: Prisma.role_filtersUpdateOneWithoutLogsNestedInput
+  role_result?: Prisma.role_resultUpdateOneWithoutLogsNestedInput
+  subscription?: Prisma.organization_subscriptionUpdateOneWithoutLogsNestedInput
+  credits?: Prisma.organization_creditsUpdateOneWithoutLogsNestedInput
+}
+
+export type organization_logUncheckedUpdateWithoutCandidateInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organization_id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumOrganizationLogTypeFieldUpdateOperationsInput | $Enums.OrganizationLogType
+  message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  project_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type organization_logUncheckedUpdateManyWithoutCandidateInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  organization_id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumOrganizationLogTypeFieldUpdateOperationsInput | $Enums.OrganizationLogType
+  message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokens_used?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  project_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
 export type organization_logCreateManyCreditsInput = {
   uid?: string
   created?: Date | string
@@ -1207,6 +1414,7 @@ export type organization_logCreateManyCreditsInput = {
   role_filter_id?: string | null
   role_result_id?: string | null
   subscription_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateWithoutCreditsInput = {
@@ -1223,6 +1431,7 @@ export type organization_logUpdateWithoutCreditsInput = {
   role_filter?: Prisma.role_filtersUpdateOneWithoutLogsNestedInput
   role_result?: Prisma.role_resultUpdateOneWithoutLogsNestedInput
   subscription?: Prisma.organization_subscriptionUpdateOneWithoutLogsNestedInput
+  candidate?: Prisma.candidateUpdateOneWithoutOrganization_logsNestedInput
 }
 
 export type organization_logUncheckedUpdateWithoutCreditsInput = {
@@ -1239,6 +1448,7 @@ export type organization_logUncheckedUpdateWithoutCreditsInput = {
   role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logUncheckedUpdateManyWithoutCreditsInput = {
@@ -1255,6 +1465,7 @@ export type organization_logUncheckedUpdateManyWithoutCreditsInput = {
   role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logCreateManySubscriptionInput = {
@@ -1271,6 +1482,7 @@ export type organization_logCreateManySubscriptionInput = {
   role_filter_id?: string | null
   role_result_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateWithoutSubscriptionInput = {
@@ -1287,6 +1499,7 @@ export type organization_logUpdateWithoutSubscriptionInput = {
   role_filter?: Prisma.role_filtersUpdateOneWithoutLogsNestedInput
   role_result?: Prisma.role_resultUpdateOneWithoutLogsNestedInput
   credits?: Prisma.organization_creditsUpdateOneWithoutLogsNestedInput
+  candidate?: Prisma.candidateUpdateOneWithoutOrganization_logsNestedInput
 }
 
 export type organization_logUncheckedUpdateWithoutSubscriptionInput = {
@@ -1303,6 +1516,7 @@ export type organization_logUncheckedUpdateWithoutSubscriptionInput = {
   role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logUncheckedUpdateManyWithoutSubscriptionInput = {
@@ -1319,6 +1533,7 @@ export type organization_logUncheckedUpdateManyWithoutSubscriptionInput = {
   role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logCreateManyProjectInput = {
@@ -1335,6 +1550,7 @@ export type organization_logCreateManyProjectInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateWithoutProjectInput = {
@@ -1351,6 +1567,7 @@ export type organization_logUpdateWithoutProjectInput = {
   role_result?: Prisma.role_resultUpdateOneWithoutLogsNestedInput
   subscription?: Prisma.organization_subscriptionUpdateOneWithoutLogsNestedInput
   credits?: Prisma.organization_creditsUpdateOneWithoutLogsNestedInput
+  candidate?: Prisma.candidateUpdateOneWithoutOrganization_logsNestedInput
 }
 
 export type organization_logUncheckedUpdateWithoutProjectInput = {
@@ -1367,6 +1584,7 @@ export type organization_logUncheckedUpdateWithoutProjectInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logUncheckedUpdateManyWithoutProjectInput = {
@@ -1383,6 +1601,7 @@ export type organization_logUncheckedUpdateManyWithoutProjectInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logCreateManyRole_filterInput = {
@@ -1399,6 +1618,7 @@ export type organization_logCreateManyRole_filterInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateWithoutRole_filterInput = {
@@ -1415,6 +1635,7 @@ export type organization_logUpdateWithoutRole_filterInput = {
   role_result?: Prisma.role_resultUpdateOneWithoutLogsNestedInput
   subscription?: Prisma.organization_subscriptionUpdateOneWithoutLogsNestedInput
   credits?: Prisma.organization_creditsUpdateOneWithoutLogsNestedInput
+  candidate?: Prisma.candidateUpdateOneWithoutOrganization_logsNestedInput
 }
 
 export type organization_logUncheckedUpdateWithoutRole_filterInput = {
@@ -1431,6 +1652,7 @@ export type organization_logUncheckedUpdateWithoutRole_filterInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logUncheckedUpdateManyWithoutRole_filterInput = {
@@ -1447,6 +1669,7 @@ export type organization_logUncheckedUpdateManyWithoutRole_filterInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logCreateManyRole_resultInput = {
@@ -1463,6 +1686,7 @@ export type organization_logCreateManyRole_resultInput = {
   role_filter_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateWithoutRole_resultInput = {
@@ -1479,6 +1703,7 @@ export type organization_logUpdateWithoutRole_resultInput = {
   role_filter?: Prisma.role_filtersUpdateOneWithoutLogsNestedInput
   subscription?: Prisma.organization_subscriptionUpdateOneWithoutLogsNestedInput
   credits?: Prisma.organization_creditsUpdateOneWithoutLogsNestedInput
+  candidate?: Prisma.candidateUpdateOneWithoutOrganization_logsNestedInput
 }
 
 export type organization_logUncheckedUpdateWithoutRole_resultInput = {
@@ -1495,6 +1720,7 @@ export type organization_logUncheckedUpdateWithoutRole_resultInput = {
   role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logUncheckedUpdateManyWithoutRole_resultInput = {
@@ -1511,6 +1737,7 @@ export type organization_logUncheckedUpdateManyWithoutRole_resultInput = {
   role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logCreateManyRoleInput = {
@@ -1527,6 +1754,7 @@ export type organization_logCreateManyRoleInput = {
   role_result_id?: string | null
   subscription_id?: string | null
   credits_id?: string | null
+  candidate_id?: string | null
 }
 
 export type organization_logUpdateWithoutRoleInput = {
@@ -1543,6 +1771,7 @@ export type organization_logUpdateWithoutRoleInput = {
   role_result?: Prisma.role_resultUpdateOneWithoutLogsNestedInput
   subscription?: Prisma.organization_subscriptionUpdateOneWithoutLogsNestedInput
   credits?: Prisma.organization_creditsUpdateOneWithoutLogsNestedInput
+  candidate?: Prisma.candidateUpdateOneWithoutOrganization_logsNestedInput
 }
 
 export type organization_logUncheckedUpdateWithoutRoleInput = {
@@ -1559,6 +1788,7 @@ export type organization_logUncheckedUpdateWithoutRoleInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_logUncheckedUpdateManyWithoutRoleInput = {
@@ -1575,6 +1805,7 @@ export type organization_logUncheckedUpdateManyWithoutRoleInput = {
   role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscription_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   credits_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  candidate_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1594,12 +1825,14 @@ export type organization_logSelect<ExtArgs extends runtime.Types.Extensions.Inte
   role_result_id?: boolean
   subscription_id?: boolean
   credits_id?: boolean
+  candidate_id?: boolean
   project?: boolean | Prisma.organization_log$projectArgs<ExtArgs>
   role?: boolean | Prisma.organization_log$roleArgs<ExtArgs>
   role_filter?: boolean | Prisma.organization_log$role_filterArgs<ExtArgs>
   role_result?: boolean | Prisma.organization_log$role_resultArgs<ExtArgs>
   subscription?: boolean | Prisma.organization_log$subscriptionArgs<ExtArgs>
   credits?: boolean | Prisma.organization_log$creditsArgs<ExtArgs>
+  candidate?: boolean | Prisma.organization_log$candidateArgs<ExtArgs>
 }, ExtArgs["result"]["organization_log"]>
 
 export type organization_logSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1617,12 +1850,14 @@ export type organization_logSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   role_result_id?: boolean
   subscription_id?: boolean
   credits_id?: boolean
+  candidate_id?: boolean
   project?: boolean | Prisma.organization_log$projectArgs<ExtArgs>
   role?: boolean | Prisma.organization_log$roleArgs<ExtArgs>
   role_filter?: boolean | Prisma.organization_log$role_filterArgs<ExtArgs>
   role_result?: boolean | Prisma.organization_log$role_resultArgs<ExtArgs>
   subscription?: boolean | Prisma.organization_log$subscriptionArgs<ExtArgs>
   credits?: boolean | Prisma.organization_log$creditsArgs<ExtArgs>
+  candidate?: boolean | Prisma.organization_log$candidateArgs<ExtArgs>
 }, ExtArgs["result"]["organization_log"]>
 
 export type organization_logSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1640,12 +1875,14 @@ export type organization_logSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   role_result_id?: boolean
   subscription_id?: boolean
   credits_id?: boolean
+  candidate_id?: boolean
   project?: boolean | Prisma.organization_log$projectArgs<ExtArgs>
   role?: boolean | Prisma.organization_log$roleArgs<ExtArgs>
   role_filter?: boolean | Prisma.organization_log$role_filterArgs<ExtArgs>
   role_result?: boolean | Prisma.organization_log$role_resultArgs<ExtArgs>
   subscription?: boolean | Prisma.organization_log$subscriptionArgs<ExtArgs>
   credits?: boolean | Prisma.organization_log$creditsArgs<ExtArgs>
+  candidate?: boolean | Prisma.organization_log$candidateArgs<ExtArgs>
 }, ExtArgs["result"]["organization_log"]>
 
 export type organization_logSelectScalar = {
@@ -1663,9 +1900,10 @@ export type organization_logSelectScalar = {
   role_result_id?: boolean
   subscription_id?: boolean
   credits_id?: boolean
+  candidate_id?: boolean
 }
 
-export type organization_logOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "user_id" | "organization_id" | "type" | "message" | "tokens_used" | "project_id" | "role_id" | "role_filter_id" | "role_result_id" | "subscription_id" | "credits_id", ExtArgs["result"]["organization_log"]>
+export type organization_logOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "user_id" | "organization_id" | "type" | "message" | "tokens_used" | "project_id" | "role_id" | "role_filter_id" | "role_result_id" | "subscription_id" | "credits_id" | "candidate_id", ExtArgs["result"]["organization_log"]>
 export type organization_logInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.organization_log$projectArgs<ExtArgs>
   role?: boolean | Prisma.organization_log$roleArgs<ExtArgs>
@@ -1673,6 +1911,7 @@ export type organization_logInclude<ExtArgs extends runtime.Types.Extensions.Int
   role_result?: boolean | Prisma.organization_log$role_resultArgs<ExtArgs>
   subscription?: boolean | Prisma.organization_log$subscriptionArgs<ExtArgs>
   credits?: boolean | Prisma.organization_log$creditsArgs<ExtArgs>
+  candidate?: boolean | Prisma.organization_log$candidateArgs<ExtArgs>
 }
 export type organization_logIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.organization_log$projectArgs<ExtArgs>
@@ -1681,6 +1920,7 @@ export type organization_logIncludeCreateManyAndReturn<ExtArgs extends runtime.T
   role_result?: boolean | Prisma.organization_log$role_resultArgs<ExtArgs>
   subscription?: boolean | Prisma.organization_log$subscriptionArgs<ExtArgs>
   credits?: boolean | Prisma.organization_log$creditsArgs<ExtArgs>
+  candidate?: boolean | Prisma.organization_log$candidateArgs<ExtArgs>
 }
 export type organization_logIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.organization_log$projectArgs<ExtArgs>
@@ -1689,6 +1929,7 @@ export type organization_logIncludeUpdateManyAndReturn<ExtArgs extends runtime.T
   role_result?: boolean | Prisma.organization_log$role_resultArgs<ExtArgs>
   subscription?: boolean | Prisma.organization_log$subscriptionArgs<ExtArgs>
   credits?: boolean | Prisma.organization_log$creditsArgs<ExtArgs>
+  candidate?: boolean | Prisma.organization_log$candidateArgs<ExtArgs>
 }
 
 export type $organization_logPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1700,6 +1941,7 @@ export type $organization_logPayload<ExtArgs extends runtime.Types.Extensions.In
     role_result: Prisma.$role_resultPayload<ExtArgs> | null
     subscription: Prisma.$organization_subscriptionPayload<ExtArgs> | null
     credits: Prisma.$organization_creditsPayload<ExtArgs> | null
+    candidate: Prisma.$candidatePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
@@ -1716,6 +1958,7 @@ export type $organization_logPayload<ExtArgs extends runtime.Types.Extensions.In
     role_result_id: string | null
     subscription_id: string | null
     credits_id: string | null
+    candidate_id: string | null
   }, ExtArgs["result"]["organization_log"]>
   composites: {}
 }
@@ -2116,6 +2359,7 @@ export interface Prisma__organization_logClient<T, Null = never, ExtArgs extends
   role_result<T extends Prisma.organization_log$role_resultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.organization_log$role_resultArgs<ExtArgs>>): Prisma.Prisma__role_resultClient<runtime.Types.Result.GetResult<Prisma.$role_resultPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   subscription<T extends Prisma.organization_log$subscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.organization_log$subscriptionArgs<ExtArgs>>): Prisma.Prisma__organization_subscriptionClient<runtime.Types.Result.GetResult<Prisma.$organization_subscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   credits<T extends Prisma.organization_log$creditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.organization_log$creditsArgs<ExtArgs>>): Prisma.Prisma__organization_creditsClient<runtime.Types.Result.GetResult<Prisma.$organization_creditsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  candidate<T extends Prisma.organization_log$candidateArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.organization_log$candidateArgs<ExtArgs>>): Prisma.Prisma__candidateClient<runtime.Types.Result.GetResult<Prisma.$candidatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2159,6 +2403,7 @@ export interface organization_logFieldRefs {
   readonly role_result_id: Prisma.FieldRef<"organization_log", 'String'>
   readonly subscription_id: Prisma.FieldRef<"organization_log", 'String'>
   readonly credits_id: Prisma.FieldRef<"organization_log", 'String'>
+  readonly candidate_id: Prisma.FieldRef<"organization_log", 'String'>
 }
     
 
@@ -2671,6 +2916,25 @@ export type organization_log$creditsArgs<ExtArgs extends runtime.Types.Extension
    */
   include?: Prisma.organization_creditsInclude<ExtArgs> | null
   where?: Prisma.organization_creditsWhereInput
+}
+
+/**
+ * organization_log.candidate
+ */
+export type organization_log$candidateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the candidate
+   */
+  select?: Prisma.candidateSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the candidate
+   */
+  omit?: Prisma.candidateOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.candidateInclude<ExtArgs> | null
+  where?: Prisma.candidateWhereInput
 }
 
 /**

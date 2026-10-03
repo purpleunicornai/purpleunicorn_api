@@ -38,4 +38,5 @@ model candidate {
   role_results                      role_result[]
   education                         candidate_education[]
   sources                           candidate_source[]
+  organization_logs                 organization_log[]     @relation("CandidateLogs")
 }
