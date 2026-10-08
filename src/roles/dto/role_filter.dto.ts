@@ -72,7 +72,7 @@ export class FilterItemDto {
 
   @ApiProperty({
     description:
-      'Fixed category of the filter item: location, job_titles, skills, languages, industry, companies, or education.',
+      'Fixed category of the filter item: location, job_titles, skills, languages, industry, companies, education, or experience.',
     example: 'location',
   })
   @Expose()
@@ -85,6 +85,7 @@ export class FilterItemDto {
     'industry',
     'companies',
     'education',
+    'experience',
   ])
   category: string;
 
@@ -112,12 +113,12 @@ export class FilterItemDto {
   list_value?: string[];
 
   @ApiProperty({
-    description: 'Priority of the filter item: "essential" or "optional".',
-    example: 'essential',
+    description: 'Priority of the filter item: "ESSENTIAL" or "OPTIONAL".',
+    example: 'ESSENTIAL',
   })
   @Expose()
   @IsString()
-  @IsIn(['essential', 'optional'])
+  @IsIn(['ESSENTIAL', 'OPTIONAL'])
   priority: string;
 
   @ApiProperty({

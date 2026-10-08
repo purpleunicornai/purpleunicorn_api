@@ -1,3 +1,5 @@
+import { MessageEvent } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { SearchService } from './search.service';
 import { GoogleSearchService } from '../../services/google-search/google-search.service';
 import { GeminiService } from '../../services/gemini/gemini.service';
@@ -17,6 +19,19 @@ async function captureError(
   throw new Error('Expected promise to reject');
 }
 
+function collectEvents(
+  observable: Observable<MessageEvent>,
+): Promise<MessageEvent[]> {
+  return new Promise((resolve, reject) => {
+    const events: MessageEvent[] = [];
+    observable.subscribe({
+      next: (event) => events.push(event),
+      error: reject,
+      complete: () => resolve(events),
+    });
+  });
+}
+
 function buildRole(overrides: Record<string, unknown> = {}) {
   return {
     uid: 'role-1',
@@ -31,21 +46,33 @@ function buildRole(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildStoredFilterRow(overrides: Record<string, unknown> = {}) {
+function buildFilterItem(overrides: Record<string, unknown> = {}) {
   return {
-    uid: 'filter-1',
+    uid: 'item-1',
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
-    role_id: 'role-1',
+    role_filter_id: 'filter-1',
     category: 'skills',
     value: null,
     list_value: ['React', 'Node.js'],
     priority: 'ESSENTIAL',
     non_negotiable: false,
+    children: [],
+    ...overrides,
+  };
+}
+
+function buildStoredFilterSet(overrides: Record<string, unknown> = {}) {
+  return {
+    uid: 'filter-1',
+    created: new Date('2026-08-23T00:00:00.000Z'),
+    updated: new Date('2026-08-23T00:00:00.000Z'),
+    role_id: 'role-1',
     archived: false,
     archived_at: null,
+    search_run_date: null,
     metadata: null,
-    children: [],
+    role_filter_items: [buildFilterItem()],
     ...overrides,
   };
 }
@@ -83,8 +110,8 @@ function buildCandidateScoringService(): jest.Mocked<CandidateScoringService> {
 function buildPrisma() {
   return {
     role_filters: {
-      findMany: jest.fn(),
-      updateMany: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
     },
     candidate: {
       findFirst: jest.fn().mockResolvedValue(null),
@@ -184,21 +211,21 @@ describe('SearchService', () => {
   });
 
   describe('getRoleFilters', () => {
-    it('fetches every non-archived filter row for the role, with their children', async () => {
-      const rows = [buildStoredFilterRow()];
-      prisma.role_filters.findMany.mockResolvedValue(rows);
+    it('fetches the non-archived filter set for the role, with its items and their children', async () => {
+      const filterSet = buildStoredFilterSet();
+      prisma.role_filters.findFirst.mockResolvedValue(filterSet);
 
       const result = await (service as any).getRoleFilters('role-1');
 
-      expect(prisma.role_filters.findMany).toHaveBeenCalledWith({
+      expect(prisma.role_filters.findFirst).toHaveBeenCalledWith({
         where: { role_id: 'role-1', archived: false },
-        include: { children: true },
+        include: { role_filter_items: { include: { children: true } } },
       });
-      expect(result).toBe(rows);
+      expect(result).toBe(filterSet);
     });
 
-    it('throws a 404 RequestException when there are no non-archived filter rows for the role', async () => {
-      prisma.role_filters.findMany.mockResolvedValue([]);
+    it('throws a 404 RequestException when there is no non-archived filter set for the role', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(null);
 
       const error = await captureError(
         (service as any).getRoleFilters('role-1'),
@@ -381,14 +408,12 @@ describe('SearchService', () => {
           weight: 60,
           earned: 60,
           applicable: true,
-          filterId: 'filter-1',
         },
         {
           category: 'location',
           weight: 20,
           earned: 10,
           applicable: true,
-          filterId: 'filter-2',
         },
       ],
     };
@@ -399,6 +424,7 @@ describe('SearchService', () => {
 
       const result = await (service as any).upsertRoleResult(
         'role-1',
+        'filter-1',
         'candidate-1',
         match,
         123,
@@ -411,7 +437,7 @@ describe('SearchService', () => {
       expect(prisma.role_result.create).toHaveBeenCalledWith({
         data: {
           role_id: 'role-1',
-          filter_id: null,
+          filter_id: 'filter-1',
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
           reasoning: 'Matches on required skills and location.',
@@ -441,7 +467,7 @@ describe('SearchService', () => {
           },
           {
             role_result_id: 'result-1',
-            role_filter_id: 'filter-2',
+            role_filter_id: 'filter-1',
             category: 'location',
             weight: 20,
             applicable: true,
@@ -460,6 +486,7 @@ describe('SearchService', () => {
 
       const result = await (service as any).upsertRoleResult(
         'role-1',
+        'filter-1',
         'candidate-1',
         match,
         123,
@@ -470,7 +497,7 @@ describe('SearchService', () => {
         where: { uid: 'result-1' },
         data: {
           role_id: 'role-1',
-          filter_id: null,
+          filter_id: 'filter-1',
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
           reasoning: 'Matches on required skills and location.',
@@ -501,7 +528,7 @@ describe('SearchService', () => {
           },
           {
             role_result_id: 'result-1',
-            role_filter_id: 'filter-2',
+            role_filter_id: 'filter-1',
             category: 'location',
             weight: 20,
             applicable: true,
@@ -514,15 +541,17 @@ describe('SearchService', () => {
   });
 
   describe('search', () => {
-    it('fetches the saved filter rows for the role, runs the search against them, and stamps each role_result', async () => {
+    it('fetches the saved filter set for the role, runs the search against it, and stamps each role_result', async () => {
       const role = buildRole();
-      const filterRows = [
-        buildStoredFilterRow({
-          category: 'skills',
-          list_value: ['React', 'Node.js'],
-        }),
-      ];
-      prisma.role_filters.findMany.mockResolvedValue(filterRows);
+      const filterSet = buildStoredFilterSet({
+        role_filter_items: [
+          buildFilterItem({
+            category: 'skills',
+            list_value: ['React', 'Node.js'],
+          }),
+        ],
+      });
+      prisma.role_filters.findFirst.mockResolvedValue(filterSet);
 
       const items = [
         { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
@@ -552,7 +581,6 @@ describe('SearchService', () => {
             weight: 80,
             earned: 57.6,
             applicable: true,
-            filterId: 'filter-1',
           },
         ],
       };
@@ -562,9 +590,9 @@ describe('SearchService', () => {
 
       const results = await service.search('role-1', role as any);
 
-      expect(prisma.role_filters.findMany).toHaveBeenCalledWith({
+      expect(prisma.role_filters.findFirst).toHaveBeenCalledWith({
         where: { role_id: 'role-1', archived: false },
-        include: { children: true },
+        include: { role_filter_items: { include: { children: true } } },
       });
       expect(googleSearchService.search).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -573,7 +601,6 @@ describe('SearchService', () => {
               value: ['React', 'Node.js'],
               priority: 'ESSENTIAL',
               nonNegotiable: false,
-              filterId: 'filter-1',
             },
           ],
         }),
@@ -589,7 +616,7 @@ describe('SearchService', () => {
       expect(prisma.role_result.create).toHaveBeenCalledWith({
         data: {
           role_id: 'role-1',
-          filter_id: null,
+          filter_id: 'filter-1',
           candidate_uid: 'candidate-1',
           summary: 'Strong match',
           reasoning: 'Matches on required skills and location.',
@@ -614,8 +641,8 @@ describe('SearchService', () => {
           },
         ],
       });
-      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
-        where: { role_id: 'role-1' },
+      expect(prisma.role_filters.update).toHaveBeenCalledWith({
+        where: { uid: 'filter-1' },
         data: { search_run_date: expect.any(Date) },
       });
       expect(results).toEqual([roleResult]);
@@ -623,7 +650,7 @@ describe('SearchService', () => {
 
     it('forces score to 0 and marks disqualified when the candidate fails a non-negotiable filter', async () => {
       const role = buildRole();
-      prisma.role_filters.findMany.mockResolvedValue([buildStoredFilterRow()]);
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
       googleSearchService.search.mockResolvedValue([
         { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
       ]);
@@ -653,9 +680,9 @@ describe('SearchService', () => {
       });
     });
 
-    it('stamps search_run_date on the filters even when no candidates are found', async () => {
+    it('stamps search_run_date on the filter set even when no candidates are found', async () => {
       const role = buildRole();
-      prisma.role_filters.findMany.mockResolvedValue([buildStoredFilterRow()]);
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
       googleSearchService.search.mockResolvedValue([]);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
@@ -664,14 +691,14 @@ describe('SearchService', () => {
 
       await service.search('role-1', role as any);
 
-      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
-        where: { role_id: 'role-1' },
+      expect(prisma.role_filters.update).toHaveBeenCalledWith({
+        where: { uid: 'filter-1' },
         data: { search_run_date: expect.any(Date) },
       });
     });
 
-    it('throws a 404 RequestException when the role has no saved filter rows', async () => {
-      prisma.role_filters.findMany.mockResolvedValue([]);
+    it('throws a 404 RequestException when the role has no saved filter set', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(null);
 
       const error = await captureError(
         service.search('role-1', buildRole() as any),
@@ -680,6 +707,146 @@ describe('SearchService', () => {
       expect(error).toBeInstanceOf(RequestException);
       expect(error.getStatus()).toBe(404);
       expect(googleSearchService.search).not.toHaveBeenCalled();
+    });
+
+    it('splits a large result set into batches and calls Gemini once per batch, saving each batch as it completes', async () => {
+      const role = buildRole();
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      const items = Array.from({ length: 45 }, (_, i) => ({
+        title: `Candidate ${i}`,
+        link: `https://linkedin.com/in/candidate-${i}`,
+      }));
+      googleSearchService.search.mockResolvedValue(items);
+      geminiService.formatCandidates.mockResolvedValue({
+        matches: [],
+        tokensUsed: 0,
+      });
+
+      await service.search('role-1', role as any);
+
+      expect(geminiService.formatCandidates).toHaveBeenCalledTimes(3);
+      expect(geminiService.formatCandidates).toHaveBeenNthCalledWith(
+        1,
+        items.slice(0, 20),
+        expect.anything(),
+      );
+      expect(geminiService.formatCandidates).toHaveBeenNthCalledWith(
+        2,
+        items.slice(20, 40),
+        expect.anything(),
+      );
+      expect(geminiService.formatCandidates).toHaveBeenNthCalledWith(
+        3,
+        items.slice(40, 45),
+        expect.anything(),
+      );
+    });
+
+    it('does not call Gemini at all when there are no search results, but still stamps search_run_date once', async () => {
+      const role = buildRole();
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      googleSearchService.search.mockResolvedValue([]);
+
+      await service.search('role-1', role as any);
+
+      expect(geminiService.formatCandidates).not.toHaveBeenCalled();
+      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
+      expect(prisma.role_filters.update).toHaveBeenCalledWith({
+        where: { uid: 'filter-1' },
+        data: { search_run_date: expect.any(Date) },
+      });
+    });
+
+    it('stamps search_run_date exactly once even when multiple batches are processed', async () => {
+      const role = buildRole();
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      const items = Array.from({ length: 25 }, (_, i) => ({
+        title: `Candidate ${i}`,
+        link: `https://linkedin.com/in/candidate-${i}`,
+      }));
+      googleSearchService.search.mockResolvedValue(items);
+      geminiService.formatCandidates.mockResolvedValue({
+        matches: [],
+        tokensUsed: 0,
+      });
+
+      await service.search('role-1', role as any);
+
+      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('streamSearch', () => {
+    it('emits a progress event per batch and a final done event with every saved result', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      const items = Array.from({ length: 25 }, (_, i) => ({
+        title: `Candidate ${i}`,
+        link: `https://linkedin.com/in/candidate-${i}`,
+      }));
+      googleSearchService.search.mockResolvedValue(items);
+      geminiService.formatCandidates.mockResolvedValue({
+        matches: [],
+        tokensUsed: 0,
+      });
+
+      const events = await collectEvents(service.streamSearch('role-1'));
+
+      expect(geminiService.formatCandidates).toHaveBeenCalledTimes(2);
+      const progressEvents = events.filter((e) => {
+        const data = e.data as { stage?: string; status?: string };
+        return (
+          e.type === 'stage' &&
+          data.stage === 'formating candidates' &&
+          data.status === 'progress'
+        );
+      });
+      expect(progressEvents).toEqual([
+        {
+          type: 'stage',
+          data: {
+            stage: 'formating candidates',
+            status: 'progress',
+            completed: 1,
+            total: 2,
+          },
+        },
+        {
+          type: 'stage',
+          data: {
+            stage: 'formating candidates',
+            status: 'progress',
+            completed: 2,
+            total: 2,
+          },
+        },
+      ]);
+
+      const doneEvent = events[events.length - 1];
+      expect(doneEvent.type).toBe('done');
+      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('emits an error event and completes without a done event when an upstream step throws', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(null);
+
+      const events = await collectEvents(service.streamSearch('role-1'));
+
+      expect(events.some((e) => e.type === 'error')).toBe(true);
+      expect(events.some((e) => e.type === 'done')).toBe(false);
+      const errorEvent = events.find((e) => e.type === 'error');
+      const data = errorEvent?.data as { message?: string } | undefined;
+      expect(data?.message).toBe('Role filter not found');
+    });
+
+    it('does not call Gemini and still stamps search_run_date once when there are no search results', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      googleSearchService.search.mockResolvedValue([]);
+
+      const events = await collectEvents(service.streamSearch('role-1'));
+
+      expect(geminiService.formatCandidates).not.toHaveBeenCalled();
+      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
+      expect(events.some((e) => e.type === 'done')).toBe(true);
     });
   });
 

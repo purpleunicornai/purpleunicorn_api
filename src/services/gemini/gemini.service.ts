@@ -10,6 +10,11 @@ import { InstitutionType } from '../../generated/prisma/enums';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
+// Bounds a single generateText call so a stuck or abnormally slow request
+// (e.g. an oversized batch) fails with a clear timeout error instead of
+// hanging the caller indefinitely.
+const GEMINI_CALL_TIMEOUT_MS = 120_000;
+
 const candidateSchema = z.object({
   // These three map directly onto a candidate_source row created alongside
   // the candidate (main: true) — see SearchService.upsertCandidate.
@@ -163,6 +168,11 @@ export class GeminiService {
       model,
       prompt: this.buildPrompt(items, filters),
       output: Output.array({ element: matchSchema }),
+      timeout: GEMINI_CALL_TIMEOUT_MS,
+      // This is scoring each candidate against fixed criteria, not
+      // multi-step reasoning — disabling thinking measured ~25% faster
+      // and cheaper with no observed quality loss.
+      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
     });
 
     return {
@@ -234,7 +244,6 @@ export class GeminiService {
   // image, or a thumbnail, roughly in that order of how likely it is to
   // actually be the person's photo rather than a site logo or icon.
   private extractImageUrl(item: GoogleSearchItem): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const pagemap = item.pagemap as any;
     return (
       pagemap?.metatags?.[0]?.['og:image'] ??
@@ -299,6 +308,16 @@ export class GeminiService {
               industry: filters.industry.value,
               priority: filters.industry.priority,
               nonNegotiable: filters.industry.nonNegotiable,
+            },
+          ]
+        : []),
+      ...(filters.experience
+        ? [
+            {
+              category: 'experience',
+              minYears: filters.experience.value.minYears,
+              priority: filters.experience.priority,
+              nonNegotiable: filters.experience.nonNegotiable,
             },
           ]
         : []),

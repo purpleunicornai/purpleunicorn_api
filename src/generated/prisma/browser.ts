@@ -58,6 +58,11 @@ export type organization_subscription = Prisma.organization_subscriptionModel
  */
 export type projects = Prisma.projectsModel
 /**
+ * Model role_filter_item
+ * 
+ */
+export type role_filter_item = Prisma.role_filter_itemModel
+/**
  * Model role_filter_child
  * 
  */

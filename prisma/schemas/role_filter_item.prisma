@@ -1,0 +1,15 @@
+model role_filter_item {
+  uid            String              @id @unique @default(uuid()) @db.Uuid
+  created        DateTime            @default(now())
+  updated        DateTime            @updatedAt
+  role_filter_id String              @db.Uuid
+  role_filter    role_filters        @relation(fields: [role_filter_id], references: [uid], onDelete: Cascade)
+  category       String
+  value          String?
+  list_value     String[]
+  priority       RoleFilterPriority  @default(OPTIONAL)
+  non_negotiable Boolean             @default(false)
+  children       role_filter_child[]
+
+  @@index([role_filter_id])
+}

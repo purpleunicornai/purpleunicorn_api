@@ -72,25 +72,15 @@ export class RoleFilterChildResponseDto {
   boolean_value?: boolean;
 }
 
-export class RoleFilterResponseDto {
+export class RoleFilterItemResponseDto {
   @ApiProperty({ description: 'Unique identifier (UUID v4)' })
   @Expose()
   @IsUUID()
   uid: string;
 
-  @ApiProperty({ description: 'Record creation timestamp' })
-  @Expose()
-  @IsDateString()
-  created: string;
-
-  @ApiProperty({ description: 'Record last updated timestamp' })
-  @Expose()
-  @IsDateString()
-  updated: string;
-
   @ApiProperty({
     description:
-      'Fixed category: location, job_titles, skills, languages, industry, companies, or education',
+      'Fixed category: location, job_titles, skills, languages, industry, companies, education, or experience',
   })
   @Expose()
   @IsString()
@@ -121,8 +111,32 @@ export class RoleFilterResponseDto {
   @IsBoolean()
   non_negotiable: boolean;
 
+  @ApiProperty({ type: () => [RoleFilterChildResponseDto] })
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RoleFilterChildResponseDto)
+  children: RoleFilterChildResponseDto[];
+}
+
+export class RoleFilterResponseDto {
+  @ApiProperty({ description: 'Unique identifier (UUID v4)' })
+  @Expose()
+  @IsUUID()
+  uid: string;
+
+  @ApiProperty({ description: 'Record creation timestamp' })
+  @Expose()
+  @IsDateString()
+  created: string;
+
+  @ApiProperty({ description: 'Record last updated timestamp' })
+  @Expose()
+  @IsDateString()
+  updated: string;
+
   @ApiProperty({
-    description: 'Whether this filter has been superseded by a newer set',
+    description: 'Whether this filter set has been superseded by a newer one',
   })
   @Expose()
   @IsBoolean()
@@ -138,12 +152,12 @@ export class RoleFilterResponseDto {
   @IsDateString()
   search_run_date?: string;
 
-  @ApiProperty({ type: () => [RoleFilterChildResponseDto] })
+  @ApiProperty({ type: () => [RoleFilterItemResponseDto] })
   @Expose()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => RoleFilterChildResponseDto)
-  children: RoleFilterChildResponseDto[];
+  @Type(() => RoleFilterItemResponseDto)
+  role_filter_items: RoleFilterItemResponseDto[];
 }
 
 export class RoleResultScoreBreakdownDto {

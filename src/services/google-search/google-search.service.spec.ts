@@ -111,7 +111,6 @@ describe('GoogleSearchService', () => {
             value: { titles: ['Software Engineer'], option: 'main_title' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
         skills: [
@@ -119,7 +118,6 @@ describe('GoogleSearchService', () => {
             value: ['TypeScript', 'AWS'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
         location: {
@@ -131,7 +129,6 @@ describe('GoogleSearchService', () => {
           },
           priority: 'ESSENTIAL',
           nonNegotiable: false,
-          filterId: 'f3',
         },
       });
 
@@ -152,7 +149,6 @@ describe('GoogleSearchService', () => {
             value: { titles: ['Software Engineer'], option: 'main_title' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
         skills: [
@@ -160,7 +156,6 @@ describe('GoogleSearchService', () => {
             value: ['GraphQL', 'Docker'],
             priority: 'OPTIONAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -179,7 +174,6 @@ describe('GoogleSearchService', () => {
             value: { titles: ['Software Engineer'], option: 'main_title' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
           {
             value: {
@@ -193,7 +187,6 @@ describe('GoogleSearchService', () => {
             },
             priority: 'OPTIONAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -221,7 +214,6 @@ describe('GoogleSearchService', () => {
             value: { titles: ['Software Engineer'], option: 'main_title' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
         companies: [
@@ -229,7 +221,6 @@ describe('GoogleSearchService', () => {
             value: { names: ['Google', 'Microsoft'], type: 'include' },
             priority: 'OPTIONAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -363,7 +354,6 @@ describe('GoogleSearchService', () => {
               value: { titles: ['Software Engineer'], option: 'main_title' },
               priority: 'ESSENTIAL',
               nonNegotiable: false,
-              filterId: 'f1',
             },
           ],
         }),
@@ -393,7 +383,6 @@ describe('GoogleSearchService', () => {
               value: { titles: ['Software Engineer'], option: 'main_title' },
               priority: 'ESSENTIAL',
               nonNegotiable: false,
-              filterId: 'f1',
             },
           ],
         }),
@@ -412,7 +401,6 @@ describe('GoogleSearchService', () => {
               value: { titles: ['Software Engineer'], option: 'main_title' },
               priority: 'ESSENTIAL',
               nonNegotiable: false,
-              filterId: 'f1',
             },
           ],
         }),
@@ -440,7 +428,6 @@ describe('GoogleSearchService', () => {
               value: { titles: ['Software Engineer'], option: 'main_title' },
               priority: 'ESSENTIAL',
               nonNegotiable: false,
-              filterId: 'f1',
             },
           ],
         }),
@@ -478,7 +465,6 @@ describe('GoogleSearchService', () => {
               value: { titles: ['Software Engineer'], option: 'main_title' },
               priority: 'ESSENTIAL',
               nonNegotiable: false,
-              filterId: 'f1',
             },
           ],
         }),

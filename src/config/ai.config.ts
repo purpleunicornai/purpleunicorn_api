@@ -7,10 +7,12 @@ export default registerWithValidation(
     googleSearchApiKey: String(process.env.GOOGLE_SEARCH_API_KEY),
     googleSearchEngineId: String(process.env.GOOGLE_SEARCH_ENGINE_ID),
     geminiApiKey: String(process.env.GEMINI_API_KEY),
+    rocketReachApiKey: String(process.env.ROCKET_REACH_API_KEY),
   }),
   {
     GOOGLE_SEARCH_API_KEY: Joi.string().required(),
     GOOGLE_SEARCH_ENGINE_ID: Joi.string().required(),
     GEMINI_API_KEY: Joi.string().required(),
+    ROCKET_REACH_API_KEY: Joi.string().required(),
   },
 );

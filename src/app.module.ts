@@ -11,6 +11,7 @@ import { DatabaseModule } from './common/database/database.module';
 import { ProjectsModule } from './projects/projects.module';
 import { MiddlewareModule } from './common/middleware/middleware.module';
 import { CountriesModule } from './system/config/countries/countries.module';
+import { CandidateModule } from './organization/candidate/candidate.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CountriesModule } from './system/config/countries/countries.module';
     DatabaseModule,
     ProjectsModule,
     CountriesModule,
+    CandidateModule,
   ],
   controllers: [AppController],
   providers: [AppService],

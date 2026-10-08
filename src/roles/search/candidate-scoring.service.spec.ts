@@ -113,7 +113,6 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -132,7 +131,6 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -150,13 +148,11 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
           {
             value: ['Go'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -176,13 +172,11 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'OPTIONAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
           {
             value: ['Go'],
             priority: 'OPTIONAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -200,13 +194,11 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
           {
             value: ['Go'],
             priority: 'OPTIONAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -232,7 +224,6 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'OPTIONAL',
             nonNegotiable: true,
-            filterId: 'f1',
           },
         ],
       });
@@ -251,7 +242,6 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: true,
-            filterId: 'f1',
           },
         ],
       });
@@ -270,13 +260,11 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: true,
-            filterId: 'f1',
           },
           {
             value: ['Go'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -285,28 +273,6 @@ describe('CandidateScoringService', () => {
       const result = service.scoreCandidate(filters, candidate);
 
       expect(result.disqualified).toBe(true);
-    });
-
-    it('stamps each breakdown entry with the source filterId', () => {
-      const filters = buildFilters({
-        skills: [
-          {
-            value: ['TypeScript'],
-            priority: 'ESSENTIAL',
-            nonNegotiable: false,
-            filterId: 'skills-filter-1',
-          },
-        ],
-      });
-
-      const result = service.scoreCandidate(
-        filters,
-        buildCandidate({ skills: ['TypeScript'] }),
-      );
-
-      expect(findCategory(result.breakdown, 'skills')).toEqual(
-        expect.objectContaining({ filterId: 'skills-filter-1' }),
-      );
     });
   });
 
@@ -318,7 +284,6 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript', 'AWS'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -338,13 +303,11 @@ describe('CandidateScoringService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
           {
             value: ['Go'],
             priority: 'OPTIONAL',
             nonNegotiable: false,
-            filterId: 'f2',
           },
         ],
       });
@@ -368,7 +331,6 @@ describe('CandidateScoringService', () => {
             value: ['English'],
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -390,7 +352,6 @@ describe('CandidateScoringService', () => {
             value: { titles: ['Software Engineer'], option: 'main_title' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -410,7 +371,6 @@ describe('CandidateScoringService', () => {
             value: { titles: ['Software Engineer'], option: 'main_title' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -436,7 +396,6 @@ describe('CandidateScoringService', () => {
             },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -467,7 +426,6 @@ describe('CandidateScoringService', () => {
             },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -493,7 +451,6 @@ describe('CandidateScoringService', () => {
             value: { names: ['Acme'], type: 'include' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -529,7 +486,6 @@ describe('CandidateScoringService', () => {
             value: { names: ['Acme'], type: 'exclude' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -571,7 +527,6 @@ describe('CandidateScoringService', () => {
           },
           priority: 'ESSENTIAL',
           nonNegotiable: false,
-          filterId: 'f1',
         },
       });
       const candidate = buildCandidate({ current_location_country_code: 'GB' });
@@ -594,7 +549,6 @@ describe('CandidateScoringService', () => {
           },
           priority: 'ESSENTIAL',
           nonNegotiable: false,
-          filterId: 'f1',
         },
       });
       const candidate = buildCandidate({
@@ -618,7 +572,6 @@ describe('CandidateScoringService', () => {
           },
           priority: 'ESSENTIAL',
           nonNegotiable: false,
-          filterId: 'f1',
         },
       });
       const candidate = buildCandidate({
@@ -642,7 +595,6 @@ describe('CandidateScoringService', () => {
           },
           priority: 'ESSENTIAL',
           nonNegotiable: false,
-          filterId: 'f1',
         },
       });
 
@@ -660,6 +612,120 @@ describe('CandidateScoringService', () => {
     });
   });
 
+  describe('experience category', () => {
+    it('awards full credit when the candidate meets or exceeds the minimum years required', () => {
+      const filters = buildFilters({
+        experience: {
+          value: { minYears: 5 },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+        },
+      });
+      const candidate = buildCandidate({ experience_years: 7 });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(findCategory(result.breakdown, 'experience')).toEqual(
+        expect.objectContaining({ weight: 80, earned: 80, applicable: true }),
+      );
+    });
+
+    it('awards partial credit scaled to candidate years / required years when below the minimum', () => {
+      const filters = buildFilters({
+        experience: {
+          value: { minYears: 10 },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+        },
+      });
+      const candidate = buildCandidate({ experience_years: 5 });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(findCategory(result.breakdown, 'experience')?.earned).toBe(40);
+    });
+
+    it('treats a missing experience_years as zero', () => {
+      const filters = buildFilters({
+        experience: {
+          value: { minYears: 5 },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+        },
+      });
+      const candidate = buildCandidate({ experience_years: null });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(findCategory(result.breakdown, 'experience')?.earned).toBe(0);
+    });
+
+    it('caps credit at the full row weight when the candidate has far more experience than required', () => {
+      const filters = buildFilters({
+        experience: {
+          value: { minYears: 2 },
+          priority: 'OPTIONAL',
+          nonNegotiable: false,
+        },
+      });
+      const candidate = buildCandidate({ experience_years: 20 });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(findCategory(result.breakdown, 'experience')?.earned).toBe(20);
+    });
+  });
+
+  describe('every selected essential filter is considered in the 80% split', () => {
+    it('divides the 80% bucket across every essential row the user selected, including experience', () => {
+      const filters = buildFilters({
+        location: {
+          value: {
+            countryCode: 'GB',
+            regions: [],
+            remoteWork: false,
+            workAuthorizationRequired: false,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+        },
+        jobTitles: [
+          {
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+        experience: {
+          value: { minYears: 5 },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+        },
+      });
+      // Matches only the job title; misses location and experience entirely.
+      const candidate = buildCandidate({
+        current_title: 'Software Engineer',
+        current_location_country_code: 'US',
+        experience_years: 0,
+      });
+
+      const result = service.scoreCandidate(filters, candidate);
+
+      expect(findCategory(result.breakdown, 'job_titles')?.weight).toBeCloseTo(
+        80 / 3,
+        2,
+      );
+      expect(findCategory(result.breakdown, 'job_titles')?.earned).toBeCloseTo(
+        80 / 3,
+        2,
+      );
+      expect(findCategory(result.breakdown, 'location')?.earned).toBe(0);
+      expect(findCategory(result.breakdown, 'experience')?.earned).toBe(0);
+      // 80/3 rounded to the nearest whole point.
+      expect(result.score).toBe(27);
+    });
+  });
+
   describe('industry category', () => {
     it('awards full credit when the candidate experience includes a role at a company in the required industry', () => {
       // industry has no first-class candidate field to match against today —
@@ -671,7 +737,6 @@ describe('CandidateScoringService', () => {
           value: 'finance',
           priority: 'OPTIONAL',
           nonNegotiable: false,
-          filterId: 'f1',
         },
       });
 

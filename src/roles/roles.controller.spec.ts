@@ -231,10 +231,10 @@ describe('RolesController', () => {
   });
 
   describe('createFilter', () => {
-    it('saves the filter criteria for the role and returns the filters', async () => {
-      const created = [{ uid: 'filter-1', category: 'skills' }];
+    it('saves the filter criteria for the role and returns the filter', async () => {
+      const created = { uid: 'filter-1', role_filter_items: [] };
       rolesService.createFilter.mockResolvedValue({
-        filters: created,
+        filter: created,
         isFirst: true,
       } as any);
       const body = {
@@ -260,7 +260,7 @@ describe('RolesController', () => {
 
     it('logs ROLE_FILTERS_CREATED when this is the first set of filters for the role', async () => {
       rolesService.createFilter.mockResolvedValue({
-        filters: [{ uid: 'filter-1' }],
+        filter: { uid: 'filter-1' },
         isFirst: true,
       } as any);
 
@@ -281,7 +281,7 @@ describe('RolesController', () => {
 
     it('logs ROLE_FILTERS_UPDATED when previous filters existed for the role', async () => {
       rolesService.createFilter.mockResolvedValue({
-        filters: [{ uid: 'filter-2' }],
+        filter: { uid: 'filter-2' },
         isFirst: false,
       } as any);
 

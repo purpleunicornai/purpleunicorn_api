@@ -202,7 +202,7 @@ export type role_filter_childWhereInput = {
   value?: Prisma.StringNullableFilter<"role_filter_child"> | string | null
   list_value?: Prisma.StringNullableListFilter<"role_filter_child">
   boolean?: Prisma.BoolFilter<"role_filter_child"> | boolean
-  parent?: Prisma.XOR<Prisma.Role_filtersScalarRelationFilter, Prisma.role_filtersWhereInput>
+  parent?: Prisma.XOR<Prisma.Role_filter_itemScalarRelationFilter, Prisma.role_filter_itemWhereInput>
 }
 
 export type role_filter_childOrderByWithRelationInput = {
@@ -214,7 +214,7 @@ export type role_filter_childOrderByWithRelationInput = {
   value?: Prisma.SortOrderInput | Prisma.SortOrder
   list_value?: Prisma.SortOrder
   boolean?: Prisma.SortOrder
-  parent?: Prisma.role_filtersOrderByWithRelationInput
+  parent?: Prisma.role_filter_itemOrderByWithRelationInput
 }
 
 export type role_filter_childWhereUniqueInput = Prisma.AtLeast<{
@@ -229,7 +229,7 @@ export type role_filter_childWhereUniqueInput = Prisma.AtLeast<{
   value?: Prisma.StringNullableFilter<"role_filter_child"> | string | null
   list_value?: Prisma.StringNullableListFilter<"role_filter_child">
   boolean?: Prisma.BoolFilter<"role_filter_child"> | boolean
-  parent?: Prisma.XOR<Prisma.Role_filtersScalarRelationFilter, Prisma.role_filtersWhereInput>
+  parent?: Prisma.XOR<Prisma.Role_filter_itemScalarRelationFilter, Prisma.role_filter_itemWhereInput>
 }, "uid" | "uid">
 
 export type role_filter_childOrderByWithAggregationInput = {
@@ -268,7 +268,7 @@ export type role_filter_childCreateInput = {
   value?: string | null
   list_value?: Prisma.role_filter_childCreatelist_valueInput | string[]
   boolean?: boolean
-  parent: Prisma.role_filtersCreateNestedOneWithoutChildrenInput
+  parent: Prisma.role_filter_itemCreateNestedOneWithoutChildrenInput
 }
 
 export type role_filter_childUncheckedCreateInput = {
@@ -290,7 +290,7 @@ export type role_filter_childUpdateInput = {
   value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   list_value?: Prisma.role_filter_childUpdatelist_valueInput | string[]
   boolean?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  parent?: Prisma.role_filtersUpdateOneRequiredWithoutChildrenNestedInput
+  parent?: Prisma.role_filter_itemUpdateOneRequiredWithoutChildrenNestedInput
 }
 
 export type role_filter_childUncheckedUpdateInput = {
@@ -336,6 +336,16 @@ export type role_filter_childUncheckedUpdateManyInput = {
   boolean?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
+export type Role_filter_childListRelationFilter = {
+  every?: Prisma.role_filter_childWhereInput
+  some?: Prisma.role_filter_childWhereInput
+  none?: Prisma.role_filter_childWhereInput
+}
+
+export type role_filter_childOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type role_filter_childCountOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
@@ -365,25 +375,6 @@ export type role_filter_childMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   value?: Prisma.SortOrder
   boolean?: Prisma.SortOrder
-}
-
-export type Role_filter_childListRelationFilter = {
-  every?: Prisma.role_filter_childWhereInput
-  some?: Prisma.role_filter_childWhereInput
-  none?: Prisma.role_filter_childWhereInput
-}
-
-export type role_filter_childOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
-}
-
-export type role_filter_childCreatelist_valueInput = {
-  set: string[]
-}
-
-export type role_filter_childUpdatelist_valueInput = {
-  set?: string[]
-  push?: string | string[]
 }
 
 export type role_filter_childCreateNestedManyWithoutParentInput = {
@@ -426,6 +417,15 @@ export type role_filter_childUncheckedUpdateManyWithoutParentNestedInput = {
   update?: Prisma.role_filter_childUpdateWithWhereUniqueWithoutParentInput | Prisma.role_filter_childUpdateWithWhereUniqueWithoutParentInput[]
   updateMany?: Prisma.role_filter_childUpdateManyWithWhereWithoutParentInput | Prisma.role_filter_childUpdateManyWithWhereWithoutParentInput[]
   deleteMany?: Prisma.role_filter_childScalarWhereInput | Prisma.role_filter_childScalarWhereInput[]
+}
+
+export type role_filter_childCreatelist_valueInput = {
+  set: string[]
+}
+
+export type role_filter_childUpdatelist_valueInput = {
+  set?: string[]
+  push?: string | string[]
 }
 
 export type role_filter_childCreateWithoutParentInput = {
@@ -539,7 +539,7 @@ export type role_filter_childSelect<ExtArgs extends runtime.Types.Extensions.Int
   value?: boolean
   list_value?: boolean
   boolean?: boolean
-  parent?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  parent?: boolean | Prisma.role_filter_itemDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filter_child"]>
 
 export type role_filter_childSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -551,7 +551,7 @@ export type role_filter_childSelectCreateManyAndReturn<ExtArgs extends runtime.T
   value?: boolean
   list_value?: boolean
   boolean?: boolean
-  parent?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  parent?: boolean | Prisma.role_filter_itemDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filter_child"]>
 
 export type role_filter_childSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -563,7 +563,7 @@ export type role_filter_childSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   value?: boolean
   list_value?: boolean
   boolean?: boolean
-  parent?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  parent?: boolean | Prisma.role_filter_itemDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filter_child"]>
 
 export type role_filter_childSelectScalar = {
@@ -579,19 +579,19 @@ export type role_filter_childSelectScalar = {
 
 export type role_filter_childOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "parent_uid" | "title" | "value" | "list_value" | "boolean", ExtArgs["result"]["role_filter_child"]>
 export type role_filter_childInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  parent?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  parent?: boolean | Prisma.role_filter_itemDefaultArgs<ExtArgs>
 }
 export type role_filter_childIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  parent?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  parent?: boolean | Prisma.role_filter_itemDefaultArgs<ExtArgs>
 }
 export type role_filter_childIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  parent?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  parent?: boolean | Prisma.role_filter_itemDefaultArgs<ExtArgs>
 }
 
 export type $role_filter_childPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "role_filter_child"
   objects: {
-    parent: Prisma.$role_filtersPayload<ExtArgs>
+    parent: Prisma.$role_filter_itemPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
@@ -996,7 +996,7 @@ readonly fields: role_filter_childFieldRefs;
  */
 export interface Prisma__role_filter_childClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  parent<T extends Prisma.role_filtersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filtersDefaultArgs<ExtArgs>>): Prisma.Prisma__role_filtersClient<runtime.Types.Result.GetResult<Prisma.$role_filtersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  parent<T extends Prisma.role_filter_itemDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filter_itemDefaultArgs<ExtArgs>>): Prisma.Prisma__role_filter_itemClient<runtime.Types.Result.GetResult<Prisma.$role_filter_itemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

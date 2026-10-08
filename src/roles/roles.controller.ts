@@ -138,8 +138,9 @@ export class RolesController {
     @Body() body: RoleFilterDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
+    console.log('ATEEMPTING TO CREAT NEW FILRES', body);
     const orgId = requireOrgId(auth);
-    const { filters, isFirst } = await this.rolesService.createFilter(
+    const { filter, isFirst } = await this.rolesService.createFilter(
       roleId,
       body,
       orgId,
@@ -154,7 +155,7 @@ export class RolesController {
       message: `${isFirst ? 'Created' : 'Updated'} search filters for role`,
     });
 
-    return filters;
+    return filter;
   }
 
   @Post('/:roleId/fixed-search')

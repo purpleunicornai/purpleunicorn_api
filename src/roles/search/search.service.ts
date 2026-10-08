@@ -22,6 +22,7 @@ import {
   candidate_source,
   Prisma,
   role_filter_child,
+  role_filter_item,
   role_filters,
   role_result,
   roles,
@@ -34,6 +35,13 @@ import {
   CandidateScoreResult,
   CandidateScoringService,
 } from './candidate-scoring.service';
+
+// A single generateText call asking Gemini to score the whole result set at
+// once scales badly (a 200-item synthetic batch took ~2.7 minutes end to
+// end) and puts the entire run at risk of one slow/interrupted call losing
+// every candidate. Chunking keeps each Gemini call small and lets matches
+// be persisted batch-by-batch instead of only after everything finishes.
+const CANDIDATE_FORMAT_BATCH_SIZE = 20;
 
 @Injectable()
 export class SearchService {
@@ -48,11 +56,27 @@ export class SearchService {
   ) {}
 
   async search(roleId: string, role: roles): Promise<role_result[]> {
-    const filterRows = await this.getRoleFilters(roleId);
-    const filters = parseRoleFilters(filterRows);
+    const filterSet = await this.getRoleFilters(roleId);
+    const filters = parseRoleFilters(filterSet.role_filter_items);
     const items = await this.googleSearchService.search(filters);
-    const formatted = await this.geminiService.formatCandidates(items, filters);
-    return this.saveCandidateMatches(role.uid, filters, formatted);
+
+    const roleResults: role_result[] = [];
+    for (const batch of this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE)) {
+      const formatted = await this.geminiService.formatCandidates(
+        batch,
+        filters,
+      );
+      const saved = await this.saveCandidateMatches(
+        role.uid,
+        filterSet.uid,
+        filters,
+        formatted,
+      );
+      roleResults.push(...saved);
+    }
+
+    await this.markSearchRunDate(filterSet.uid);
+    return roleResults;
   }
 
   // Digs deeper on a single already-found candidate to build out their
@@ -360,7 +384,7 @@ export class SearchService {
             data: { stage: 'fetching filters', status: 'started' },
           });
           this.logger.debug(`Fetching role filter for roleId=${roleId}`);
-          const filterRows = await this.getRoleFilters(roleId);
+          const filterSet = await this.getRoleFilters(roleId);
           subscriber.next({
             type: 'stage',
             data: { stage: 'fetching filters', status: 'done' },
@@ -371,7 +395,7 @@ export class SearchService {
             data: { stage: 'parsing filters', status: 'started' },
           });
           this.logger.debug('Parsing role filters');
-          const filters = parseRoleFilters(filterRows);
+          const filters = parseRoleFilters(filterSet.role_filter_items);
           subscriber.next({
             type: 'stage',
             data: { stage: 'parsing filters', status: 'done' },
@@ -405,10 +429,34 @@ export class SearchService {
             },
           });
           this.logger.debug(`Formatting candidates for roleId=${roleId}`);
-          const formatted = await this.geminiService.formatCandidates(
-            items,
-            filters,
-          );
+          const batches = this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE);
+          const roleResults: role_result[] = [];
+          for (let i = 0; i < batches.length; i++) {
+            this.logger.debug(
+              `Formatting batch ${i + 1}/${batches.length} for roleId=${roleId}`,
+            );
+            const formatted = await this.geminiService.formatCandidates(
+              batches[i],
+              filters,
+            );
+            const saved = await this.saveCandidateMatches(
+              roleId,
+              filterSet.uid,
+              filters,
+              formatted,
+            );
+            roleResults.push(...saved);
+            subscriber.next({
+              type: 'stage',
+              data: {
+                stage: 'formating candidates',
+                status: 'progress',
+                completed: i + 1,
+                total: batches.length,
+              },
+            });
+          }
+          this.logger.debug(`Formatted candidates for roleId=${roleId}`);
           subscriber.next({
             type: 'stage',
             data: {
@@ -425,15 +473,18 @@ export class SearchService {
             },
           });
           this.logger.debug(`Saving candidates for roleId=${roleId}`);
-          const saved = await this.saveCandidateMatches(
-            roleId,
-            filters,
-            formatted,
-          );
+          await this.markSearchRunDate(filterSet.uid);
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'saving candidates',
+              status: 'done',
+            },
+          });
           subscriber.next({
             type: 'done',
             data: {
-              result: saved,
+              result: roleResults,
             },
           });
 
@@ -452,15 +503,19 @@ export class SearchService {
     });
   }
 
-  private async getRoleFilters(
-    roleId: string,
-  ): Promise<(role_filters & { children: role_filter_child[] })[]> {
-    const rows = await this.prisma.role_filters.findMany({
+  private async getRoleFilters(roleId: string): Promise<
+    role_filters & {
+      role_filter_items: (role_filter_item & {
+        children: role_filter_child[];
+      })[];
+    }
+  > {
+    const filterSet = await this.prisma.role_filters.findFirst({
       where: { role_id: roleId, archived: false },
-      include: { children: true },
+      include: { role_filter_items: { include: { children: true } } },
     });
 
-    if (rows.length === 0) {
+    if (!filterSet) {
       throw new RequestException(
         'Role filter not found',
         HttpStatus.NOT_FOUND,
@@ -468,11 +523,12 @@ export class SearchService {
       );
     }
 
-    return rows;
+    return filterSet;
   }
 
   private async saveCandidateMatches(
     roleId: string,
+    filterId: string,
     filters: ParsedRoleFilters,
     result: { matches: GeminiCandidateMatch[]; tokensUsed: number },
   ): Promise<role_result[]> {
@@ -489,6 +545,7 @@ export class SearchService {
       );
       const roleResult = await this.upsertRoleResult(
         roleId,
+        filterId,
         candidateRecord.uid,
         match,
         tokensPerMatch,
@@ -497,15 +554,22 @@ export class SearchService {
       roleResults.push(roleResult);
     }
 
-    // Stamping search_run_date updates every filter row for this role_id —
-    // role_id isn't a unique key (a role now has many filter rows), so this
-    // uses updateMany rather than update.
-    await this.prisma.role_filters.updateMany({
-      where: { role_id: roleId },
+    return roleResults;
+  }
+
+  private async markSearchRunDate(filterId: string): Promise<void> {
+    await this.prisma.role_filters.update({
+      where: { uid: filterId },
       data: { search_run_date: new Date() },
     });
+  }
 
-    return roleResults;
+  private chunk<T>(items: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += size) {
+      chunks.push(items.slice(i, i + size));
+    }
+    return chunks;
   }
 
   private async upsertCandidate(fields: GeminiCandidateFields): Promise<
@@ -565,6 +629,7 @@ export class SearchService {
 
   private async upsertRoleResult(
     roleId: string,
+    filterId: string,
     candidateUid: string,
     match: GeminiCandidateMatch,
     tokensUsed: number,
@@ -576,7 +641,7 @@ export class SearchService {
 
     const data = {
       role_id: roleId,
-      filter_id: null,
+      filter_id: filterId,
       candidate_uid: candidateUid,
       summary: match.summary,
       reasoning: match.reasoning,
@@ -595,16 +660,23 @@ export class SearchService {
         })
       : await this.prisma.role_result.create({ data });
 
-    await this.createScoreBreakdown(roleResult.uid, scoreResult.breakdown);
+    await this.createScoreBreakdown(
+      roleResult.uid,
+      filterId,
+      scoreResult.breakdown,
+    );
 
     return roleResult;
   }
 
   // A role_result's score breakdown is fully replaced on every save rather
   // than diffed, since the category set and weights are re-derived from
-  // scratch each search run.
+  // scratch each search run. Every breakdown row shares the same
+  // role_filter_id: a role now has exactly one active filter set, so there's
+  // nothing finer-grained to link back to than that one row.
   private async createScoreBreakdown(
     roleResultId: string,
+    filterId: string,
     breakdown: CandidateScoreCategory[],
   ): Promise<void> {
     await this.prisma.role_result_score_breakdown.deleteMany({
@@ -616,7 +688,7 @@ export class SearchService {
     await this.prisma.role_result_score_breakdown.createMany({
       data: breakdown.map((entry) => ({
         role_result_id: roleResultId,
-        role_filter_id: entry.filterId,
+        role_filter_id: filterId,
         category: entry.category,
         weight: entry.weight,
         applicable: entry.applicable,

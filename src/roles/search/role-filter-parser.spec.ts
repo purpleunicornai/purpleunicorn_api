@@ -1,7 +1,10 @@
 import { parseRoleFilters } from './role-filter-parser';
-import { role_filters, role_filter_child } from '../../generated/prisma/client';
+import {
+  role_filter_item,
+  role_filter_child,
+} from '../../generated/prisma/client';
 
-type RoleFilterRow = role_filters & { children: role_filter_child[] };
+type RoleFilterItemRow = role_filter_item & { children: role_filter_child[] };
 
 function buildChild(
   overrides: Partial<role_filter_child> = {},
@@ -10,7 +13,7 @@ function buildChild(
     uid: 'child-1',
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
-    parent_uid: 'filter-1',
+    parent_uid: 'item-1',
     title: 'some_title',
     value: null,
     list_value: [],
@@ -19,31 +22,28 @@ function buildChild(
   };
 }
 
-function buildRow(overrides: Partial<RoleFilterRow> = {}): RoleFilterRow {
+function buildItem(
+  overrides: Partial<RoleFilterItemRow> = {},
+): RoleFilterItemRow {
   return {
-    uid: 'filter-1',
+    uid: 'item-1',
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
-    role_id: 'role-1',
+    role_filter_id: 'filter-1',
     category: 'skills',
     value: null,
     list_value: [],
     priority: 'ESSENTIAL',
     non_negotiable: false,
-    archived: false,
-    archived_at: null,
-    search_run_date: null,
-    metadata: null,
     children: [],
     ...overrides,
   };
 }
 
 describe('parseRoleFilters', () => {
-  it('parses a location row with sub-region children into countryCode/regions', () => {
-    const rows = [
-      buildRow({
-        uid: 'filter-loc',
+  it('parses a location item with sub-region children into countryCode/regions', () => {
+    const items = [
+      buildItem({
         category: 'location',
         value: 'ZA',
         priority: 'ESSENTIAL',
@@ -51,7 +51,7 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.location).toEqual({
       value: {
@@ -62,13 +62,12 @@ describe('parseRoleFilters', () => {
       },
       priority: 'ESSENTIAL',
       nonNegotiable: false,
-      filterId: 'filter-loc',
     });
   });
 
   it('reads remote_work and work_authorization booleans from location children', () => {
-    const rows = [
-      buildRow({
+    const items = [
+      buildItem({
         category: 'location',
         value: 'GB',
         children: [
@@ -78,22 +77,21 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.location?.value.remoteWork).toBe(true);
     expect(result.location?.value.workAuthorizationRequired).toBe(true);
   });
 
-  it('leaves location undefined when there is no location row', () => {
-    const result = parseRoleFilters([buildRow({ category: 'skills' })]);
+  it('leaves location undefined when there is no location item', () => {
+    const result = parseRoleFilters([buildItem({ category: 'skills' })]);
 
     expect(result.location).toBeUndefined();
   });
 
-  it('parses a job_titles row, defaulting to main_title when no title_option child is present', () => {
-    const rows = [
-      buildRow({
-        uid: 'filter-title',
+  it('parses a job_titles item, defaulting to main_title when no title_option child is present', () => {
+    const items = [
+      buildItem({
         category: 'job_titles',
         list_value: ['Head of Engineering'],
         priority: 'ESSENTIAL',
@@ -101,21 +99,20 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.jobTitles).toEqual([
       {
         value: { titles: ['Head of Engineering'], option: 'main_title' },
         priority: 'ESSENTIAL',
         nonNegotiable: false,
-        filterId: 'filter-title',
       },
     ]);
   });
 
-  it('parses an alternative job_titles row from the title_option child', () => {
-    const rows = [
-      buildRow({
+  it('parses an alternative job_titles item from the title_option child', () => {
+    const items = [
+      buildItem({
         category: 'job_titles',
         list_value: ['Tech Lead', 'Team Lead'],
         priority: 'OPTIONAL',
@@ -125,92 +122,83 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.jobTitles[0].value.option).toBe('alternative_title');
   });
 
-  it('collects multiple job_titles rows (one per priority tier) into the array', () => {
-    const rows = [
-      buildRow({
-        uid: 'f1',
+  it('collects multiple job_titles items (one per priority tier) into the array', () => {
+    const items = [
+      buildItem({
         category: 'job_titles',
         list_value: ['Head of Engineering'],
         priority: 'ESSENTIAL',
       }),
-      buildRow({
-        uid: 'f2',
+      buildItem({
         category: 'job_titles',
         list_value: ['Tech Lead'],
         priority: 'OPTIONAL',
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.jobTitles).toHaveLength(2);
   });
 
-  it('collects skills rows by list_value, independent of how many rows exist', () => {
-    const rows = [
-      buildRow({
-        uid: 'f1',
+  it('collects skills items by list_value, independent of how many items exist', () => {
+    const items = [
+      buildItem({
         category: 'skills',
         list_value: ['Leadership', 'React Native'],
         priority: 'ESSENTIAL',
       }),
-      buildRow({
-        uid: 'f2',
+      buildItem({
         category: 'skills',
         list_value: ['GraphQL'],
         priority: 'OPTIONAL',
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.skills).toEqual([
       {
         value: ['Leadership', 'React Native'],
         priority: 'ESSENTIAL',
         nonNegotiable: false,
-        filterId: 'f1',
       },
       {
         value: ['GraphQL'],
         priority: 'OPTIONAL',
         nonNegotiable: false,
-        filterId: 'f2',
       },
     ]);
   });
 
-  it('collects languages rows the same way as skills', () => {
-    const rows = [
-      buildRow({
-        uid: 'f1',
+  it('collects languages items the same way as skills', () => {
+    const items = [
+      buildItem({
         category: 'languages',
         list_value: ['English'],
         priority: 'ESSENTIAL',
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.languages).toEqual([
       {
         value: ['English'],
         priority: 'ESSENTIAL',
         nonNegotiable: false,
-        filterId: 'f1',
       },
     ]);
   });
 
-  it('parses an industry row from its scalar value', () => {
-    const rows = [
-      buildRow({
-        uid: 'f1',
+  it('parses an industry item from its scalar value', () => {
+    const items = [
+      buildItem({
         category: 'industry',
         value: 'finance',
         priority: 'ESSENTIAL',
@@ -218,20 +206,18 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.industry).toEqual({
       value: 'finance',
       priority: 'ESSENTIAL',
       nonNegotiable: true,
-      filterId: 'f1',
     });
   });
 
-  it('parses a companies row, defaulting company_type to include when the child is missing', () => {
-    const rows = [
-      buildRow({
-        uid: 'f1',
+  it('parses a companies item, defaulting company_type to include when the child is missing', () => {
+    const items = [
+      buildItem({
         category: 'companies',
         list_value: ['FNB'],
         priority: 'OPTIONAL',
@@ -239,21 +225,20 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.companies).toEqual([
       {
         value: { names: ['FNB'], type: 'include', dateRange: undefined },
         priority: 'OPTIONAL',
         nonNegotiable: false,
-        filterId: 'f1',
       },
     ]);
   });
 
-  it('parses a companies row date range when include_dates is true', () => {
-    const rows = [
-      buildRow({
+  it('parses a companies item date range when include_dates is true', () => {
+    const items = [
+      buildItem({
         category: 'companies',
         list_value: ['FNB'],
         children: [
@@ -268,7 +253,7 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.companies[0].value).toEqual({
       names: ['FNB'],
@@ -280,10 +265,9 @@ describe('parseRoleFilters', () => {
     });
   });
 
-  it('parses an education row, defaulting institutionType to include and institutions to empty when missing', () => {
-    const rows = [
-      buildRow({
-        uid: 'f1',
+  it('parses an education item, defaulting institutionType to include and institutions to empty when missing', () => {
+    const items = [
+      buildItem({
         category: 'education',
         list_value: ['Computer Science degree'],
         priority: 'OPTIONAL',
@@ -291,7 +275,7 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.education).toEqual([
       {
@@ -302,14 +286,13 @@ describe('parseRoleFilters', () => {
         },
         priority: 'OPTIONAL',
         nonNegotiable: false,
-        filterId: 'f1',
       },
     ]);
   });
 
-  it('parses an education row institutions list from the institutions child', () => {
-    const rows = [
-      buildRow({
+  it('parses an education item institutions list from the institutions child', () => {
+    const items = [
+      buildItem({
         category: 'education',
         list_value: ['Computer Science degree'],
         children: [
@@ -320,15 +303,42 @@ describe('parseRoleFilters', () => {
       }),
     ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
 
     expect(result.education[0].value.institutions).toEqual(['Wits', 'UJ']);
   });
 
-  it('ignores any row whose category is not one of the seven known categories', () => {
-    const rows = [buildRow({ category: 'not_a_real_category' })];
+  it('parses an experience item from its scalar value into minYears', () => {
+    const items = [
+      buildItem({
+        category: 'experience',
+        value: '5',
+        priority: 'ESSENTIAL',
+        non_negotiable: true,
+      }),
+    ];
 
-    const result = parseRoleFilters(rows);
+    const result = parseRoleFilters(items);
+
+    expect(result.experience).toEqual({
+      value: { minYears: 5 },
+      priority: 'ESSENTIAL',
+      nonNegotiable: true,
+    });
+  });
+
+  it('defaults minYears to 0 when the experience item has no parsable value', () => {
+    const result = parseRoleFilters([
+      buildItem({ category: 'experience', value: undefined }),
+    ]);
+
+    expect(result.experience?.value.minYears).toBe(0);
+  });
+
+  it('ignores any item whose category is not one of the seven known categories', () => {
+    const items = [buildItem({ category: 'not_a_real_category' })];
+
+    const result = parseRoleFilters(items);
 
     expect(result.skills).toEqual([]);
     expect(result.languages).toEqual([]);
@@ -339,7 +349,7 @@ describe('parseRoleFilters', () => {
     expect(result.industry).toBeUndefined();
   });
 
-  it('returns empty arrays and undefined scalars for all categories when given no rows', () => {
+  it('returns empty arrays and undefined scalars for all categories when given no items', () => {
     const result = parseRoleFilters([]);
 
     expect(result).toEqual({

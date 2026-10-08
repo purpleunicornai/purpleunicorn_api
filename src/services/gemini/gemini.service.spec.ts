@@ -130,7 +130,6 @@ describe('GeminiService', () => {
             value: { titles: ['Fullstack Developer'], option: 'main_title' },
             priority: 'ESSENTIAL',
             nonNegotiable: false,
-            filterId: 'f1',
           },
         ],
       });
@@ -141,6 +140,30 @@ describe('GeminiService', () => {
           model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
           prompt: expect.stringContaining('Fullstack Developer'),
           output: expect.anything(),
+        }),
+      );
+    });
+
+    it('bounds the call with an explicit timeout so a stuck request fails instead of hanging', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      await service.formatCandidates([buildItem()], buildFilters());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({ timeout: expect.any(Number) }),
+      );
+    });
+
+    it('disables thinking, since this is scoring against fixed criteria rather than multi-step reasoning', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      await service.formatCandidates([buildItem()], buildFilters());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerOptions: {
+            google: { thinkingConfig: { thinkingBudget: 0 } },
+          },
         }),
       );
     });
@@ -196,7 +219,6 @@ describe('GeminiService', () => {
             value: ['TypeScript'],
             priority: 'ESSENTIAL',
             nonNegotiable: true,
-            filterId: 'f1',
           },
         ],
       });
@@ -210,6 +232,25 @@ describe('GeminiService', () => {
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
           prompt: expect.stringContaining('"nonNegotiable":true'),
+        }),
+      );
+    });
+
+    it('includes the experience minimum-years criterion in the prompt', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      const filters = buildFilters({
+        experience: {
+          value: { minYears: 5 },
+          priority: 'ESSENTIAL',
+          nonNegotiable: true,
+        },
+      });
+      await service.formatCandidates([buildItem()], filters);
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('"minYears":5'),
         }),
       );
     });
