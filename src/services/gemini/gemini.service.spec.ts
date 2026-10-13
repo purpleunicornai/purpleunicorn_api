@@ -2,6 +2,7 @@ import { GeminiService } from './gemini.service';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { GoogleSearchItem } from '../google-search/google-search.service';
 import { candidate, candidate_source } from '../../generated/prisma/client';
+import { CandidateWithHistory } from '../../roles/search/candidate-scoring.service';
 
 type CandidateWithSources = candidate & { sources: candidate_source[] };
 
@@ -56,6 +57,45 @@ function buildCandidate(
     image_url: null,
     enriched_at: null,
     sources: [buildSource()],
+    ...overrides,
+  };
+}
+
+function buildKnownCandidate(
+  overrides: Partial<CandidateWithHistory> = {},
+): CandidateWithHistory {
+  return {
+    uid: 'candidate-1',
+    created: new Date('2026-08-23T00:00:00.000Z'),
+    updated: new Date('2026-08-23T00:00:00.000Z'),
+    first_name: 'Jane',
+    last_name: 'Doe',
+    email: null,
+    phone: null,
+    country_calling_code: null,
+    contact_info_last_updated: null,
+    rocketreach_profile_id: null,
+    current_location_city: null,
+    current_location_country_code: null,
+    current_location_postal_code: null,
+    open_to_relocation: null,
+    open_to_remote_work: null,
+    current_work_authorization_status: null,
+    experience_years: null,
+    experience_roles: [],
+    current_title: null,
+    current_company: null,
+    current_salary: null,
+    current_salary_currency: null,
+    current_role_start_date: null,
+    skills: [],
+    languages: [],
+    diversity: [],
+    summary: null,
+    image_url: null,
+    enriched_at: null,
+    experience: [],
+    education: [],
     ...overrides,
   };
 }
@@ -345,6 +385,94 @@ describe('GeminiService', () => {
       await service.formatCandidates([buildItem()], buildFilters());
 
       expect(createGoogleGenerativeAI).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('scoreKnownCandidates', () => {
+    it('returns an empty result without calling the model when there are no candidates', async () => {
+      const result = await service.scoreKnownCandidates([], buildFilters());
+
+      expect(generateText).not.toHaveBeenCalled();
+      expect(result).toEqual({ matches: [], tokensUsed: 0 });
+    });
+
+    it('calls generateText with the configured model and a prompt built from the stored candidate profile', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      const candidate = buildKnownCandidate({
+        first_name: 'Jane',
+        last_name: 'Doe',
+        current_title: 'Senior Engineer',
+        skills: ['TypeScript'],
+      });
+      await service.scoreKnownCandidates([candidate], buildFilters());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          prompt: expect.stringContaining('Senior Engineer'),
+          output: expect.anything(),
+          timeout: expect.any(Number),
+          providerOptions: {
+            google: { thinkingConfig: { thinkingBudget: 0 } },
+          },
+        }),
+      );
+    });
+
+    it("includes each candidate's uid verbatim so results can be matched back", async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      const candidate = buildKnownCandidate({ uid: 'candidate-42' });
+      await service.scoreKnownCandidates([candidate], buildFilters());
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('candidate-42'),
+        }),
+      );
+    });
+
+    it('includes role criteria in the prompt, same as formatCandidates', async () => {
+      generateText.mockResolvedValue({ output: [], usage: { totalTokens: 0 } });
+
+      const filters = buildFilters({
+        experience: {
+          value: { minYears: 5 },
+          priority: 'ESSENTIAL',
+          nonNegotiable: true,
+        },
+      });
+      await service.scoreKnownCandidates([buildKnownCandidate()], filters);
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('"minYears":5'),
+        }),
+      );
+    });
+
+    it('parses the matches and token usage from the response', async () => {
+      const matches = [
+        {
+          candidate_uid: 'candidate-1',
+          summary: 'Strong fit based on existing profile.',
+          reasoning: 'Already has the required skill on file.',
+          skills_matched: ['TypeScript'],
+          score: 75,
+        },
+      ];
+      generateText.mockResolvedValue({
+        output: matches,
+        usage: { totalTokens: 123 },
+      });
+
+      const result = await service.scoreKnownCandidates(
+        [buildKnownCandidate()],
+        buildFilters(),
+      );
+
+      expect(result).toEqual({ matches, tokensUsed: 123 });
     });
   });
 

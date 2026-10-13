@@ -13,6 +13,8 @@ import {
   GeminiCandidateMatch,
   GeminiCandidateSourceEnrichment,
   GeminiService,
+  GEMINI_MODEL,
+  GEMINI_PLATFORM,
 } from '../../services/gemini/gemini.service';
 import { PrismaService } from '../../common/database/prisma.service';
 import {
@@ -35,6 +37,18 @@ import {
   CandidateScoreResult,
   CandidateScoringService,
 } from './candidate-scoring.service';
+import { ExistingCandidateSearchService } from './existing-candidate-search.service';
+import { GithubSearchService } from '../../services/github/github-search.service';
+
+// Both a freshly-extracted match (GeminiCandidateMatch) and an
+// already-known candidate's judgment (GeminiKnownCandidateMatch) carry
+// these same four fields — upsertRoleResult only ever reads these, so it
+// can serve both saveCandidateMatches and findExistingCandidateMatches
+// without duplicating the upsert logic.
+type MatchNarrative = Pick<
+  GeminiCandidateMatch,
+  'summary' | 'reasoning' | 'skills_matched' | 'score'
+>;
 
 // A single generateText call asking Gemini to score the whole result set at
 // once scales badly (a 200-item synthetic batch took ~2.7 minutes end to
@@ -52,15 +66,30 @@ export class SearchService {
     private readonly geminiService: GeminiService,
     private readonly pageFetchService: PageFetchService,
     private readonly candidateScoringService: CandidateScoringService,
+    private readonly existingCandidateSearchService: ExistingCandidateSearchService,
+    private readonly githubSearchService: GithubSearchService,
     private readonly prisma: PrismaService,
   ) {}
 
-  async search(roleId: string, role: roles): Promise<role_result[]> {
+  async search(
+    roleId: string,
+    role: roles,
+    userId: string,
+    userName: string,
+  ): Promise<role_result[]> {
     const filterSet = await this.getRoleFilters(roleId);
     const filters = parseRoleFilters(filterSet.role_filter_items);
-    const items = await this.googleSearchService.search(filters);
 
     const roleResults: role_result[] = [];
+    roleResults.push(
+      ...(await this.findExistingCandidateMatches(
+        role.uid,
+        filterSet.uid,
+        filters,
+      )),
+    );
+
+    const { items, sourceByLink } = await this.searchForItems(filters);
     for (const batch of this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE)) {
       const formatted = await this.geminiService.formatCandidates(
         batch,
@@ -71,11 +100,12 @@ export class SearchService {
         filterSet.uid,
         filters,
         formatted,
+        sourceByLink,
       );
       roleResults.push(...saved);
     }
 
-    await this.markSearchRunDate(filterSet.uid);
+    await this.markSearchRunDate(filterSet.uid, userId, userName);
     return roleResults;
   }
 
@@ -374,7 +404,11 @@ export class SearchService {
     await this.prisma.candidate_source.createMany({ data: rows });
   }
 
-  streamSearch(roleId: string): Observable<MessageEvent> {
+  streamSearch(
+    roleId: string,
+    userId: string,
+    userName: string,
+  ): Observable<MessageEvent> {
     return new Observable((subscriber) => {
       this.logger.debug(`Starting search for roleId=${roleId}`);
       const run = async () => {
@@ -404,11 +438,35 @@ export class SearchService {
           subscriber.next({
             type: 'stage',
             data: {
+              stage: 'searching existing candidates',
+              status: 'started',
+            },
+          });
+          const roleResults: role_result[] = [];
+          const existingMatches = await this.findExistingCandidateMatches(
+            roleId,
+            filterSet.uid,
+            filters,
+          );
+          roleResults.push(...existingMatches);
+          subscriber.next({
+            type: 'stage',
+            data: {
+              stage: 'searching existing candidates',
+              status: 'done',
+              result: existingMatches.length,
+              results: existingMatches,
+            },
+          });
+
+          subscriber.next({
+            type: 'stage',
+            data: {
               stage: 'searching candidates',
               status: 'started',
             },
           });
-          const items = await this.googleSearchService.search(filters);
+          const { items, sourceByLink } = await this.searchForItems(filters);
           this.logger.debug(
             `Finished searching candidates for roleId=${roleId}, found ${items?.length} items`,
           );
@@ -430,7 +488,6 @@ export class SearchService {
           });
           this.logger.debug(`Formatting candidates for roleId=${roleId}`);
           const batches = this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE);
-          const roleResults: role_result[] = [];
           for (let i = 0; i < batches.length; i++) {
             this.logger.debug(
               `Formatting batch ${i + 1}/${batches.length} for roleId=${roleId}`,
@@ -444,6 +501,7 @@ export class SearchService {
               filterSet.uid,
               filters,
               formatted,
+              sourceByLink,
             );
             roleResults.push(...saved);
             subscriber.next({
@@ -453,6 +511,9 @@ export class SearchService {
                 status: 'progress',
                 completed: i + 1,
                 total: batches.length,
+                // The frontend can render these as they arrive instead of
+                // waiting for the final 'done' event to see any results.
+                results: saved,
               },
             });
           }
@@ -473,7 +534,7 @@ export class SearchService {
             },
           });
           this.logger.debug(`Saving candidates for roleId=${roleId}`);
-          await this.markSearchRunDate(filterSet.uid);
+          await this.markSearchRunDate(filterSet.uid, userId, userName);
           subscriber.next({
             type: 'stage',
             data: {
@@ -531,6 +592,7 @@ export class SearchService {
     filterId: string,
     filters: ParsedRoleFilters,
     result: { matches: GeminiCandidateMatch[]; tokensUsed: number },
+    sourceByLink: Map<string, string>,
   ): Promise<role_result[]> {
     const tokensPerMatch = result.matches.length
       ? Math.round(result.tokensUsed / result.matches.length)
@@ -543,6 +605,13 @@ export class SearchService {
         filters,
         candidateRecord,
       );
+      // Gemini is instructed to copy source_url verbatim from the input
+      // item's link, so it doubles as the key for recovering which engine
+      // actually produced this match — default to Google since that's the
+      // dominant source if a URL was altered or omitted.
+      const source = match.candidate.source_url
+        ? (sourceByLink.get(match.candidate.source_url) ?? 'Google')
+        : 'Google';
       const roleResult = await this.upsertRoleResult(
         roleId,
         filterId,
@@ -550,6 +619,7 @@ export class SearchService {
         match,
         tokensPerMatch,
         scoreResult,
+        source,
       );
       roleResults.push(roleResult);
     }
@@ -557,10 +627,102 @@ export class SearchService {
     return roleResults;
   }
 
-  private async markSearchRunDate(filterId: string): Promise<void> {
+  // Google x-ray and GitHub are two independent candidate sources that both
+  // return the same GoogleSearchItem shape — merging them here means every
+  // downstream step (chunking, Gemini extraction, upsertCandidate dedup by
+  // source_url) needs no awareness that more than one source exists. The
+  // link->engine map is built before merging (while the two lists are still
+  // separate) so that once Gemini returns a match's source_url, we can
+  // still tell which engine actually found it, to record on role_result.
+  private async searchForItems(filters: ParsedRoleFilters): Promise<{
+    items: GoogleSearchItem[];
+    sourceByLink: Map<string, string>;
+  }> {
+    const googleItems = await this.googleSearchService.search(filters);
+    const githubItems = await this.githubSearchService.search(filters);
+
+    const sourceByLink = new Map<string, string>();
+    for (const item of googleItems) sourceByLink.set(item.link, 'Google');
+    for (const item of githubItems) sourceByLink.set(item.link, 'GitHub');
+
+    return { items: [...googleItems, ...githubItems], sourceByLink };
+  }
+
+  // Finds candidates already on file that weren't surfaced by this role's
+  // Google search, scores them with the same deterministic algorithm used
+  // for freshly-found matches, and sends only the top-ranked, non-
+  // disqualified subset to Gemini for a narrative judgment — capping
+  // Gemini usage regardless of how many candidates the DB query returns.
+  private async findExistingCandidateMatches(
+    roleId: string,
+    filterId: string,
+    filters: ParsedRoleFilters,
+  ): Promise<role_result[]> {
+    const pool = await this.existingCandidateSearchService.findCandidates(
+      roleId,
+      filters,
+    );
+
+    const ranked = pool
+      .map((candidate) => ({
+        candidate,
+        scoreResult: this.candidateScoringService.scoreCandidate(
+          filters,
+          candidate,
+        ),
+      }))
+      .filter(
+        ({ scoreResult }) => !scoreResult.disqualified && scoreResult.score > 0,
+      )
+      .sort((a, b) => b.scoreResult.score - a.scoreResult.score)
+      .slice(0, CANDIDATE_FORMAT_BATCH_SIZE);
+
+    if (ranked.length === 0) return [];
+
+    const { matches, tokensUsed } =
+      await this.geminiService.scoreKnownCandidates(
+        ranked.map((entry) => entry.candidate),
+        filters,
+      );
+    const tokensPerMatch = matches.length
+      ? Math.round(tokensUsed / matches.length)
+      : 0;
+
+    const roleResults: role_result[] = [];
+    for (const entry of ranked) {
+      const match = matches.find(
+        (candidateMatch) =>
+          candidateMatch.candidate_uid === entry.candidate.uid,
+      );
+      if (!match) continue;
+
+      const roleResult = await this.upsertRoleResult(
+        roleId,
+        filterId,
+        entry.candidate.uid,
+        match,
+        tokensPerMatch,
+        entry.scoreResult,
+        'Database',
+      );
+      roleResults.push(roleResult);
+    }
+
+    return roleResults;
+  }
+
+  private async markSearchRunDate(
+    filterId: string,
+    userId: string,
+    userName: string,
+  ): Promise<void> {
     await this.prisma.role_filters.update({
       where: { uid: filterId },
-      data: { search_run_date: new Date() },
+      data: {
+        search_run_date: new Date(),
+        search_run_by: userName,
+        search_run_by_id: userId,
+      },
     });
   }
 
@@ -580,12 +742,30 @@ export class SearchService {
   > {
     const { source_title, source_name, source_url, ...scalarFields } = fields;
     const data = this.buildCandidateData(scalarFields);
-    const existing = source_url
-      ? await this.prisma.candidate.findFirst({
-          where: { sources: { some: { url: source_url } } },
-          include: { experience: true, education: true },
-        })
-      : null;
+
+    // A matching source_url is the strongest signal, but the same person
+    // is often found again at a different URL entirely (their LinkedIn vs.
+    // their GitHub) — an exact first+last name match is treated as "almost
+    // certainly the same person" too, even though that carries some risk
+    // of merging two different people who happen to share a full name.
+    const matchConditions: Prisma.candidateWhereInput[] = [];
+    if (source_url) {
+      matchConditions.push({ sources: { some: { url: source_url } } });
+    }
+    if (scalarFields.first_name && scalarFields.last_name) {
+      matchConditions.push({
+        first_name: { equals: scalarFields.first_name, mode: 'insensitive' },
+        last_name: { equals: scalarFields.last_name, mode: 'insensitive' },
+      });
+    }
+
+    const existing =
+      matchConditions.length > 0
+        ? await this.prisma.candidate.findFirst({
+            where: { OR: matchConditions },
+            include: { experience: true, education: true },
+          })
+        : null;
 
     if (!existing) {
       const currentRoleRow = this.buildCurrentRoleExperienceRow(
@@ -631,9 +811,10 @@ export class SearchService {
     roleId: string,
     filterId: string,
     candidateUid: string,
-    match: GeminiCandidateMatch,
+    match: MatchNarrative,
     tokensUsed: number,
     scoreResult: CandidateScoreResult,
+    source: string,
   ): Promise<role_result> {
     const existing = await this.prisma.role_result.findFirst({
       where: { role_id: roleId, candidate_uid: candidateUid },
@@ -650,6 +831,9 @@ export class SearchService {
       score: scoreResult.disqualified ? 0 : scoreResult.score,
       disqualified: scoreResult.disqualified,
       tokens_used: tokensUsed,
+      sources: [source],
+      ai_platform: GEMINI_PLATFORM,
+      ai_model: GEMINI_MODEL,
     };
 
     const roleResult = existing
@@ -690,7 +874,12 @@ export class SearchService {
         role_result_id: roleResultId,
         role_filter_id: filterId,
         category: entry.category,
-        weight: entry.weight,
+        // weight is an Int column, but CandidateScoringService divides the
+        // 80/20 buckets evenly across however many rows exist (e.g.
+        // 80/3 = 26.666...) — rounding it the same way score is rounded
+        // keeps the two consistent, so a full match (fraction === 1) can
+        // never show a score higher than its own weight.
+        weight: Math.round(entry.weight),
         applicable: entry.applicable,
         score: Math.round(entry.earned),
       })),

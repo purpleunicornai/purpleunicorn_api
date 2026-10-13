@@ -29,6 +29,10 @@ model role_result {
   metadata               Json?
   logs                   organization_log[]            @relation("RoleResultLogs")
   score_breakdown        role_result_score_breakdown[]
+  // ai related fields
+  ai_platform            String? // Gemini, OpenAI, etc.
+  ai_model               String? // The specific model used for the AI summary, e.g. "gpt-4", "gpt-3.5-turbo"
+  sources                String[] // the sources used to generate the AI summary, e.g. ["LinkedIn", "Resume", "Database"]
 
   // upsertRoleResult looks up by (role_id, candidate_uid) on every search
   // save; filter_id and candidate_uid alone are also traversed (a filter's

@@ -3,6 +3,7 @@ import { GoogleSearchService } from './google-search/google-search.service';
 import { GeminiService } from './gemini/gemini.service';
 import { PageFetchService } from './page-fetch/page-fetch.service';
 import { RocketReachService } from './rocket-reach/rocket-reach.service';
+import { GithubSearchService } from './github/github-search.service';
 
 @Module({
   providers: [
@@ -10,12 +11,14 @@ import { RocketReachService } from './rocket-reach/rocket-reach.service';
     GeminiService,
     PageFetchService,
     RocketReachService,
+    GithubSearchService,
   ],
   exports: [
     GoogleSearchService,
     GeminiService,
     PageFetchService,
     RocketReachService,
+    GithubSearchService,
   ],
 })
 export class ServicesModule {}

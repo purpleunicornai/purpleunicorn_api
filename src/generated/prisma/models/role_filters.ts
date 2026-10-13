@@ -32,6 +32,8 @@ export type Role_filtersMinAggregateOutputType = {
   archived: boolean | null
   archived_at: Date | null
   search_run_date: Date | null
+  search_run_by: string | null
+  search_run_by_id: string | null
 }
 
 export type Role_filtersMaxAggregateOutputType = {
@@ -42,6 +44,8 @@ export type Role_filtersMaxAggregateOutputType = {
   archived: boolean | null
   archived_at: Date | null
   search_run_date: Date | null
+  search_run_by: string | null
+  search_run_by_id: string | null
 }
 
 export type Role_filtersCountAggregateOutputType = {
@@ -53,6 +57,8 @@ export type Role_filtersCountAggregateOutputType = {
   archived_at: number
   search_run_date: number
   metadata: number
+  search_run_by: number
+  search_run_by_id: number
   _all: number
 }
 
@@ -65,6 +71,8 @@ export type Role_filtersMinAggregateInputType = {
   archived?: true
   archived_at?: true
   search_run_date?: true
+  search_run_by?: true
+  search_run_by_id?: true
 }
 
 export type Role_filtersMaxAggregateInputType = {
@@ -75,6 +83,8 @@ export type Role_filtersMaxAggregateInputType = {
   archived?: true
   archived_at?: true
   search_run_date?: true
+  search_run_by?: true
+  search_run_by_id?: true
 }
 
 export type Role_filtersCountAggregateInputType = {
@@ -86,6 +96,8 @@ export type Role_filtersCountAggregateInputType = {
   archived_at?: true
   search_run_date?: true
   metadata?: true
+  search_run_by?: true
+  search_run_by_id?: true
   _all?: true
 }
 
@@ -170,6 +182,8 @@ export type Role_filtersGroupByOutputType = {
   archived_at: Date | null
   search_run_date: Date | null
   metadata: runtime.JsonValue | null
+  search_run_by: string | null
+  search_run_by_id: string | null
   _count: Role_filtersCountAggregateOutputType | null
   _min: Role_filtersMinAggregateOutputType | null
   _max: Role_filtersMaxAggregateOutputType | null
@@ -202,6 +216,8 @@ export type role_filtersWhereInput = {
   archived_at?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   metadata?: Prisma.JsonNullableFilter<"role_filters">
+  search_run_by?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  search_run_by_id?: Prisma.StringNullableFilter<"role_filters"> | string | null
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
   role_results?: Prisma.Role_resultListRelationFilter
   score_breakdowns?: Prisma.Role_result_score_breakdownListRelationFilter
@@ -218,6 +234,8 @@ export type role_filtersOrderByWithRelationInput = {
   archived_at?: Prisma.SortOrderInput | Prisma.SortOrder
   search_run_date?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  search_run_by?: Prisma.SortOrderInput | Prisma.SortOrder
+  search_run_by_id?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.rolesOrderByWithRelationInput
   role_results?: Prisma.role_resultOrderByRelationAggregateInput
   score_breakdowns?: Prisma.role_result_score_breakdownOrderByRelationAggregateInput
@@ -237,6 +255,8 @@ export type role_filtersWhereUniqueInput = Prisma.AtLeast<{
   archived_at?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   metadata?: Prisma.JsonNullableFilter<"role_filters">
+  search_run_by?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  search_run_by_id?: Prisma.StringNullableFilter<"role_filters"> | string | null
   role?: Prisma.XOR<Prisma.RolesScalarRelationFilter, Prisma.rolesWhereInput>
   role_results?: Prisma.Role_resultListRelationFilter
   score_breakdowns?: Prisma.Role_result_score_breakdownListRelationFilter
@@ -253,6 +273,8 @@ export type role_filtersOrderByWithAggregationInput = {
   archived_at?: Prisma.SortOrderInput | Prisma.SortOrder
   search_run_date?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  search_run_by?: Prisma.SortOrderInput | Prisma.SortOrder
+  search_run_by_id?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.role_filtersCountOrderByAggregateInput
   _max?: Prisma.role_filtersMaxOrderByAggregateInput
   _min?: Prisma.role_filtersMinOrderByAggregateInput
@@ -270,6 +292,8 @@ export type role_filtersScalarWhereWithAggregatesInput = {
   archived_at?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableWithAggregatesFilter<"role_filters"> | Date | string | null
   metadata?: Prisma.JsonNullableWithAggregatesFilter<"role_filters">
+  search_run_by?: Prisma.StringNullableWithAggregatesFilter<"role_filters"> | string | null
+  search_run_by_id?: Prisma.StringNullableWithAggregatesFilter<"role_filters"> | string | null
 }
 
 export type role_filtersCreateInput = {
@@ -280,6 +304,8 @@ export type role_filtersCreateInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
@@ -296,6 +322,8 @@ export type role_filtersUncheckedCreateInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
@@ -310,6 +338,8 @@ export type role_filtersUpdateInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
@@ -326,6 +356,8 @@ export type role_filtersUncheckedUpdateInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -341,6 +373,8 @@ export type role_filtersCreateManyInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
 }
 
 export type role_filtersUpdateManyMutationInput = {
@@ -351,6 +385,8 @@ export type role_filtersUpdateManyMutationInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type role_filtersUncheckedUpdateManyInput = {
@@ -362,6 +398,8 @@ export type role_filtersUncheckedUpdateManyInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type Role_filtersNullableScalarRelationFilter = {
@@ -383,6 +421,8 @@ export type role_filtersCountOrderByAggregateInput = {
   archived_at?: Prisma.SortOrder
   search_run_date?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
+  search_run_by?: Prisma.SortOrder
+  search_run_by_id?: Prisma.SortOrder
 }
 
 export type role_filtersMaxOrderByAggregateInput = {
@@ -393,6 +433,8 @@ export type role_filtersMaxOrderByAggregateInput = {
   archived?: Prisma.SortOrder
   archived_at?: Prisma.SortOrder
   search_run_date?: Prisma.SortOrder
+  search_run_by?: Prisma.SortOrder
+  search_run_by_id?: Prisma.SortOrder
 }
 
 export type role_filtersMinOrderByAggregateInput = {
@@ -403,6 +445,8 @@ export type role_filtersMinOrderByAggregateInput = {
   archived?: Prisma.SortOrder
   archived_at?: Prisma.SortOrder
   search_run_date?: Prisma.SortOrder
+  search_run_by?: Prisma.SortOrder
+  search_run_by_id?: Prisma.SortOrder
 }
 
 export type Role_filtersListRelationFilter = {
@@ -527,6 +571,8 @@ export type role_filtersCreateWithoutLogsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
@@ -542,6 +588,8 @@ export type role_filtersUncheckedCreateWithoutLogsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   role_filter_items?: Prisma.role_filter_itemUncheckedCreateNestedManyWithoutRole_filterInput
@@ -571,6 +619,8 @@ export type role_filtersUpdateWithoutLogsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
@@ -586,6 +636,8 @@ export type role_filtersUncheckedUpdateWithoutLogsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
   role_filter_items?: Prisma.role_filter_itemUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -599,6 +651,8 @@ export type role_filtersCreateWithoutRole_filter_itemsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
@@ -614,6 +668,8 @@ export type role_filtersUncheckedCreateWithoutRole_filter_itemsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
@@ -643,6 +699,8 @@ export type role_filtersUpdateWithoutRole_filter_itemsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
@@ -658,6 +716,8 @@ export type role_filtersUncheckedUpdateWithoutRole_filter_itemsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -671,6 +731,8 @@ export type role_filtersCreateWithoutRole_resultsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
@@ -686,6 +748,8 @@ export type role_filtersUncheckedCreateWithoutRole_resultsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
   role_filter_items?: Prisma.role_filter_itemUncheckedCreateNestedManyWithoutRole_filterInput
@@ -715,6 +779,8 @@ export type role_filtersUpdateWithoutRole_resultsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
@@ -730,6 +796,8 @@ export type role_filtersUncheckedUpdateWithoutRole_resultsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
   role_filter_items?: Prisma.role_filter_itemUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -743,6 +811,8 @@ export type role_filtersCreateWithoutScore_breakdownsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role: Prisma.rolesCreateNestedOneWithoutRole_filtersInput
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
@@ -758,6 +828,8 @@ export type role_filtersUncheckedCreateWithoutScore_breakdownsInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
   role_filter_items?: Prisma.role_filter_itemUncheckedCreateNestedManyWithoutRole_filterInput
@@ -787,6 +859,8 @@ export type role_filtersUpdateWithoutScore_breakdownsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.rolesUpdateOneRequiredWithoutRole_filtersNestedInput
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
@@ -802,6 +876,8 @@ export type role_filtersUncheckedUpdateWithoutScore_breakdownsInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
   role_filter_items?: Prisma.role_filter_itemUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -815,6 +891,8 @@ export type role_filtersCreateWithoutRoleInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role_results?: Prisma.role_resultCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRole_filterInput
@@ -829,6 +907,8 @@ export type role_filtersUncheckedCreateWithoutRoleInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
   role_results?: Prisma.role_resultUncheckedCreateNestedManyWithoutRole_filterInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedCreateNestedManyWithoutRole_filterInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRole_filterInput
@@ -873,6 +953,8 @@ export type role_filtersScalarWhereInput = {
   archived_at?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   search_run_date?: Prisma.DateTimeNullableFilter<"role_filters"> | Date | string | null
   metadata?: Prisma.JsonNullableFilter<"role_filters">
+  search_run_by?: Prisma.StringNullableFilter<"role_filters"> | string | null
+  search_run_by_id?: Prisma.StringNullableFilter<"role_filters"> | string | null
 }
 
 export type role_filtersCreateManyRoleInput = {
@@ -883,6 +965,8 @@ export type role_filtersCreateManyRoleInput = {
   archived_at?: Date | string | null
   search_run_date?: Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: string | null
+  search_run_by_id?: string | null
 }
 
 export type role_filtersUpdateWithoutRoleInput = {
@@ -893,6 +977,8 @@ export type role_filtersUpdateWithoutRoleInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_results?: Prisma.role_resultUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRole_filterNestedInput
@@ -907,6 +993,8 @@ export type role_filtersUncheckedUpdateWithoutRoleInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_results?: Prisma.role_resultUncheckedUpdateManyWithoutRole_filterNestedInput
   score_breakdowns?: Prisma.role_result_score_breakdownUncheckedUpdateManyWithoutRole_filterNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRole_filterNestedInput
@@ -921,6 +1009,8 @@ export type role_filtersUncheckedUpdateManyWithoutRoleInput = {
   archived_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   search_run_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  search_run_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  search_run_by_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -990,6 +1080,8 @@ export type role_filtersSelect<ExtArgs extends runtime.Types.Extensions.Internal
   archived_at?: boolean
   search_run_date?: boolean
   metadata?: boolean
+  search_run_by?: boolean
+  search_run_by_id?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   role_results?: boolean | Prisma.role_filters$role_resultsArgs<ExtArgs>
   score_breakdowns?: boolean | Prisma.role_filters$score_breakdownsArgs<ExtArgs>
@@ -1007,6 +1099,8 @@ export type role_filtersSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   archived_at?: boolean
   search_run_date?: boolean
   metadata?: boolean
+  search_run_by?: boolean
+  search_run_by_id?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filters"]>
 
@@ -1019,6 +1113,8 @@ export type role_filtersSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   archived_at?: boolean
   search_run_date?: boolean
   metadata?: boolean
+  search_run_by?: boolean
+  search_run_by_id?: boolean
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filters"]>
 
@@ -1031,9 +1127,11 @@ export type role_filtersSelectScalar = {
   archived_at?: boolean
   search_run_date?: boolean
   metadata?: boolean
+  search_run_by?: boolean
+  search_run_by_id?: boolean
 }
 
-export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "archived" | "archived_at" | "search_run_date" | "metadata", ExtArgs["result"]["role_filters"]>
+export type role_filtersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_id" | "archived" | "archived_at" | "search_run_date" | "metadata" | "search_run_by" | "search_run_by_id", ExtArgs["result"]["role_filters"]>
 export type role_filtersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role?: boolean | Prisma.rolesDefaultArgs<ExtArgs>
   role_results?: boolean | Prisma.role_filters$role_resultsArgs<ExtArgs>
@@ -1067,6 +1165,8 @@ export type $role_filtersPayload<ExtArgs extends runtime.Types.Extensions.Intern
     archived_at: Date | null
     search_run_date: Date | null
     metadata: runtime.JsonValue | null
+    search_run_by: string | null
+    search_run_by_id: string | null
   }, ExtArgs["result"]["role_filters"]>
   composites: {}
 }
@@ -1503,6 +1603,8 @@ export interface role_filtersFieldRefs {
   readonly archived_at: Prisma.FieldRef<"role_filters", 'DateTime'>
   readonly search_run_date: Prisma.FieldRef<"role_filters", 'DateTime'>
   readonly metadata: Prisma.FieldRef<"role_filters", 'Json'>
+  readonly search_run_by: Prisma.FieldRef<"role_filters", 'String'>
+  readonly search_run_by_id: Prisma.FieldRef<"role_filters", 'String'>
 }
     
 

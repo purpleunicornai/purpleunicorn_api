@@ -270,7 +270,9 @@ export const Role_filtersScalarFieldEnum = {
   archived: 'archived',
   archived_at: 'archived_at',
   search_run_date: 'search_run_date',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  search_run_by: 'search_run_by',
+  search_run_by_id: 'search_run_by_id'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -299,7 +301,10 @@ export const Role_resultScalarFieldEnum = {
   not_suitable_date: 'not_suitable_date',
   tokens_used: 'tokens_used',
   tokens_cost: 'tokens_cost',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  ai_platform: 'ai_platform',
+  ai_model: 'ai_model',
+  sources: 'sources'
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]

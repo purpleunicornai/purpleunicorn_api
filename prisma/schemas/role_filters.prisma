@@ -17,6 +17,8 @@ model role_filters {
   score_breakdowns  role_result_score_breakdown[]
   logs              organization_log[]            @relation("RoleFilterLogs")
   role_filter_items role_filter_item[]
+  search_run_by     String?
+  search_run_by_id  String?
 
   // Every filter lookup in the app is scoped to a role and the "current"
   // (non-archived) one, e.g. `where: { role_id, archived: false }` — this

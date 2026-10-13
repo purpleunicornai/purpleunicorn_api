@@ -152,6 +152,26 @@ export class RoleFilterResponseDto {
   @IsDateString()
   search_run_date?: string;
 
+  @ApiProperty({
+    description:
+      'The Clerk user of who last ran a search against this filter set',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  search_run_by?: string;
+
+  @ApiProperty({
+    description:
+      'The Clerk user id of who last ran a search against this filter set',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  search_run_by_id?: string;
+
   @ApiProperty({ type: () => [RoleFilterItemResponseDto] })
   @Expose()
   @IsArray()
@@ -356,6 +376,38 @@ export class RoleResultSummaryDto {
   @IsOptional()
   @IsBoolean()
   disqualified?: boolean;
+
+  @ApiProperty({
+    description:
+      'The AI model used to generate the score and reasoning, e.g. "Flash1.5"',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  ai_model?: string;
+
+  @ApiProperty({
+    description:
+      'The AI platform used to generate the score and reasoning, e.g. "OpenAI"',
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  ai_platform?: string;
+
+  @ApiProperty({
+    description: 'The sources used to generate the score and reasoning',
+    required: false,
+    isArray: true,
+    type: () => String,
+  })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  sources?: string[];
 }
 
 export class RoleDto {
