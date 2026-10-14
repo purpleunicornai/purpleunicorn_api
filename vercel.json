@@ -1,9 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "src/main.ts": {
+    "api/index.ts": {
       "maxDuration": 300,
       "includeFiles": "node_modules/@countrystatecity/countries/dist/data/**"
     }
-  }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
 }
