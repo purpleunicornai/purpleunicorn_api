@@ -1,13 +1,13 @@
 model organization_subscription {
   uid             String             @id @unique @default(uuid()) @db.Uuid
-  created         DateTime           @default(now())
-  updated         DateTime           @updatedAt
+  created         DateTime           @default(now()) @db.Timestamptz(3)
+  updated         DateTime           @updatedAt @db.Timestamptz(3)
   organization_id String
   plan            String
   status          String
-  purchase_date   DateTime
-  renewal_date    DateTime?
-  expire_date     DateTime?
+  purchase_date   DateTime           @db.Timestamptz(3)
+  renewal_date    DateTime?          @db.Timestamptz(3)
+  expire_date     DateTime?          @db.Timestamptz(3)
   subscription_id String
   logs            organization_log[] @relation("SubscriptionLogs")
 

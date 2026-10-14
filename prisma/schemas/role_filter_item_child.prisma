@@ -1,7 +1,7 @@
 model role_filter_child {
   uid        String           @id @unique @default(uuid()) @db.Uuid
-  created    DateTime         @default(now())
-  updated    DateTime         @updatedAt
+  created    DateTime         @default(now()) @db.Timestamptz(3)
+  updated    DateTime         @updatedAt @db.Timestamptz(3)
   parent_uid String           @db.Uuid
   parent     role_filter_item @relation(fields: [parent_uid], references: [uid], onDelete: Cascade)
   title      String

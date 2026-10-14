@@ -5,13 +5,13 @@ enum RoleFilterPriority {
 
 model role_filters {
   uid               String                        @id @unique @default(uuid()) @db.Uuid
-  created           DateTime                      @default(now())
-  updated           DateTime                      @updatedAt
+  created           DateTime                      @default(now()) @db.Timestamptz(3)
+  updated           DateTime                      @updatedAt @db.Timestamptz(3)
   role_id           String                        @db.Uuid
   role              roles                         @relation(fields: [role_id], references: [uid], onDelete: Cascade)
   archived          Boolean                       @default(false)
-  archived_at       DateTime?
-  search_run_date   DateTime?
+  archived_at       DateTime?                     @db.Timestamptz(3)
+  search_run_date   DateTime?                     @db.Timestamptz(3)
   metadata          Json?                         @db.JsonB
   role_results      role_result[]
   score_breakdowns  role_result_score_breakdown[]
