@@ -405,6 +405,7 @@ export const ModelName = {
   organization_log: 'organization_log',
   organization_subscription: 'organization_subscription',
   projects: 'projects',
+  role_filter_item: 'role_filter_item',
   role_filter_child: 'role_filter_child',
   role_filters: 'role_filters',
   role_result: 'role_result',
@@ -425,7 +426,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filter_child" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
+    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filter_item" | "role_filter_child" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1021,6 +1022,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    role_filter_item: {
+      payload: Prisma.$role_filter_itemPayload<ExtArgs>
+      fields: Prisma.role_filter_itemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.role_filter_itemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.role_filter_itemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>
+        }
+        findFirst: {
+          args: Prisma.role_filter_itemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.role_filter_itemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>
+        }
+        findMany: {
+          args: Prisma.role_filter_itemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>[]
+        }
+        create: {
+          args: Prisma.role_filter_itemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>
+        }
+        createMany: {
+          args: Prisma.role_filter_itemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.role_filter_itemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>[]
+        }
+        delete: {
+          args: Prisma.role_filter_itemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>
+        }
+        update: {
+          args: Prisma.role_filter_itemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>
+        }
+        deleteMany: {
+          args: Prisma.role_filter_itemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.role_filter_itemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.role_filter_itemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>[]
+        }
+        upsert: {
+          args: Prisma.role_filter_itemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_filter_itemPayload>
+        }
+        aggregate: {
+          args: Prisma.Role_filter_itemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRole_filter_item>
+        }
+        groupBy: {
+          args: Prisma.role_filter_itemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Role_filter_itemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.role_filter_itemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Role_filter_itemCountAggregateOutputType> | number
+        }
+      }
+    }
     role_filter_child: {
       payload: Prisma.$role_filter_childPayload<ExtArgs>
       fields: Prisma.role_filter_childFieldRefs
@@ -1522,8 +1597,7 @@ export const Organization_creditsScalarFieldEnum = {
   updated: 'updated',
   organization_id: 'organization_id',
   type: 'type',
-  amount: 'amount',
-  transaction_type: 'transaction_type'
+  amount: 'amount'
 } as const
 
 export type Organization_creditsScalarFieldEnum = (typeof Organization_creditsScalarFieldEnum)[keyof typeof Organization_creditsScalarFieldEnum]
@@ -1581,6 +1655,21 @@ export const ProjectsScalarFieldEnum = {
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
 
 
+export const Role_filter_itemScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  role_filter_id: 'role_filter_id',
+  category: 'category',
+  value: 'value',
+  list_value: 'list_value',
+  priority: 'priority',
+  non_negotiable: 'non_negotiable'
+} as const
+
+export type Role_filter_itemScalarFieldEnum = (typeof Role_filter_itemScalarFieldEnum)[keyof typeof Role_filter_itemScalarFieldEnum]
+
+
 export const Role_filter_childScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -1600,15 +1689,12 @@ export const Role_filtersScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   role_id: 'role_id',
-  category: 'category',
-  value: 'value',
-  list_value: 'list_value',
-  priority: 'priority',
-  non_negotiable: 'non_negotiable',
   archived: 'archived',
   archived_at: 'archived_at',
   search_run_date: 'search_run_date',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  search_run_by: 'search_run_by',
+  search_run_by_id: 'search_run_by_id'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -1637,7 +1723,10 @@ export const Role_resultScalarFieldEnum = {
   not_suitable_date: 'not_suitable_date',
   tokens_used: 'tokens_used',
   tokens_cost: 'tokens_cost',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  ai_platform: 'ai_platform',
+  ai_model: 'ai_model',
+  sources: 'sources'
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]
@@ -1822,20 +1911,6 @@ export type EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel> = FieldRefInp
  * Reference to a field of type 'OrganizationCreditsType[]'
  */
 export type ListEnumOrganizationCreditsTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditsType[]'>
-    
-
-
-/**
- * Reference to a field of type 'OrganizationCreditsTransactionType'
- */
-export type EnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditsTransactionType'>
-    
-
-
-/**
- * Reference to a field of type 'OrganizationCreditsTransactionType[]'
- */
-export type ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditsTransactionType[]'>
     
 
 
@@ -2053,6 +2128,7 @@ export type GlobalOmitConfig = {
   organization_log?: Prisma.organization_logOmit
   organization_subscription?: Prisma.organization_subscriptionOmit
   projects?: Prisma.projectsOmit
+  role_filter_item?: Prisma.role_filter_itemOmit
   role_filter_child?: Prisma.role_filter_childOmit
   role_filters?: Prisma.role_filtersOmit
   role_result?: Prisma.role_resultOmit

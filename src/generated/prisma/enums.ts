@@ -40,14 +40,6 @@ export const OrganizationCreditsType = {
 export type OrganizationCreditsType = (typeof OrganizationCreditsType)[keyof typeof OrganizationCreditsType]
 
 
-export const OrganizationCreditsTransactionType = {
-  ADD: 'ADD',
-  SUBTRACT: 'SUBTRACT'
-} as const
-
-export type OrganizationCreditsTransactionType = (typeof OrganizationCreditsTransactionType)[keyof typeof OrganizationCreditsTransactionType]
-
-
 export const OrganizationLogType = {
   CREATED: 'CREATED',
   UPDATED: 'UPDATED',

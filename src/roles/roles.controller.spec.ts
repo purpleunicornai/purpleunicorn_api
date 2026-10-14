@@ -2,6 +2,7 @@ import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
 import { LogsService } from '../common/logs/logs.service';
+import { ClerkService } from '../common/clerk/clerk.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import type { ClerkAuthContext } from '../auth/auth.types';
 import { of, lastValueFrom, toArray } from 'rxjs';
@@ -44,6 +45,16 @@ function buildLogsService(): jest.Mocked<LogsService> {
   } as unknown as jest.Mocked<LogsService>;
 }
 
+function buildClerkService(): jest.Mocked<ClerkService> {
+  return {
+    getUser: jest.fn().mockResolvedValue({
+      firstName: 'Jane',
+      lastName: 'Admin',
+      username: null,
+    }),
+  } as unknown as jest.Mocked<ClerkService>;
+}
+
 async function captureError(
   promise: Promise<unknown>,
 ): Promise<RequestException> {
@@ -59,13 +70,20 @@ describe('RolesController', () => {
   let rolesService: jest.Mocked<RolesService>;
   let searchService: jest.Mocked<SearchService>;
   let logsService: jest.Mocked<LogsService>;
+  let clerkService: jest.Mocked<ClerkService>;
   let controller: RolesController;
 
   beforeEach(() => {
     rolesService = buildRolesService();
     searchService = buildSearchService();
     logsService = buildLogsService();
-    controller = new RolesController(rolesService, searchService, logsService);
+    clerkService = buildClerkService();
+    controller = new RolesController(
+      rolesService,
+      searchService,
+      logsService,
+      clerkService,
+    );
   });
 
   it('should be defined', () => {
@@ -231,10 +249,10 @@ describe('RolesController', () => {
   });
 
   describe('createFilter', () => {
-    it('saves the filter criteria for the role and returns the filters', async () => {
-      const created = [{ uid: 'filter-1', category: 'skills' }];
+    it('saves the filter criteria for the role and returns the filter', async () => {
+      const created = { uid: 'filter-1', role_filter_items: [] };
       rolesService.createFilter.mockResolvedValue({
-        filters: created,
+        filter: created,
         isFirst: true,
       } as any);
       const body = {
@@ -260,7 +278,7 @@ describe('RolesController', () => {
 
     it('logs ROLE_FILTERS_CREATED when this is the first set of filters for the role', async () => {
       rolesService.createFilter.mockResolvedValue({
-        filters: [{ uid: 'filter-1' }],
+        filter: { uid: 'filter-1' },
         isFirst: true,
       } as any);
 
@@ -281,7 +299,7 @@ describe('RolesController', () => {
 
     it('logs ROLE_FILTERS_UPDATED when previous filters existed for the role', async () => {
       rolesService.createFilter.mockResolvedValue({
-        filters: [{ uid: 'filter-2' }],
+        filter: { uid: 'filter-2' },
         isFirst: false,
       } as any);
 
@@ -315,7 +333,13 @@ describe('RolesController', () => {
         'org-1',
         'user-1',
       );
-      expect(searchService.search).toHaveBeenCalledWith('role-1', role);
+      expect(clerkService.getUser).toHaveBeenCalledWith('user-1');
+      expect(searchService.search).toHaveBeenCalledWith(
+        'role-1',
+        role,
+        'user-1',
+        'Jane Admin',
+      );
       expect(result).toBe(results);
     });
 
@@ -522,7 +546,48 @@ describe('RolesController', () => {
         'org-1',
         'user-1',
       );
-      expect(searchService.streamSearch).toHaveBeenCalledWith('role-1');
+      expect(clerkService.getUser).toHaveBeenCalledWith('user-1');
+      expect(searchService.streamSearch).toHaveBeenCalledWith(
+        'role-1',
+        'user-1',
+        'Jane Admin',
+      );
+    });
+
+    it('falls back to the username, then the userId, when first/last name are unavailable', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      searchService.streamSearch.mockReturnValue(of());
+      clerkService.getUser.mockResolvedValue({
+        firstName: null,
+        lastName: null,
+        username: 'janedoe',
+      } as any);
+
+      await lastValueFrom(
+        controller.search('role-1', buildAuth()).pipe(toArray()),
+      );
+
+      expect(searchService.streamSearch).toHaveBeenCalledWith(
+        'role-1',
+        'user-1',
+        'janedoe',
+      );
+
+      clerkService.getUser.mockResolvedValue({
+        firstName: null,
+        lastName: null,
+        username: null,
+      } as any);
+
+      await lastValueFrom(
+        controller.search('role-1', buildAuth()).pipe(toArray()),
+      );
+
+      expect(searchService.streamSearch).toHaveBeenLastCalledWith(
+        'role-1',
+        'user-1',
+        'user-1',
+      );
     });
 
     it("checks the caller's access to the role before streaming", async () => {

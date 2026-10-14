@@ -1,14 +1,14 @@
 model candidate {
   uid                               String                 @id @unique @default(uuid()) @db.Uuid
-  created                           DateTime               @default(now())
-  updated                           DateTime               @updatedAt
+  created                           DateTime               @default(now()) @db.Timestamptz(3)
+  updated                           DateTime               @updatedAt @db.Timestamptz(3)
   // Personal Information
   first_name                        String?
   last_name                         String?
   email                             String?
   phone                             String?
   country_calling_code              String?
-  contact_info_last_updated         DateTime?
+  contact_info_last_updated         DateTime?              @db.Timestamptz(3)
   rocketreach_profile_id            String?
   // Location
   current_location_city             String?
@@ -24,7 +24,7 @@ model candidate {
   current_company                   String?
   current_salary                    Float?
   current_salary_currency           String?
-  current_role_start_date           DateTime?
+  current_role_start_date           DateTime?              @db.Timestamptz(3)
   // Skills
   skills                            String[]
   languages                         String[]
@@ -32,7 +32,7 @@ model candidate {
   // other
   summary                           String?
   image_url                         String?
-  enriched_at                       DateTime? // set once a deep candidate search has run, so it isn't repeated
+  enriched_at                       DateTime?              @db.Timestamptz(3) // set once a deep candidate search has run, so it isn't repeated
   experience                        candidate_experience[]
   // Relationships
   role_results                      role_result[]

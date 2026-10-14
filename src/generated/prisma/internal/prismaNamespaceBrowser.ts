@@ -59,6 +59,7 @@ export const ModelName = {
   organization_log: 'organization_log',
   organization_subscription: 'organization_subscription',
   projects: 'projects',
+  role_filter_item: 'role_filter_item',
   role_filter_child: 'role_filter_child',
   role_filters: 'role_filters',
   role_result: 'role_result',
@@ -174,8 +175,7 @@ export const Organization_creditsScalarFieldEnum = {
   updated: 'updated',
   organization_id: 'organization_id',
   type: 'type',
-  amount: 'amount',
-  transaction_type: 'transaction_type'
+  amount: 'amount'
 } as const
 
 export type Organization_creditsScalarFieldEnum = (typeof Organization_creditsScalarFieldEnum)[keyof typeof Organization_creditsScalarFieldEnum]
@@ -233,6 +233,21 @@ export const ProjectsScalarFieldEnum = {
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
 
 
+export const Role_filter_itemScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  role_filter_id: 'role_filter_id',
+  category: 'category',
+  value: 'value',
+  list_value: 'list_value',
+  priority: 'priority',
+  non_negotiable: 'non_negotiable'
+} as const
+
+export type Role_filter_itemScalarFieldEnum = (typeof Role_filter_itemScalarFieldEnum)[keyof typeof Role_filter_itemScalarFieldEnum]
+
+
 export const Role_filter_childScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -252,15 +267,12 @@ export const Role_filtersScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   role_id: 'role_id',
-  category: 'category',
-  value: 'value',
-  list_value: 'list_value',
-  priority: 'priority',
-  non_negotiable: 'non_negotiable',
   archived: 'archived',
   archived_at: 'archived_at',
   search_run_date: 'search_run_date',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  search_run_by: 'search_run_by',
+  search_run_by_id: 'search_run_by_id'
 } as const
 
 export type Role_filtersScalarFieldEnum = (typeof Role_filtersScalarFieldEnum)[keyof typeof Role_filtersScalarFieldEnum]
@@ -289,7 +301,10 @@ export const Role_resultScalarFieldEnum = {
   not_suitable_date: 'not_suitable_date',
   tokens_used: 'tokens_used',
   tokens_cost: 'tokens_cost',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  ai_platform: 'ai_platform',
+  ai_model: 'ai_model',
+  sources: 'sources'
 } as const
 
 export type Role_resultScalarFieldEnum = (typeof Role_resultScalarFieldEnum)[keyof typeof Role_resultScalarFieldEnum]

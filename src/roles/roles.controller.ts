@@ -32,6 +32,7 @@ import type { ClerkAuthContext } from '../auth/auth.types';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { Serialize } from '../common/interceptors/serialize.interceptor';
 import { LogsService } from '../common/logs/logs.service';
+import { ClerkService } from '../common/clerk/clerk.service';
 import { role_result } from '../generated/prisma/client';
 import { requireOrgId } from '../common/utils/organizationUtils';
 
@@ -46,6 +47,7 @@ export class RolesController {
     private readonly rolesService: RolesService,
     private readonly searchService: SearchService,
     private readonly logsService: LogsService,
+    private readonly clerkService: ClerkService,
   ) {}
 
   @Get()
@@ -138,8 +140,9 @@ export class RolesController {
     @Body() body: RoleFilterDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
+    console.log('ATEEMPTING TO CREAT NEW FILRES', body);
     const orgId = requireOrgId(auth);
-    const { filters, isFirst } = await this.rolesService.createFilter(
+    const { filter, isFirst } = await this.rolesService.createFilter(
       roleId,
       body,
       orgId,
@@ -154,7 +157,7 @@ export class RolesController {
       message: `${isFirst ? 'Created' : 'Updated'} search filters for role`,
     });
 
-    return filters;
+    return filter;
   }
 
   @Post('/:roleId/fixed-search')
@@ -165,7 +168,13 @@ export class RolesController {
   ) {
     const orgId = requireOrgId(auth);
     const role = await this.rolesService.getRole(roleId, orgId, auth.userId);
-    const results = await this.searchService.search(roleId, role);
+    const userName = await this.resolveUserName(auth.userId);
+    const results = await this.searchService.search(
+      roleId,
+      role,
+      auth.userId,
+      userName,
+    );
 
     void this.logsService.log({
       organization_id: orgId,
@@ -186,9 +195,14 @@ export class RolesController {
   ): Observable<MessageEvent> {
     const orgId = requireOrgId(auth);
 
-    return from(this.rolesService.getRole(roleId, orgId, auth.userId)).pipe(
-      switchMap((role) =>
-        this.searchService.streamSearch(roleId).pipe(
+    return from(
+      Promise.all([
+        this.rolesService.getRole(roleId, orgId, auth.userId),
+        this.resolveUserName(auth.userId),
+      ]),
+    ).pipe(
+      switchMap(([role, userName]) =>
+        this.searchService.streamSearch(roleId, auth.userId, userName).pipe(
           tap((event) => {
             if (event.type === 'done') {
               const results = (event.data as { result: role_result[] }).result;
@@ -263,6 +277,22 @@ export class RolesController {
 
   private sumTokensUsed(results: role_result[]): number {
     return results.reduce((sum, result) => sum + (result.tokens_used ?? 0), 0);
+  }
+
+  // Never throws — recording who ran a search is a nice-to-have, not
+  // something that should block the search itself if Clerk's API is slow
+  // or unreachable. Falls back from full name to username to the raw id.
+  private async resolveUserName(userId: string): Promise<string> {
+    try {
+      const user = await this.clerkService.getUser(userId);
+      const fullName = [user.firstName, user.lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      return fullName || user.username || userId;
+    } catch {
+      return userId;
+    }
   }
 
   @Post('/:roleId/result/:resultId/shortlist')

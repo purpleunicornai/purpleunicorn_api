@@ -5,20 +5,14 @@ enum OrganizationCreditsType {
   SMS
 }
 
-enum OrganizationCreditsTransactionType {
-  ADD
-  SUBTRACT
-}
-
 model organization_credits {
-  uid              String                             @id @unique @default(uuid()) @db.Uuid
-  created          DateTime                           @default(now())
-  updated          DateTime                           @updatedAt
-  organization_id  String
-  type             OrganizationCreditsType
-  amount           Int
-  transaction_type OrganizationCreditsTransactionType
-  logs             organization_log[]                 @relation("CreditsLogs")
+  uid             String                  @id @unique @default(uuid()) @db.Uuid
+  created         DateTime                @default(now()) @db.Timestamptz(3)
+  updated         DateTime                @updatedAt @db.Timestamptz(3)
+  organization_id String
+  type            OrganizationCreditsType
+  amount          Int
+  logs            organization_log[]      @relation("CreditsLogs")
 
   // A credits balance is computed by summing rows per org per credit type,
   // so this composite covers that directly and plain organization_id

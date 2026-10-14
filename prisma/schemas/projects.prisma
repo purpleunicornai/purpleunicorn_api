@@ -6,8 +6,8 @@ enum ProjectVisibility {
 
 model projects {
   uid             String             @id @unique @default(uuid()) @db.Uuid
-  created         DateTime           @default(now())
-  updated         DateTime           @updatedAt
+  created         DateTime           @default(now()) @db.Timestamptz(3)
+  updated         DateTime           @updatedAt @db.Timestamptz(3)
   user_id         String // Clerk user id
   organization_id String // Clerk organization id
   name            String

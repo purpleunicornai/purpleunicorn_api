@@ -1,7 +1,7 @@
 model role_result_score_breakdown {
   uid            String        @id @unique @default(uuid()) @db.Uuid
-  created        DateTime      @default(now())
-  updated        DateTime      @updatedAt
+  created        DateTime      @default(now()) @db.Timestamptz(3)
+  updated        DateTime      @updatedAt @db.Timestamptz(3)
   role_result_id String        @db.Uuid
   role_result    role_result   @relation(fields: [role_result_id], references: [uid])
   role_filter_id String?       @db.Uuid

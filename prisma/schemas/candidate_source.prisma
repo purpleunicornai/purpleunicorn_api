@@ -7,8 +7,8 @@ enum SourceType {
 
 model candidate_source {
   uid          String     @id @unique @default(uuid()) @db.Uuid
-  created      DateTime   @default(now())
-  updated      DateTime   @updatedAt
+  created      DateTime   @default(now()) @db.Timestamptz(3)
+  updated      DateTime   @updatedAt @db.Timestamptz(3)
   title        String
   source       String?
   url          String?

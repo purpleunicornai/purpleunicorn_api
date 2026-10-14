@@ -18,7 +18,11 @@ const ROLE_WITH_DETAILS_INCLUDE = {
       archived: false,
     },
     include: {
-      children: true,
+      role_filter_items: {
+        include: {
+          children: true,
+        },
+      },
     },
   },
   role_result: {
@@ -97,8 +101,8 @@ export class RolesService {
     });
   }
 
-  // Returns whether this is the role's first-ever filter alongside the
-  // created rows — the archiving updateMany's `count` tells us that for
+  // Returns whether this is the role's first-ever filter set alongside the
+  // created row — the archiving updateMany's `count` tells us that for
   // free, so callers (the controller, for audit logging) don't need a
   // separate existence check.
   async createFilter(
@@ -107,31 +111,33 @@ export class RolesService {
     orgId: string,
     userId: string,
   ): Promise<{
-    filters: (role_filters & {
-      children: Prisma.role_filter_childGetPayload<object>[];
-    })[];
+    filter: role_filters & {
+      role_filter_items: (Prisma.role_filter_itemGetPayload<object> & {
+        children: Prisma.role_filter_childGetPayload<object>[];
+      })[];
+    };
     isFirst: boolean;
   }> {
     await this.getRole(roleId, orgId, userId);
 
-    // Archive previous filters to mark them as superseded, so we can keep a
-    // history of filter sets for the role.
+    // Archive the previous filter set to mark it as superseded, so we can
+    // keep a history of filter sets for the role.
     const { count } = await this.prisma.role_filters.updateMany({
-      where: { role_id: roleId },
+      where: { role_id: roleId, archived: false },
       data: { archived: true, archived_at: new Date() },
     });
 
-    const filters = await Promise.all(
-      dto.filters.map((item) =>
-        this.prisma.role_filters.create({
-          data: {
-            role_id: roleId,
+    const filter = await this.prisma.role_filters.create({
+      data: {
+        role_id: roleId,
+        metadata: {},
+        role_filter_items: {
+          create: dto.filters.map((item) => ({
             category: item.category,
             value: item.value,
             list_value: item.list_value,
             priority: item.priority.toUpperCase() as RoleFilterPriority,
             non_negotiable: item.non_negotiable ?? false,
-            metadata: {},
             children: {
               create: (item.children ?? []).map((child) => ({
                 title: child.title,
@@ -140,13 +146,13 @@ export class RolesService {
                 boolean: child.boolean_value,
               })),
             },
-          },
-          include: { children: true },
-        }),
-      ),
-    );
+          })),
+        },
+      },
+      include: { role_filter_items: { include: { children: true } } },
+    });
 
-    return { filters, isFirst: count === 0 };
+    return { filter, isFirst: count === 0 };
   }
 
   async update(

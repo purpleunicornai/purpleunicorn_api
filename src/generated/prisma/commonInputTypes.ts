@@ -294,13 +294,6 @@ export type IntFilter<$PrismaModel = never> = {
   not?: Prisma.NestedIntFilter<$PrismaModel> | number
 }
 
-export type EnumOrganizationCreditsTransactionTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.OrganizationCreditsTransactionType | Prisma.EnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumOrganizationCreditsTransactionTypeFilter<$PrismaModel> | $Enums.OrganizationCreditsTransactionType
-}
-
 export type EnumOrganizationCreditsTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.OrganizationCreditsType | Prisma.EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
   in?: $Enums.OrganizationCreditsType[] | Prisma.ListEnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
@@ -325,16 +318,6 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _sum?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedIntFilter<$PrismaModel>
   _max?: Prisma.NestedIntFilter<$PrismaModel>
-}
-
-export type EnumOrganizationCreditsTransactionTypeWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.OrganizationCreditsTransactionType | Prisma.EnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumOrganizationCreditsTransactionTypeWithAggregatesFilter<$PrismaModel> | $Enums.OrganizationCreditsTransactionType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumOrganizationCreditsTransactionTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumOrganizationCreditsTransactionTypeFilter<$PrismaModel>
 }
 
 export type EnumOrganizationLogTypeFilter<$PrismaModel = never> = {
@@ -405,6 +388,16 @@ export type EnumRoleFilterPriorityFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel> | $Enums.RoleFilterPriority
 }
 
+export type EnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RoleFilterPriority | Prisma.EnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  in?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel> | $Enums.RoleFilterPriority
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
+}
+
 export type JsonNullableFilter<$PrismaModel = never> =
 | Prisma.PatchUndefined<
     Prisma.Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -427,16 +420,6 @@ export type JsonNullableFilterBase<$PrismaModel = never> = {
   gt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
-}
-
-export type EnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.RoleFilterPriority | Prisma.EnumRoleFilterPriorityFieldRefInput<$PrismaModel>
-  in?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
-  notIn?: $Enums.RoleFilterPriority[] | Prisma.ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumRoleFilterPriorityWithAggregatesFilter<$PrismaModel> | $Enums.RoleFilterPriority
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumRoleFilterPriorityFilter<$PrismaModel>
 }
 
 export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
@@ -735,13 +718,6 @@ export type NestedEnumOrganizationCreditsTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumOrganizationCreditsTypeFilter<$PrismaModel> | $Enums.OrganizationCreditsType
 }
 
-export type NestedEnumOrganizationCreditsTransactionTypeFilter<$PrismaModel = never> = {
-  equals?: $Enums.OrganizationCreditsTransactionType | Prisma.EnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumOrganizationCreditsTransactionTypeFilter<$PrismaModel> | $Enums.OrganizationCreditsTransactionType
-}
-
 export type NestedEnumOrganizationCreditsTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.OrganizationCreditsType | Prisma.EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
   in?: $Enums.OrganizationCreditsType[] | Prisma.ListEnumOrganizationCreditsTypeFieldRefInput<$PrismaModel>
@@ -777,16 +753,6 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
-}
-
-export type NestedEnumOrganizationCreditsTransactionTypeWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.OrganizationCreditsTransactionType | Prisma.EnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  in?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  notIn?: $Enums.OrganizationCreditsTransactionType[] | Prisma.ListEnumOrganizationCreditsTransactionTypeFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumOrganizationCreditsTransactionTypeWithAggregatesFilter<$PrismaModel> | $Enums.OrganizationCreditsTransactionType
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumOrganizationCreditsTransactionTypeFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumOrganizationCreditsTransactionTypeFilter<$PrismaModel>
 }
 
 export type NestedEnumOrganizationLogTypeFilter<$PrismaModel = never> = {

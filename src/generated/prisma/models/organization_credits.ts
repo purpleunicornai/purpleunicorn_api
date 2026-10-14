@@ -41,7 +41,6 @@ export type Organization_creditsMinAggregateOutputType = {
   organization_id: string | null
   type: $Enums.OrganizationCreditsType | null
   amount: number | null
-  transaction_type: $Enums.OrganizationCreditsTransactionType | null
 }
 
 export type Organization_creditsMaxAggregateOutputType = {
@@ -51,7 +50,6 @@ export type Organization_creditsMaxAggregateOutputType = {
   organization_id: string | null
   type: $Enums.OrganizationCreditsType | null
   amount: number | null
-  transaction_type: $Enums.OrganizationCreditsTransactionType | null
 }
 
 export type Organization_creditsCountAggregateOutputType = {
@@ -61,7 +59,6 @@ export type Organization_creditsCountAggregateOutputType = {
   organization_id: number
   type: number
   amount: number
-  transaction_type: number
   _all: number
 }
 
@@ -81,7 +78,6 @@ export type Organization_creditsMinAggregateInputType = {
   organization_id?: true
   type?: true
   amount?: true
-  transaction_type?: true
 }
 
 export type Organization_creditsMaxAggregateInputType = {
@@ -91,7 +87,6 @@ export type Organization_creditsMaxAggregateInputType = {
   organization_id?: true
   type?: true
   amount?: true
-  transaction_type?: true
 }
 
 export type Organization_creditsCountAggregateInputType = {
@@ -101,7 +96,6 @@ export type Organization_creditsCountAggregateInputType = {
   organization_id?: true
   type?: true
   amount?: true
-  transaction_type?: true
   _all?: true
 }
 
@@ -198,7 +192,6 @@ export type Organization_creditsGroupByOutputType = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
-  transaction_type: $Enums.OrganizationCreditsTransactionType
   _count: Organization_creditsCountAggregateOutputType | null
   _avg: Organization_creditsAvgAggregateOutputType | null
   _sum: Organization_creditsSumAggregateOutputType | null
@@ -231,7 +224,6 @@ export type organization_creditsWhereInput = {
   organization_id?: Prisma.StringFilter<"organization_credits"> | string
   type?: Prisma.EnumOrganizationCreditsTypeFilter<"organization_credits"> | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFilter<"organization_credits"> | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFilter<"organization_credits"> | $Enums.OrganizationCreditsTransactionType
   logs?: Prisma.Organization_logListRelationFilter
 }
 
@@ -242,7 +234,6 @@ export type organization_creditsOrderByWithRelationInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  transaction_type?: Prisma.SortOrder
   logs?: Prisma.organization_logOrderByRelationAggregateInput
 }
 
@@ -256,7 +247,6 @@ export type organization_creditsWhereUniqueInput = Prisma.AtLeast<{
   organization_id?: Prisma.StringFilter<"organization_credits"> | string
   type?: Prisma.EnumOrganizationCreditsTypeFilter<"organization_credits"> | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFilter<"organization_credits"> | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFilter<"organization_credits"> | $Enums.OrganizationCreditsTransactionType
   logs?: Prisma.Organization_logListRelationFilter
 }, "uid" | "uid">
 
@@ -267,7 +257,6 @@ export type organization_creditsOrderByWithAggregationInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  transaction_type?: Prisma.SortOrder
   _count?: Prisma.organization_creditsCountOrderByAggregateInput
   _avg?: Prisma.organization_creditsAvgOrderByAggregateInput
   _max?: Prisma.organization_creditsMaxOrderByAggregateInput
@@ -285,7 +274,6 @@ export type organization_creditsScalarWhereWithAggregatesInput = {
   organization_id?: Prisma.StringWithAggregatesFilter<"organization_credits"> | string
   type?: Prisma.EnumOrganizationCreditsTypeWithAggregatesFilter<"organization_credits"> | $Enums.OrganizationCreditsType
   amount?: Prisma.IntWithAggregatesFilter<"organization_credits"> | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeWithAggregatesFilter<"organization_credits"> | $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsCreateInput = {
@@ -295,7 +283,6 @@ export type organization_creditsCreateInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
-  transaction_type: $Enums.OrganizationCreditsTransactionType
   logs?: Prisma.organization_logCreateNestedManyWithoutCreditsInput
 }
 
@@ -306,7 +293,6 @@ export type organization_creditsUncheckedCreateInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
-  transaction_type: $Enums.OrganizationCreditsTransactionType
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutCreditsInput
 }
 
@@ -317,7 +303,6 @@ export type organization_creditsUpdateInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsTransactionType
   logs?: Prisma.organization_logUpdateManyWithoutCreditsNestedInput
 }
 
@@ -328,7 +313,6 @@ export type organization_creditsUncheckedUpdateInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsTransactionType
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutCreditsNestedInput
 }
 
@@ -339,7 +323,6 @@ export type organization_creditsCreateManyInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
-  transaction_type: $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsUpdateManyMutationInput = {
@@ -349,7 +332,6 @@ export type organization_creditsUpdateManyMutationInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsUncheckedUpdateManyInput = {
@@ -359,7 +341,6 @@ export type organization_creditsUncheckedUpdateManyInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsCountOrderByAggregateInput = {
@@ -369,7 +350,6 @@ export type organization_creditsCountOrderByAggregateInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  transaction_type?: Prisma.SortOrder
 }
 
 export type organization_creditsAvgOrderByAggregateInput = {
@@ -383,7 +363,6 @@ export type organization_creditsMaxOrderByAggregateInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  transaction_type?: Prisma.SortOrder
 }
 
 export type organization_creditsMinOrderByAggregateInput = {
@@ -393,7 +372,6 @@ export type organization_creditsMinOrderByAggregateInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
-  transaction_type?: Prisma.SortOrder
 }
 
 export type organization_creditsSumOrderByAggregateInput = {
@@ -415,10 +393,6 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
-}
-
-export type EnumOrganizationCreditsTransactionTypeFieldUpdateOperationsInput = {
-  set?: $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsCreateNestedOneWithoutLogsInput = {
@@ -444,7 +418,6 @@ export type organization_creditsCreateWithoutLogsInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
-  transaction_type: $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsUncheckedCreateWithoutLogsInput = {
@@ -454,7 +427,6 @@ export type organization_creditsUncheckedCreateWithoutLogsInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
-  transaction_type: $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsCreateOrConnectWithoutLogsInput = {
@@ -480,7 +452,6 @@ export type organization_creditsUpdateWithoutLogsInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsTransactionType
 }
 
 export type organization_creditsUncheckedUpdateWithoutLogsInput = {
@@ -490,7 +461,6 @@ export type organization_creditsUncheckedUpdateWithoutLogsInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
-  transaction_type?: Prisma.EnumOrganizationCreditsTransactionTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsTransactionType
 }
 
 
@@ -531,7 +501,6 @@ export type organization_creditsSelect<ExtArgs extends runtime.Types.Extensions.
   organization_id?: boolean
   type?: boolean
   amount?: boolean
-  transaction_type?: boolean
   logs?: boolean | Prisma.organization_credits$logsArgs<ExtArgs>
   _count?: boolean | Prisma.Organization_creditsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["organization_credits"]>
@@ -543,7 +512,6 @@ export type organization_creditsSelectCreateManyAndReturn<ExtArgs extends runtim
   organization_id?: boolean
   type?: boolean
   amount?: boolean
-  transaction_type?: boolean
 }, ExtArgs["result"]["organization_credits"]>
 
 export type organization_creditsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -553,7 +521,6 @@ export type organization_creditsSelectUpdateManyAndReturn<ExtArgs extends runtim
   organization_id?: boolean
   type?: boolean
   amount?: boolean
-  transaction_type?: boolean
 }, ExtArgs["result"]["organization_credits"]>
 
 export type organization_creditsSelectScalar = {
@@ -563,10 +530,9 @@ export type organization_creditsSelectScalar = {
   organization_id?: boolean
   type?: boolean
   amount?: boolean
-  transaction_type?: boolean
 }
 
-export type organization_creditsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "organization_id" | "type" | "amount" | "transaction_type", ExtArgs["result"]["organization_credits"]>
+export type organization_creditsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "organization_id" | "type" | "amount", ExtArgs["result"]["organization_credits"]>
 export type organization_creditsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   logs?: boolean | Prisma.organization_credits$logsArgs<ExtArgs>
   _count?: boolean | Prisma.Organization_creditsCountOutputTypeDefaultArgs<ExtArgs>
@@ -586,7 +552,6 @@ export type $organization_creditsPayload<ExtArgs extends runtime.Types.Extension
     organization_id: string
     type: $Enums.OrganizationCreditsType
     amount: number
-    transaction_type: $Enums.OrganizationCreditsTransactionType
   }, ExtArgs["result"]["organization_credits"]>
   composites: {}
 }
@@ -1017,7 +982,6 @@ export interface organization_creditsFieldRefs {
   readonly organization_id: Prisma.FieldRef<"organization_credits", 'String'>
   readonly type: Prisma.FieldRef<"organization_credits", 'OrganizationCreditsType'>
   readonly amount: Prisma.FieldRef<"organization_credits", 'Int'>
-  readonly transaction_type: Prisma.FieldRef<"organization_credits", 'OrganizationCreditsTransactionType'>
 }
     
 

@@ -1,12 +1,14 @@
-import { role_filters, role_filter_child } from '../../generated/prisma/client';
+import {
+  role_filter_item,
+  role_filter_child,
+} from '../../generated/prisma/client';
 
-type RoleFilterRow = role_filters & { children: role_filter_child[] };
+type RoleFilterItemRow = role_filter_item & { children: role_filter_child[] };
 
 export interface ParsedFilterRow<T> {
   value: T;
   priority: 'ESSENTIAL' | 'OPTIONAL';
   nonNegotiable: boolean;
-  filterId: string;
 }
 
 export interface ParsedLocation {
@@ -33,6 +35,10 @@ export interface ParsedEducation {
   institutionType: 'include' | 'exclude';
 }
 
+export interface ParsedExperience {
+  minYears: number;
+}
+
 export interface ParsedRoleFilters {
   location?: ParsedFilterRow<ParsedLocation>;
   jobTitles: ParsedFilterRow<ParsedJobTitles>[];
@@ -41,13 +47,16 @@ export interface ParsedRoleFilters {
   industry?: ParsedFilterRow<string>;
   companies: ParsedFilterRow<ParsedCompanies>[];
   education: ParsedFilterRow<ParsedEducation>[];
+  experience?: ParsedFilterRow<ParsedExperience>;
 }
 
-// Turns raw, open-ended role_filters + children rows into one typed, stable
-// structure — isolating the dynamic (child.title is an open-ended label)
-// parsing in one place instead of duplicating it in GoogleSearchService,
-// GeminiService, and CandidateScoringService.
-export function parseRoleFilters(rows: RoleFilterRow[]): ParsedRoleFilters {
+// Turns raw, open-ended role_filter_item + children rows into one typed,
+// stable structure — isolating the dynamic (child.title is an open-ended
+// label) parsing in one place instead of duplicating it in
+// GoogleSearchService, GeminiService, and CandidateScoringService.
+export function parseRoleFilters(
+  items: RoleFilterItemRow[],
+): ParsedRoleFilters {
   const result: ParsedRoleFilters = {
     jobTitles: [],
     skills: [],
@@ -56,34 +65,36 @@ export function parseRoleFilters(rows: RoleFilterRow[]): ParsedRoleFilters {
     education: [],
   };
 
-  for (const row of rows) {
+  for (const item of items) {
     const base = {
-      priority: row.priority,
-      nonNegotiable: row.non_negotiable,
-      filterId: row.uid,
+      priority: item.priority,
+      nonNegotiable: item.non_negotiable,
     };
 
-    switch (row.category) {
+    switch (item.category) {
       case 'location':
-        result.location = { ...base, value: parseLocation(row) };
+        result.location = { ...base, value: parseLocation(item) };
         break;
       case 'job_titles':
-        result.jobTitles.push({ ...base, value: parseJobTitles(row) });
+        result.jobTitles.push({ ...base, value: parseJobTitles(item) });
         break;
       case 'skills':
-        result.skills.push({ ...base, value: row.list_value });
+        result.skills.push({ ...base, value: item.list_value });
         break;
       case 'languages':
-        result.languages.push({ ...base, value: row.list_value });
+        result.languages.push({ ...base, value: item.list_value });
         break;
       case 'industry':
-        result.industry = { ...base, value: row.value ?? '' };
+        result.industry = { ...base, value: item.value ?? '' };
         break;
       case 'companies':
-        result.companies.push({ ...base, value: parseCompanies(row) });
+        result.companies.push({ ...base, value: parseCompanies(item) });
         break;
       case 'education':
-        result.education.push({ ...base, value: parseEducation(row) });
+        result.education.push({ ...base, value: parseEducation(item) });
+        break;
+      case 'experience':
+        result.experience = { ...base, value: parseExperience(item) };
         break;
       default:
         // Unknown category — ignore rather than throw, since the shape is
@@ -102,8 +113,8 @@ function findChild(
   return children.find((child) => child.title === title);
 }
 
-function parseLocation(row: RoleFilterRow): ParsedLocation {
-  const regions = row.children
+function parseLocation(item: RoleFilterItemRow): ParsedLocation {
+  const regions = item.children
     .filter(
       (child) =>
         child.title !== 'remote_work' && child.title !== 'work_authorization',
@@ -111,31 +122,31 @@ function parseLocation(row: RoleFilterRow): ParsedLocation {
     .map((child) => ({ type: child.title, value: child.value ?? '' }));
 
   return {
-    countryCode: row.value ?? '',
+    countryCode: item.value ?? '',
     regions,
-    remoteWork: findChild(row.children, 'remote_work')?.boolean ?? false,
+    remoteWork: findChild(item.children, 'remote_work')?.boolean ?? false,
     workAuthorizationRequired:
-      findChild(row.children, 'work_authorization')?.boolean ?? false,
+      findChild(item.children, 'work_authorization')?.boolean ?? false,
   };
 }
 
-function parseJobTitles(row: RoleFilterRow): ParsedJobTitles {
-  const option = findChild(row.children, 'title_option')?.value;
+function parseJobTitles(item: RoleFilterItemRow): ParsedJobTitles {
+  const option = findChild(item.children, 'title_option')?.value;
   return {
-    titles: row.list_value,
+    titles: item.list_value,
     option: option === 'alternative_title' ? 'alternative_title' : 'main_title',
   };
 }
 
-function parseCompanies(row: RoleFilterRow): ParsedCompanies {
-  const type = findChild(row.children, 'company_type')?.value;
+function parseCompanies(item: RoleFilterItemRow): ParsedCompanies {
+  const type = findChild(item.children, 'company_type')?.value;
   const includeDates =
-    findChild(row.children, 'include_dates')?.boolean ?? false;
+    findChild(item.children, 'include_dates')?.boolean ?? false;
 
   let dateRange: ParsedCompanies['dateRange'];
   if (includeDates) {
-    const startValue = findChild(row.children, 'start_date')?.value;
-    const endValue = findChild(row.children, 'end_date')?.value;
+    const startValue = findChild(item.children, 'start_date')?.value;
+    const endValue = findChild(item.children, 'end_date')?.value;
     dateRange = {
       start: startValue ? new Date(startValue) : undefined,
       end: endValue ? new Date(endValue) : undefined,
@@ -143,19 +154,23 @@ function parseCompanies(row: RoleFilterRow): ParsedCompanies {
   }
 
   return {
-    names: row.list_value,
+    names: item.list_value,
     type: type === 'exclude' ? 'exclude' : 'include',
     dateRange,
   };
 }
 
-function parseEducation(row: RoleFilterRow): ParsedEducation {
-  const type = findChild(row.children, 'type')?.value;
+function parseExperience(item: RoleFilterItemRow): ParsedExperience {
+  return { minYears: Number(item.value) || 0 };
+}
+
+function parseEducation(item: RoleFilterItemRow): ParsedEducation {
+  const type = findChild(item.children, 'type')?.value;
   const institutions =
-    findChild(row.children, 'institutions')?.list_value ?? [];
+    findChild(item.children, 'institutions')?.list_value ?? [];
 
   return {
-    qualifications: row.list_value,
+    qualifications: item.list_value,
     institutions,
     institutionType: type === 'exclude' ? 'exclude' : 'include',
   };

@@ -7,8 +7,18 @@ import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { GoogleSearchItem } from '../google-search/google-search.service';
 import { candidate, candidate_source } from '../../generated/prisma/client';
 import { InstitutionType } from '../../generated/prisma/enums';
+import { CandidateWithHistory } from '../../roles/search/candidate-scoring.service';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+// Exported so callers persisting a role_result's ai_platform/ai_model
+// (SearchService) can record exactly which model actually produced the
+// judgment, without hardcoding the string a second time.
+export const GEMINI_MODEL = 'gemini-2.5-flash';
+export const GEMINI_PLATFORM = 'Gemini';
+
+// Bounds a single generateText call so a stuck or abnormally slow request
+// (e.g. an oversized batch) fails with a clear timeout error instead of
+// hanging the caller indefinitely.
+const GEMINI_CALL_TIMEOUT_MS = 120_000;
 
 const candidateSchema = z.object({
   // These three map directly onto a candidate_source row created alongside
@@ -54,6 +64,29 @@ export type GeminiCandidateMatch = z.infer<typeof matchSchema>;
 
 export interface FormatCandidatesResult {
   matches: GeminiCandidateMatch[];
+  tokensUsed: number;
+}
+
+// Unlike matchSchema (used when extracting a brand-new candidate from a
+// search snippet), an already-known candidate's fields are already on
+// file — Gemini is only judging fit, not extracting data — so this omits
+// the nested candidate schema and instead carries candidate_uid, since
+// there's no source-URL dedup step here to attribute a response back to
+// the right input candidate.
+const knownCandidateMatchSchema = z.object({
+  candidate_uid: z.string(),
+  summary: z.string(),
+  reasoning: z.string(),
+  skills_matched: z.array(z.string()),
+  score: z.number().int().min(0).max(100),
+});
+
+export type GeminiKnownCandidateMatch = z.infer<
+  typeof knownCandidateMatchSchema
+>;
+
+export interface ScoreKnownCandidatesResult {
+  matches: GeminiKnownCandidateMatch[];
   tokensUsed: number;
 }
 
@@ -163,6 +196,41 @@ export class GeminiService {
       model,
       prompt: this.buildPrompt(items, filters),
       output: Output.array({ element: matchSchema }),
+      timeout: GEMINI_CALL_TIMEOUT_MS,
+      // This is scoring each candidate against fixed criteria, not
+      // multi-step reasoning — disabling thinking measured ~25% faster
+      // and cheaper with no observed quality loss.
+      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
+    });
+
+    return {
+      matches: output,
+      tokensUsed: usage.totalTokens ?? 0,
+    };
+  }
+
+  // Scores candidates already on file (no new search snippet to extract
+  // from) against the role's criteria, the same way formatCandidates scores
+  // freshly-found ones — just reading from the stored profile instead.
+  async scoreKnownCandidates(
+    candidates: CandidateWithHistory[],
+    filters: ParsedRoleFilters,
+  ): Promise<ScoreKnownCandidatesResult> {
+    if (candidates.length === 0) return { matches: [], tokensUsed: 0 };
+
+    this.logger.debug(
+      `Scoring ${candidates.length} existing candidate(s) with Gemini`,
+    );
+
+    const { generateText, Output } = await this.loadAi();
+    const model = await this.getModel();
+
+    const { output, usage } = await generateText({
+      model,
+      prompt: this.buildKnownCandidatePrompt(candidates, filters),
+      output: Output.array({ element: knownCandidateMatchSchema }),
+      timeout: GEMINI_CALL_TIMEOUT_MS,
+      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
     });
 
     return {
@@ -234,7 +302,6 @@ export class GeminiService {
   // image, or a thumbnail, roughly in that order of how likely it is to
   // actually be the person's photo rather than a site logo or icon.
   private extractImageUrl(item: GoogleSearchItem): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const pagemap = item.pagemap as any;
     return (
       pagemap?.metatags?.[0]?.['og:image'] ??
@@ -243,11 +310,8 @@ export class GeminiService {
     );
   }
 
-  private buildPrompt(
-    items: GoogleSearchItem[],
-    filters: ParsedRoleFilters,
-  ): string {
-    const criteria = [
+  private buildCriteria(filters: ParsedRoleFilters): unknown[] {
+    return [
       ...filters.jobTitles.map((row) => ({
         category: 'job_titles',
         option: row.value.option,
@@ -302,7 +366,24 @@ export class GeminiService {
             },
           ]
         : []),
+      ...(filters.experience
+        ? [
+            {
+              category: 'experience',
+              minYears: filters.experience.value.minYears,
+              priority: filters.experience.priority,
+              nonNegotiable: filters.experience.nonNegotiable,
+            },
+          ]
+        : []),
     ];
+  }
+
+  private buildPrompt(
+    items: GoogleSearchItem[],
+    filters: ParsedRoleFilters,
+  ): string {
+    const criteria = this.buildCriteria(filters);
 
     const results = items.map((item) => ({
       title: item.title,
@@ -326,6 +407,53 @@ export class GeminiService {
       `Role criteria: ${JSON.stringify(criteria)}`,
       '',
       `Search results: ${JSON.stringify(results)}`,
+    ].join('\n');
+  }
+
+  // Unlike buildPrompt, there is no search snippet to read — every field
+  // here comes straight from the candidate's own stored record, so the
+  // model is asked to judge fit, not extract facts.
+  private buildKnownCandidatePrompt(
+    candidates: CandidateWithHistory[],
+    filters: ParsedRoleFilters,
+  ): string {
+    const criteria = this.buildCriteria(filters);
+
+    const profiles = candidates.map((candidate) => ({
+      candidate_uid: candidate.uid,
+      name: [candidate.first_name, candidate.last_name]
+        .filter(Boolean)
+        .join(' '),
+      current_title: candidate.current_title,
+      current_company: candidate.current_company,
+      experience_years: candidate.experience_years,
+      skills: candidate.skills,
+      languages: candidate.languages,
+      location_country_code: candidate.current_location_country_code,
+      open_to_relocation: candidate.open_to_relocation,
+      open_to_remote_work: candidate.open_to_remote_work,
+      experience: candidate.experience.map((entry) => ({
+        company_name: entry.company_name,
+        role: entry.role,
+        start_date: entry.start_date,
+        end_date: entry.end_date,
+      })),
+      education: candidate.education.map((entry) => ({
+        institution_name: entry.institution_name,
+        degree: entry.degree,
+        field_of_study: entry.field_of_study,
+      })),
+    }));
+
+    return [
+      "You are evaluating candidates already on file in our database against a role's criteria — you are judging fit, not extracting new information, since every field below is already known.",
+      'For each candidate below, compare them against the role criteria and write a short "summary", a more detailed "reasoning", a "skills_matched" array listing which required/optional skills they have evidence of, and a "score" from 0-100 rating the overall match quality.',
+      'Always copy "candidate_uid" into your response verbatim from the input, so each judgment can be matched back to the right candidate.',
+      'Each criterion below has a "priority" ("ESSENTIAL" or "OPTIONAL") and a "nonNegotiable" flag — weigh ESSENTIAL and non-negotiable criteria most heavily.',
+      '',
+      `Role criteria: ${JSON.stringify(criteria)}`,
+      '',
+      `Candidates: ${JSON.stringify(profiles)}`,
     ].join('\n');
   }
 

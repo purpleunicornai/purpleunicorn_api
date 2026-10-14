@@ -32,8 +32,8 @@ enum OrganizationLogType {
 
 model organization_log {
   uid             String                     @id @unique @default(uuid()) @db.Uuid
-  created         DateTime                   @default(now())
-  updated         DateTime                   @updatedAt
+  created         DateTime                   @default(now()) @db.Timestamptz(3)
+  updated         DateTime                   @updatedAt @db.Timestamptz(3)
   user_id         String?
   organization_id String
   type            OrganizationLogType

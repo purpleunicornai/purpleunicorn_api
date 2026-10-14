@@ -12,7 +12,7 @@ describe('FilterItemDto', () => {
     expect(errors.some((e) => e.property === 'category')).toBe(true);
   });
 
-  it('accepts every one of the 7 known categories', async () => {
+  it('accepts every one of the known categories', async () => {
     for (const category of [
       'location',
       'job_titles',
@@ -21,6 +21,7 @@ describe('FilterItemDto', () => {
       'industry',
       'companies',
       'education',
+      'experience',
     ]) {
       const dto = new FilterItemDto();
       dto.category = category;

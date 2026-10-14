@@ -1,14 +1,14 @@
 model candidate_experience {
   uid              String    @id @unique @default(uuid()) @db.Uuid
-  created          DateTime  @default(now())
-  updated          DateTime  @updatedAt
+  created          DateTime  @default(now()) @db.Timestamptz(3)
+  updated          DateTime  @updatedAt @db.Timestamptz(3)
   candidate_id     String    @db.Uuid
   candidate        candidate @relation(fields: [candidate_id], references: [uid])
   company_name     String
   company_location String?
   role             String
-  start_date       DateTime
-  end_date         DateTime?
+  start_date       DateTime  @db.Timestamptz(3)
+  end_date         DateTime? @db.Timestamptz(3)
   responsibilities String?
   skills           String[]
 

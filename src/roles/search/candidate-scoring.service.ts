@@ -16,7 +16,6 @@ export interface CandidateScoreCategory {
   weight: number;
   earned: number;
   applicable: boolean;
-  filterId: string;
 }
 
 export interface CandidateScoreResult {
@@ -30,7 +29,6 @@ interface ScoredRow {
   fraction: number;
   priority: 'ESSENTIAL' | 'OPTIONAL';
   nonNegotiable: boolean;
-  filterId: string;
 }
 
 const ESSENTIAL_BUCKET_WEIGHT = 80;
@@ -84,6 +82,15 @@ export class CandidateScoringService {
             ),
           ]
         : []),
+      ...(filters.experience
+        ? [
+            this.scoreRow(
+              'experience',
+              filters.experience,
+              this.fractionExperience(filters.experience, candidate),
+            ),
+          ]
+        : []),
     ];
 
     const disqualified = rows.some(
@@ -109,7 +116,6 @@ export class CandidateScoringService {
         weight,
         earned: row.fraction * weight,
         applicable: true,
-        filterId: row.filterId,
       };
     });
 
@@ -130,7 +136,6 @@ export class CandidateScoringService {
       fraction,
       priority: row.priority,
       nonNegotiable: row.nonNegotiable,
-      filterId: row.filterId,
     };
   }
 
@@ -239,6 +244,19 @@ export class CandidateScoringService {
     _candidate: CandidateWithHistory,
   ): number {
     return 0;
+  }
+
+  // Partial credit scaled to how close the candidate is to the requirement,
+  // rather than a binary pass/fail — someone with 8 of a required 10 years
+  // still earns most of the row's weight. Capped at 1 so exceeding the
+  // minimum never earns more than full credit.
+  private fractionExperience(
+    row: ParsedFilterRow<{ minYears: number }>,
+    candidate: CandidateWithHistory,
+  ): number {
+    if (row.value.minYears <= 0) return 1;
+    const candidateYears = candidate.experience_years ?? 0;
+    return Math.min(candidateYears / row.value.minYears, 1);
   }
 
   private normalize(value: string): string {
