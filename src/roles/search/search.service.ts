@@ -89,7 +89,10 @@ export class SearchService {
       )),
     );
 
-    const { items, sourceByLink } = await this.searchForItems(filters);
+    const { items, sourceByLink } = await this.searchForItems(
+      filters,
+      role.name,
+    );
     for (const batch of this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE)) {
       const formatted = await this.geminiService.formatCandidates(
         batch,
@@ -105,7 +108,7 @@ export class SearchService {
       roleResults.push(...saved);
     }
 
-    await this.markSearchRunDate(filterSet.uid, userId, userName);
+    await this.markSearchRunDate(roleId, userId, userName);
     return roleResults;
   }
 
@@ -408,6 +411,7 @@ export class SearchService {
     roleId: string,
     userId: string,
     userName: string,
+    roleName?: string,
   ): Observable<MessageEvent> {
     return new Observable((subscriber) => {
       this.logger.debug(`Starting search for roleId=${roleId}`);
@@ -423,6 +427,7 @@ export class SearchService {
             type: 'stage',
             data: { stage: 'fetching filters', status: 'done' },
           });
+          this.logger.debug('Filter search', JSON.stringify(filterSet));
 
           subscriber.next({
             type: 'stage',
@@ -434,6 +439,8 @@ export class SearchService {
             type: 'stage',
             data: { stage: 'parsing filters', status: 'done' },
           });
+
+          this.logger.debug('PARSED FILTERS', JSON.stringify(filters));
 
           subscriber.next({
             type: 'stage',
@@ -466,7 +473,10 @@ export class SearchService {
               status: 'started',
             },
           });
-          const { items, sourceByLink } = await this.searchForItems(filters);
+          const { items, sourceByLink } = await this.searchForItems(
+            filters,
+            roleName,
+          );
           this.logger.debug(
             `Finished searching candidates for roleId=${roleId}, found ${items?.length} items`,
           );
@@ -534,7 +544,7 @@ export class SearchService {
             },
           });
           this.logger.debug(`Saving candidates for roleId=${roleId}`);
-          await this.markSearchRunDate(filterSet.uid, userId, userName);
+          await this.markSearchRunDate(roleId, userId, userName);
           subscriber.next({
             type: 'stage',
             data: {
@@ -634,11 +644,17 @@ export class SearchService {
   // link->engine map is built before merging (while the two lists are still
   // separate) so that once Gemini returns a match's source_url, we can
   // still tell which engine actually found it, to record on role_result.
-  private async searchForItems(filters: ParsedRoleFilters): Promise<{
+  private async searchForItems(
+    filters: ParsedRoleFilters,
+    roleName?: string,
+  ): Promise<{
     items: GoogleSearchItem[];
     sourceByLink: Map<string, string>;
   }> {
-    const googleItems = await this.googleSearchService.search(filters);
+    const googleItems = await this.googleSearchService.search(
+      filters,
+      roleName,
+    );
     const githubItems = await this.githubSearchService.search(filters);
 
     const sourceByLink = new Map<string, string>();
@@ -711,13 +727,19 @@ export class SearchService {
     return roleResults;
   }
 
+  // Targets the role's CURRENT non-archived filter set by role_id rather
+  // than the uid captured at the start of the search — a search can run
+  // for minutes, and if the role's filters get replaced mid-run (archiving
+  // the row this search started against), the stamp must land on whatever
+  // is active now, not on the now-archived row this search actually ran
+  // against.
   private async markSearchRunDate(
-    filterId: string,
+    roleId: string,
     userId: string,
     userName: string,
   ): Promise<void> {
-    await this.prisma.role_filters.update({
-      where: { uid: filterId },
+    await this.prisma.role_filters.updateMany({
+      where: { role_id: roleId, archived: false },
       data: {
         search_run_date: new Date(),
         search_run_by: userName,

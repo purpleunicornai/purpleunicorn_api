@@ -202,21 +202,24 @@ export class RolesController {
       ]),
     ).pipe(
       switchMap(([role, userName]) =>
-        this.searchService.streamSearch(roleId, auth.userId, userName).pipe(
-          tap((event) => {
-            if (event.type === 'done') {
-              const results = (event.data as { result: role_result[] }).result;
-              void this.logsService.log({
-                organization_id: orgId,
-                user_id: auth.userId,
-                type: 'ROLE_SEARCH',
-                role_id: roleId,
-                tokens_used: this.sumTokensUsed(results),
-                message: `Ran search for role "${role.name}", found ${results.length} candidate(s)`,
-              });
-            }
-          }),
-        ),
+        this.searchService
+          .streamSearch(roleId, auth.userId, userName, role.name)
+          .pipe(
+            tap((event) => {
+              if (event.type === 'done') {
+                const results = (event.data as { result: role_result[] })
+                  .result;
+                void this.logsService.log({
+                  organization_id: orgId,
+                  user_id: auth.userId,
+                  type: 'ROLE_SEARCH',
+                  role_id: roleId,
+                  tokens_used: this.sumTokensUsed(results),
+                  message: `Ran search for role "${role.name}", found ${results.length} candidate(s)`,
+                });
+              }
+            }),
+          ),
       ),
     );
   }

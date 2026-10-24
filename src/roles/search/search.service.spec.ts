@@ -129,6 +129,7 @@ function buildPrisma() {
     role_filters: {
       findFirst: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     candidate: {
       findFirst: jest.fn().mockResolvedValue(null),
@@ -754,6 +755,7 @@ describe('SearchService', () => {
             },
           ],
         }),
+        'Fullstack Developer',
       );
       expect(geminiService.formatCandidates).toHaveBeenCalledWith(
         items,
@@ -794,8 +796,8 @@ describe('SearchService', () => {
           },
         ],
       });
-      expect(prisma.role_filters.update).toHaveBeenCalledWith({
-        where: { uid: 'filter-1' },
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1', archived: false },
         data: {
           search_run_date: expect.any(Date),
           search_run_by: 'Jane Admin',
@@ -848,8 +850,8 @@ describe('SearchService', () => {
 
       await service.search('role-1', role as any, 'user-1', 'Jane Admin');
 
-      expect(prisma.role_filters.update).toHaveBeenCalledWith({
-        where: { uid: 'filter-1' },
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1', archived: false },
         data: {
           search_run_date: expect.any(Date),
           search_run_by: 'Jane Admin',
@@ -911,9 +913,9 @@ describe('SearchService', () => {
       await service.search('role-1', role as any, 'user-1', 'Jane Admin');
 
       expect(geminiService.formatCandidates).not.toHaveBeenCalled();
-      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
-      expect(prisma.role_filters.update).toHaveBeenCalledWith({
-        where: { uid: 'filter-1' },
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1', archived: false },
         data: {
           search_run_date: expect.any(Date),
           search_run_by: 'Jane Admin',
@@ -937,7 +939,7 @@ describe('SearchService', () => {
 
       await service.search('role-1', role as any, 'user-1', 'Jane Admin');
 
-      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
     });
 
     it('merges GitHub results in with the Google results before formatting candidates', async () => {
@@ -1168,6 +1170,32 @@ describe('SearchService', () => {
       expect(prisma.role_result.create).not.toHaveBeenCalled();
       expect(results).toEqual([]);
     });
+
+    it('stamps the current non-archived filter set by role_id, not the filter_id captured when the search started (so a filter edit mid-search cannot land the stamp on a now-archived row)', async () => {
+      const role = buildRole();
+      // The filter set active when this search started.
+      prisma.role_filters.findFirst.mockResolvedValue(
+        buildStoredFilterSet({ uid: 'filter-stale' }),
+      );
+      googleSearchService.search.mockResolvedValue([]);
+
+      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+
+      // Never targets the stale uid captured at the start of the search.
+      expect(prisma.role_filters.updateMany).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ uid: 'filter-stale' }),
+        }),
+      );
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1', archived: false },
+        data: {
+          search_run_date: expect.any(Date),
+          search_run_by: 'Jane Admin',
+          search_run_by_id: 'user-1',
+        },
+      });
+    });
   });
 
   describe('streamSearch', () => {
@@ -1248,7 +1276,7 @@ describe('SearchService', () => {
 
       const doneEvent = events[events.length - 1];
       expect(doneEvent.type).toBe('done');
-      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
     });
 
     it("includes each batch's own saved candidates in its progress event, not just the counts", async () => {
@@ -1311,7 +1339,7 @@ describe('SearchService', () => {
       );
 
       expect(geminiService.formatCandidates).not.toHaveBeenCalled();
-      expect(prisma.role_filters.update).toHaveBeenCalledTimes(1);
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
       expect(events.some((e) => e.type === 'done')).toBe(true);
     });
 

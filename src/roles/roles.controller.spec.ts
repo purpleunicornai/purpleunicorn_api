@@ -534,7 +534,10 @@ describe('RolesController', () => {
 
   describe('search (SSE)', () => {
     it('resolves the role for auth, then delegates to SearchService.streamSearch', async () => {
-      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      rolesService.getRole.mockResolvedValue({
+        uid: 'role-1',
+        name: 'Fullstack Developer',
+      } as any);
       searchService.streamSearch.mockReturnValue(of());
 
       await lastValueFrom(
@@ -551,11 +554,15 @@ describe('RolesController', () => {
         'role-1',
         'user-1',
         'Jane Admin',
+        'Fullstack Developer',
       );
     });
 
     it('falls back to the username, then the userId, when first/last name are unavailable', async () => {
-      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      rolesService.getRole.mockResolvedValue({
+        uid: 'role-1',
+        name: 'Fullstack Developer',
+      } as any);
       searchService.streamSearch.mockReturnValue(of());
       clerkService.getUser.mockResolvedValue({
         firstName: null,
@@ -571,6 +578,7 @@ describe('RolesController', () => {
         'role-1',
         'user-1',
         'janedoe',
+        'Fullstack Developer',
       );
 
       clerkService.getUser.mockResolvedValue({
@@ -587,6 +595,7 @@ describe('RolesController', () => {
         'role-1',
         'user-1',
         'user-1',
+        'Fullstack Developer',
       );
     });
 

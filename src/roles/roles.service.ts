@@ -254,6 +254,24 @@ export class RolesService {
     shortlist: boolean,
     orgId: string,
   ) {
+    // Without this check, any authenticated caller could shortlist/
+    // unshortlist any role_result in the database just by knowing its uid —
+    // the plain `where: { uid: resultId }` update below has no awareness
+    // of organization at all. Mirrors getRoleResult's scoping.
+    const existing = await this.prisma.role_result.findFirst({
+      where: {
+        uid: resultId,
+        role: { project: { organization_id: orgId } },
+      },
+    });
+    if (!existing) {
+      throw new RequestException(
+        'Role result not found',
+        HttpStatus.NOT_FOUND,
+        'ROLE_RESULT_NOT_FOUND',
+      );
+    }
+
     const response = await this.prisma.role_result.update({
       where: {
         uid: resultId,
