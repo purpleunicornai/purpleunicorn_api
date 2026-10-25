@@ -169,6 +169,63 @@ export interface EnrichCandidateResult {
   tokensUsed: number;
 }
 
+// Mirrors ChildFilterItemDto/FilterItemDto (src/roles/dto/role_filter.dto.ts)
+// exactly, so a parsed job spec can be persisted as real role_filter_item/
+// role_filter_child rows with no translation step, and later read by the
+// existing role-filter-parser.ts the same way a human-entered filter would be.
+const jobSpecFilterChildSchema = z.object({
+  title: z.string(),
+  value: z.string().optional(),
+  list_value: z.array(z.string()).optional(),
+  boolean_value: z.boolean().optional(),
+});
+
+const jobSpecFilterItemSchema = z.object({
+  category: z.enum([
+    'location',
+    'job_titles',
+    'skills',
+    'languages',
+    'industry',
+    'companies',
+    'education',
+    'experience',
+  ]),
+  value: z.string().optional(),
+  list_value: z.array(z.string()).optional(),
+  priority: z.enum(['ESSENTIAL', 'OPTIONAL']),
+  non_negotiable: z.boolean().optional(),
+  children: z.array(jobSpecFilterChildSchema).optional(),
+});
+
+const jobSpecParseResultSchema = z.object({
+  items: z.array(jobSpecFilterItemSchema),
+});
+
+export type GeminiJobSpecFilterItem = z.infer<typeof jobSpecFilterItemSchema>;
+
+// Matches buildJobSpecPrompt's per-category contract: location/industry/
+// experience carry their real signal in "value" (country code / free text /
+// a numeric string) and never in "list_value"; every other category carries
+// it in "list_value" and never sets "value". Children are always supplementary
+// (region/remote_work, title_option, company_type, institutions/type) — no
+// category uses children alone as its real signal, so a stray children-only
+// item (e.g. a hallucinated "remote_work" child with no country code) is
+// just as empty as one with no fields at all.
+const SCALAR_VALUE_CATEGORIES = new Set(['location', 'industry', 'experience']);
+
+function hasRealSignal(item: GeminiJobSpecFilterItem): boolean {
+  if (SCALAR_VALUE_CATEGORIES.has(item.category)) {
+    return !!item.value;
+  }
+  return !!(item.list_value && item.list_value.length > 0);
+}
+
+export interface ParseJobSpecResult {
+  items: GeminiJobSpecFilterItem[];
+  tokensUsed: number;
+}
+
 @Injectable()
 export class GeminiService {
   private readonly logger = new Logger(GeminiService.name);
@@ -265,6 +322,32 @@ export class GeminiService {
 
     return {
       enrichment: output,
+      tokensUsed: usage.totalTokens ?? 0,
+    };
+  }
+
+  // Turns a pasted or uploaded job spec into draft role_filter_item rows —
+  // same category/child vocabulary role-filter-parser.ts already reads, so
+  // the result can be persisted and later edited/approved with no new
+  // parsing logic needed anywhere downstream.
+  async parseJobSpec(text: string): Promise<ParseJobSpecResult> {
+    this.logger.debug('Parsing job spec with Gemini');
+
+    const { generateText, Output } = await this.loadAi();
+    const model = await this.getModel();
+
+    const { output, usage } = await generateText({
+      model,
+      prompt: this.buildJobSpecPrompt(text),
+      output: Output.object({ schema: jobSpecParseResultSchema }),
+      timeout: GEMINI_CALL_TIMEOUT_MS,
+      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
+    });
+
+    const filteredItems = output.items.filter(hasRealSignal);
+
+    return {
+      items: filteredItems,
       tokensUsed: usage.totalTokens ?? 0,
     };
   }
@@ -499,6 +582,28 @@ export class GeminiService {
       `Known candidate: ${JSON.stringify(knownCandidate)}`,
       '',
       `Search results: ${JSON.stringify(results)}`,
+    ].join('\n');
+  }
+
+  // Lays out the exact category/child vocabulary role-filter-parser.ts
+  // already knows how to read, so the model's output can be persisted as
+  // real role_filter_item/role_filter_child rows with zero translation.
+  private buildJobSpecPrompt(text: string): string {
+    return [
+      'You are extracting structured recruiting filter criteria from a job specification document, for a recruiter to review and edit before it is used to search for candidates.',
+      'Return a list of "items", each with a fixed "category" (one of: location, job_titles, skills, languages, industry, companies, education, experience), a "priority" ("ESSENTIAL" if the spec treats it as a hard requirement, otherwise "OPTIONAL"), and "non_negotiable" (true only when the spec explicitly says a candidate must have this, e.g. "must have the right to work in the UK").',
+      'Each item has either a scalar "value" or a "list_value" array, depending on category, and may carry "children" — open-ended sub-facts, each with a "title" and one of "value"/"list_value"/"boolean_value":',
+      '- "location": value = the country as an ISO 3166-1 alpha-2 code (e.g. "GB"); children may include region entries (title = the region type such as "city" or "province", value = the region name), a "remote_work" child (boolean_value = true if remote work is acceptable), and a "work_authorization" child (boolean_value = true if the spec requires existing right-to-work).',
+      '- "job_titles": list_value = the job title(s). Produce at most one item for the main/primary title (no children needed), and optionally a second item for alternative/equivalent titles the spec also mentions, with a child {"title": "title_option", "value": "alternative_title"}.',
+      '- "skills": list_value = the required/preferred skills, as separate items split by priority (one ESSENTIAL item for must-have skills, one OPTIONAL item for nice-to-have skills), not as a single mixed list.',
+      '- "languages": list_value = spoken/written languages required or preferred.',
+      '- "industry": value = the industry or sector, as free text (e.g. "fintech").',
+      '- "companies": list_value = company names mentioned as a target or exclusion; a child {"title": "company_type", "value": "include"} or {"value": "exclude"} records which.',
+      '- "education": list_value = required/preferred qualifications (e.g. "Bachelor\'s degree"); a child {"title": "institutions", "list_value": [...]} when specific institutions are named, and {"title": "type", "value": "include"} or "exclude".',
+      '- "experience": value = the minimum years of experience required, as a plain number string (e.g. "5") — omit this item entirely if the spec gives no numeric experience requirement.',
+      'Only include an item when the spec actually gives real signal for it — do not invent or guess values that are not supported by the text.',
+      '',
+      `Job spec: ${text}`,
     ].join('\n');
   }
 }

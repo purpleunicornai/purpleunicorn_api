@@ -1,15 +1,17 @@
 model role_filter_item {
-  uid            String              @id @unique @default(uuid()) @db.Uuid
-  created        DateTime            @default(now()) @db.Timestamptz(3)
-  updated        DateTime            @updatedAt @db.Timestamptz(3)
-  role_filter_id String              @db.Uuid
-  role_filter    role_filters        @relation(fields: [role_filter_id], references: [uid], onDelete: Cascade)
-  category       String
-  value          String?
-  list_value     String[]
-  priority       RoleFilterPriority  @default(OPTIONAL)
-  non_negotiable Boolean             @default(false)
-  children       role_filter_child[]
+  uid                String              @id @unique @default(uuid()) @db.Uuid
+  created            DateTime            @default(now()) @db.Timestamptz(3)
+  updated            DateTime            @updatedAt @db.Timestamptz(3)
+  role_filter_id     String?             @db.Uuid
+  role_filter        role_filters?       @relation(fields: [role_filter_id], references: [uid], onDelete: Cascade)
+  job_spec_import_id String?             @db.Uuid
+  job_spec_import    job_spec_import?    @relation(fields: [job_spec_import_id], references: [uid], onDelete: Cascade)
+  category           String
+  value              String?
+  list_value         String[]
+  priority           RoleFilterPriority  @default(OPTIONAL)
+  non_negotiable     Boolean             @default(false)
+  children           role_filter_child[]
 
-  @@index([role_filter_id])
+  @@index([role_filter_id, job_spec_import_id])
 }

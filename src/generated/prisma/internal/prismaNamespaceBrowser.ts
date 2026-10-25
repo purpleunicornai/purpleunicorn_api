@@ -55,6 +55,7 @@ export const ModelName = {
   candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   candidate_source: 'candidate_source',
+  job_spec_import: 'job_spec_import',
   organization_credits: 'organization_credits',
   organization_log: 'organization_log',
   organization_subscription: 'organization_subscription',
@@ -169,6 +170,21 @@ export const Candidate_sourceScalarFieldEnum = {
 export type Candidate_sourceScalarFieldEnum = (typeof Candidate_sourceScalarFieldEnum)[keyof typeof Candidate_sourceScalarFieldEnum]
 
 
+export const Job_spec_importScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  role_id: 'role_id',
+  original_text: 'original_text',
+  created_by: 'created_by',
+  created_by_id: 'created_by_id',
+  ai_model_used: 'ai_model_used',
+  tokens_used: 'tokens_used'
+} as const
+
+export type Job_spec_importScalarFieldEnum = (typeof Job_spec_importScalarFieldEnum)[keyof typeof Job_spec_importScalarFieldEnum]
+
+
 export const Organization_creditsScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -238,6 +254,7 @@ export const Role_filter_itemScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   role_filter_id: 'role_filter_id',
+  job_spec_import_id: 'job_spec_import_id',
   category: 'category',
   value: 'value',
   list_value: 'list_value',

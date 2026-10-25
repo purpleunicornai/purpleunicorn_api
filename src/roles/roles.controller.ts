@@ -18,6 +18,7 @@ import { Observable, from } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
+import { JobSpecImportService } from './job-spec-import.service';
 import { RoleFilterDto } from './dto/role_filter.dto';
 import {
   CreateRoleDto,
@@ -26,6 +27,10 @@ import {
   RunSearchDto,
   UpdateRoleDto,
 } from './dto/role.dto';
+import {
+  ImportJobSpecDto,
+  JobSpecImportResponseDto,
+} from './dto/job-spec-import.dto';
 import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
 import { CurrentAuth } from '../auth/current-auth.decorator';
 import type { ClerkAuthContext } from '../auth/auth.types';
@@ -48,6 +53,7 @@ export class RolesController {
     private readonly searchService: SearchService,
     private readonly logsService: LogsService,
     private readonly clerkService: ClerkService,
+    private readonly jobSpecImportService: JobSpecImportService,
   ) {}
 
   @Get()
@@ -314,5 +320,24 @@ export class RolesController {
       orgId,
     );
     return result;
+  }
+
+  @Post('/:roleId/job-spec-import')
+  @Serialize(JobSpecImportResponseDto)
+  async importJobSpec(
+    @Param('roleId') roleId: string,
+    @Body() body: ImportJobSpecDto,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    const orgId = requireOrgId(auth);
+    // check if the user can access the role first
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    const userName = await this.resolveUserName(auth.userId);
+    return this.jobSpecImportService.importJobSpec(
+      roleId,
+      body,
+      auth.userId,
+      userName,
+    );
   }
 }

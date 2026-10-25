@@ -401,6 +401,7 @@ export const ModelName = {
   candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   candidate_source: 'candidate_source',
+  job_spec_import: 'job_spec_import',
   organization_credits: 'organization_credits',
   organization_log: 'organization_log',
   organization_subscription: 'organization_subscription',
@@ -426,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filter_item" | "role_filter_child" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
+    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "job_spec_import" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filter_item" | "role_filter_child" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -723,6 +724,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.candidate_sourceCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.Candidate_sourceCountAggregateOutputType> | number
+        }
+      }
+    }
+    job_spec_import: {
+      payload: Prisma.$job_spec_importPayload<ExtArgs>
+      fields: Prisma.job_spec_importFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.job_spec_importFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.job_spec_importFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>
+        }
+        findFirst: {
+          args: Prisma.job_spec_importFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.job_spec_importFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>
+        }
+        findMany: {
+          args: Prisma.job_spec_importFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>[]
+        }
+        create: {
+          args: Prisma.job_spec_importCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>
+        }
+        createMany: {
+          args: Prisma.job_spec_importCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.job_spec_importCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>[]
+        }
+        delete: {
+          args: Prisma.job_spec_importDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>
+        }
+        update: {
+          args: Prisma.job_spec_importUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>
+        }
+        deleteMany: {
+          args: Prisma.job_spec_importDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.job_spec_importUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.job_spec_importUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>[]
+        }
+        upsert: {
+          args: Prisma.job_spec_importUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$job_spec_importPayload>
+        }
+        aggregate: {
+          args: Prisma.Job_spec_importAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateJob_spec_import>
+        }
+        groupBy: {
+          args: Prisma.job_spec_importGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Job_spec_importGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.job_spec_importCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Job_spec_importCountAggregateOutputType> | number
         }
       }
     }
@@ -1591,6 +1666,21 @@ export const Candidate_sourceScalarFieldEnum = {
 export type Candidate_sourceScalarFieldEnum = (typeof Candidate_sourceScalarFieldEnum)[keyof typeof Candidate_sourceScalarFieldEnum]
 
 
+export const Job_spec_importScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  role_id: 'role_id',
+  original_text: 'original_text',
+  created_by: 'created_by',
+  created_by_id: 'created_by_id',
+  ai_model_used: 'ai_model_used',
+  tokens_used: 'tokens_used'
+} as const
+
+export type Job_spec_importScalarFieldEnum = (typeof Job_spec_importScalarFieldEnum)[keyof typeof Job_spec_importScalarFieldEnum]
+
+
 export const Organization_creditsScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -1660,6 +1750,7 @@ export const Role_filter_itemScalarFieldEnum = {
   created: 'created',
   updated: 'updated',
   role_filter_id: 'role_filter_id',
+  job_spec_import_id: 'job_spec_import_id',
   category: 'category',
   value: 'value',
   list_value: 'list_value',
@@ -2124,6 +2215,7 @@ export type GlobalOmitConfig = {
   candidate_education?: Prisma.candidate_educationOmit
   candidate_experience?: Prisma.candidate_experienceOmit
   candidate_source?: Prisma.candidate_sourceOmit
+  job_spec_import?: Prisma.job_spec_importOmit
   organization_credits?: Prisma.organization_creditsOmit
   organization_log?: Prisma.organization_logOmit
   organization_subscription?: Prisma.organization_subscriptionOmit

@@ -407,11 +407,6 @@ export type Role_filtersNullableScalarRelationFilter = {
   isNot?: Prisma.role_filtersWhereInput | null
 }
 
-export type Role_filtersScalarRelationFilter = {
-  is?: Prisma.role_filtersWhereInput
-  isNot?: Prisma.role_filtersWhereInput
-}
-
 export type role_filtersCountOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
@@ -481,10 +476,12 @@ export type role_filtersCreateNestedOneWithoutRole_filter_itemsInput = {
   connect?: Prisma.role_filtersWhereUniqueInput
 }
 
-export type role_filtersUpdateOneRequiredWithoutRole_filter_itemsNestedInput = {
+export type role_filtersUpdateOneWithoutRole_filter_itemsNestedInput = {
   create?: Prisma.XOR<Prisma.role_filtersCreateWithoutRole_filter_itemsInput, Prisma.role_filtersUncheckedCreateWithoutRole_filter_itemsInput>
   connectOrCreate?: Prisma.role_filtersCreateOrConnectWithoutRole_filter_itemsInput
   upsert?: Prisma.role_filtersUpsertWithoutRole_filter_itemsInput
+  disconnect?: Prisma.role_filtersWhereInput | boolean
+  delete?: Prisma.role_filtersWhereInput | boolean
   connect?: Prisma.role_filtersWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.role_filtersUpdateToOneWithWhereWithoutRole_filter_itemsInput, Prisma.role_filtersUpdateWithoutRole_filter_itemsInput>, Prisma.role_filtersUncheckedUpdateWithoutRole_filter_itemsInput>
 }

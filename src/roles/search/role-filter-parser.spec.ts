@@ -30,6 +30,7 @@ function buildItem(
     created: new Date('2026-08-23T00:00:00.000Z'),
     updated: new Date('2026-08-23T00:00:00.000Z'),
     role_filter_id: 'filter-1',
+    job_spec_import_id: null,
     category: 'skills',
     value: null,
     list_value: [],

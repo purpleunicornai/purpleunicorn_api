@@ -1,6 +1,7 @@
 import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
+import { JobSpecImportService } from './job-spec-import.service';
 import { LogsService } from '../common/logs/logs.service';
 import { ClerkService } from '../common/clerk/clerk.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
@@ -55,6 +56,12 @@ function buildClerkService(): jest.Mocked<ClerkService> {
   } as unknown as jest.Mocked<ClerkService>;
 }
 
+function buildJobSpecImportService(): jest.Mocked<JobSpecImportService> {
+  return {
+    importJobSpec: jest.fn(),
+  } as unknown as jest.Mocked<JobSpecImportService>;
+}
+
 async function captureError(
   promise: Promise<unknown>,
 ): Promise<RequestException> {
@@ -71,6 +78,7 @@ describe('RolesController', () => {
   let searchService: jest.Mocked<SearchService>;
   let logsService: jest.Mocked<LogsService>;
   let clerkService: jest.Mocked<ClerkService>;
+  let jobSpecImportService: jest.Mocked<JobSpecImportService>;
   let controller: RolesController;
 
   beforeEach(() => {
@@ -78,11 +86,13 @@ describe('RolesController', () => {
     searchService = buildSearchService();
     logsService = buildLogsService();
     clerkService = buildClerkService();
+    jobSpecImportService = buildJobSpecImportService();
     controller = new RolesController(
       rolesService,
       searchService,
       logsService,
       clerkService,
+      jobSpecImportService,
     );
   });
 
@@ -665,6 +675,47 @@ describe('RolesController', () => {
       );
 
       expect(logsService.log).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('importJobSpec', () => {
+    it('checks the caller can access the role, resolves their display name, then delegates to JobSpecImportService', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const result = { uid: 'import-1' };
+      jobSpecImportService.importJobSpec.mockResolvedValue(result as any);
+
+      const response = await controller.importJobSpec(
+        'role-1',
+        { text: 'Senior Engineer job spec.' },
+        buildAuth(),
+      );
+
+      expect(rolesService.getRole).toHaveBeenCalledWith(
+        'role-1',
+        'org-1',
+        'user-1',
+      );
+      expect(clerkService.getUser).toHaveBeenCalledWith('user-1');
+      expect(jobSpecImportService.importJobSpec).toHaveBeenCalledWith(
+        'role-1',
+        { text: 'Senior Engineer job spec.' },
+        'user-1',
+        'Jane Admin',
+      );
+      expect(response).toBe(result);
+    });
+
+    it("checks the caller's access to the role before delegating", async () => {
+      rolesService.getRole.mockRejectedValue(
+        new RequestException('Role not found', 404, 'ROLE_NOT_FOUND'),
+      );
+
+      const error = await captureError(
+        controller.importJobSpec('role-1', { text: 'spec' }, buildAuth()),
+      );
+
+      expect(error).toBeInstanceOf(RequestException);
+      expect(jobSpecImportService.importJobSpec).not.toHaveBeenCalled();
     });
   });
 });
