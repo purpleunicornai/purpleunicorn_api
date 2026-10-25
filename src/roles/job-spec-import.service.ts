@@ -3,6 +3,10 @@ import { PrismaService } from '../common/database/prisma.service';
 import { GEMINI_MODEL, GeminiService } from '../services/gemini/gemini.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { ImportJobSpecDto } from './dto/job-spec-import.dto';
+// Must stay before the 'pdf-parse' import below — it defines DOMMatrix/
+// Path2D/ImageData on globalThis before pdf-parse's module-top-level code
+// runs and crashes without them. See pdf-dom-polyfills.ts for why.
+import '../common/utils/pdf-dom-polyfills';
 import { PDFParse } from 'pdf-parse';
 import * as mammoth from 'mammoth';
 import dayjs from 'dayjs';
