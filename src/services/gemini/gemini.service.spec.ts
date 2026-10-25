@@ -634,4 +634,178 @@ describe('GeminiService', () => {
       expect(result.tokensUsed).toBe(0);
     });
   });
+
+  describe('parseJobSpec', () => {
+    it('calls generateText with the configured model and a prompt containing the job spec text', async () => {
+      generateText.mockResolvedValue({
+        output: { items: [] },
+        usage: { totalTokens: 0 },
+      });
+
+      await service.parseJobSpec(
+        'Senior Software Engineer, London, React required.',
+      );
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          prompt: expect.stringContaining(
+            'Senior Software Engineer, London, React required.',
+          ),
+          output: expect.anything(),
+          timeout: expect.any(Number),
+          providerOptions: {
+            google: { thinkingConfig: { thinkingBudget: 0 } },
+          },
+        }),
+      );
+    });
+
+    it('describes the fixed category vocabulary in the prompt', async () => {
+      generateText.mockResolvedValue({
+        output: { items: [] },
+        usage: { totalTokens: 0 },
+      });
+
+      await service.parseJobSpec('Some job spec text.');
+
+      const prompt = generateText.mock.calls[0][0].prompt as string;
+      for (const category of [
+        'location',
+        'job_titles',
+        'skills',
+        'languages',
+        'industry',
+        'companies',
+        'education',
+        'experience',
+      ]) {
+        expect(prompt).toContain(category);
+      }
+    });
+
+    it('parses the items and token usage from the response', async () => {
+      const items = [
+        {
+          category: 'job_titles',
+          list_value: ['Senior Software Engineer'],
+          priority: 'ESSENTIAL',
+          non_negotiable: false,
+          children: [],
+        },
+        {
+          category: 'location',
+          value: 'GB',
+          priority: 'ESSENTIAL',
+          non_negotiable: false,
+          children: [
+            { title: 'remote_work', boolean_value: false },
+            { title: 'city', value: 'London' },
+          ],
+        },
+      ];
+      generateText.mockResolvedValue({
+        output: { items },
+        usage: { totalTokens: 321 },
+      });
+
+      const result = await service.parseJobSpec('Some job spec text.');
+
+      expect(result).toEqual({ items, tokensUsed: 321 });
+    });
+
+    it('defaults tokensUsed to 0 when usage.totalTokens is undefined', async () => {
+      generateText.mockResolvedValue({
+        output: { items: [] },
+        usage: { totalTokens: undefined },
+      });
+
+      const result = await service.parseJobSpec('Some job spec text.');
+
+      expect(result.tokensUsed).toBe(0);
+    });
+
+    it('drops a list-based item (e.g. skills) that only has a stray scalar value and no list_value', async () => {
+      generateText.mockResolvedValue({
+        output: {
+          items: [
+            {
+              category: 'skills',
+              value: 'TypeScript',
+              list_value: [],
+              priority: 'ESSENTIAL',
+              non_negotiable: false,
+              children: [],
+            },
+          ],
+        },
+        usage: { totalTokens: 10 },
+      });
+
+      const result = await service.parseJobSpec('Some job spec text.');
+
+      expect(result.items).toEqual([]);
+    });
+
+    it('drops a scalar-based item (e.g. location) that only has children and no real value', async () => {
+      generateText.mockResolvedValue({
+        output: {
+          items: [
+            {
+              category: 'location',
+              list_value: [],
+              priority: 'ESSENTIAL',
+              non_negotiable: false,
+              children: [{ title: 'remote_work', boolean_value: true }],
+            },
+          ],
+        },
+        usage: { totalTokens: 10 },
+      });
+
+      const result = await service.parseJobSpec('Some job spec text.');
+
+      expect(result.items).toEqual([]);
+    });
+
+    it('keeps a scalar-based item (location/industry/experience) that has a real value', async () => {
+      const items = [
+        {
+          category: 'industry',
+          value: 'fintech',
+          priority: 'OPTIONAL',
+          non_negotiable: false,
+          children: [],
+        },
+      ];
+      generateText.mockResolvedValue({
+        output: { items },
+        usage: { totalTokens: 10 },
+      });
+
+      const result = await service.parseJobSpec('Some job spec text.');
+
+      expect(result.items).toEqual(items);
+    });
+
+    it('keeps a list-based item (job_titles/skills/languages/companies/education) that has a real list_value', async () => {
+      const items = [
+        {
+          category: 'skills',
+          list_value: ['TypeScript', 'React'],
+          priority: 'ESSENTIAL',
+          non_negotiable: false,
+          children: [],
+        },
+      ];
+      generateText.mockResolvedValue({
+        output: { items },
+        usage: { totalTokens: 10 },
+      });
+
+      const result = await service.parseJobSpec('Some job spec text.');
+
+      expect(result.items).toEqual(items);
+    });
+  });
 });

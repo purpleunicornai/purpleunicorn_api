@@ -232,10 +232,85 @@ describe('GoogleSearchService', () => {
       ).toBe(true);
     });
 
-    it('returns no queries when there is no main job title', () => {
+    it('returns no queries when there is no main job title and no role name to fall back to', () => {
       const filters = buildFilters();
 
       const queries = (service as any).buildXrayQueries(filters);
+
+      expect(queries).toEqual([]);
+    });
+
+    it("falls back to the role's name as the main title when no main_title row exists", () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+      });
+
+      const queries = (service as any).buildXrayQueries(
+        filters,
+        'Fullstack Developer',
+      );
+
+      expect(
+        queries.some((q: string) => q.includes('"Fullstack Developer"')),
+      ).toBe(true);
+    });
+
+    it('falls back to the role name when the main_title row exists but has no titles', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: [], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+      });
+
+      const queries = (service as any).buildXrayQueries(
+        filters,
+        'Fullstack Developer',
+      );
+
+      expect(
+        queries.some((q: string) => q.includes('"Fullstack Developer"')),
+      ).toBe(true);
+    });
+
+    it('falls back to the role name as an alternative title when no alternative_title row exists', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Software Engineer'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+      });
+
+      const queries = (service as any).buildXrayQueries(
+        filters,
+        'Fullstack Developer',
+      );
+
+      expect(
+        queries.some(
+          (q: string) =>
+            q.includes('"Fullstack Developer"') &&
+            !q.includes('"Software Engineer"'),
+        ),
+      ).toBe(true);
+    });
+
+    it('still returns no queries when there is no main job title and no role name was passed', () => {
+      const filters = buildFilters();
+
+      const queries = (service as any).buildXrayQueries(filters, undefined);
 
       expect(queries).toEqual([]);
     });

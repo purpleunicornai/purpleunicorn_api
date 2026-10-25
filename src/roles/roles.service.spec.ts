@@ -53,6 +53,10 @@ function buildPrisma() {
     },
     role_result: {
       findFirst: jest.fn(),
+      update: jest.fn(),
+    },
+    organization_log: {
+      create: jest.fn(),
     },
   };
 }
@@ -436,6 +440,77 @@ describe('RolesService', () => {
       expect(error).toBeInstanceOf(RequestException);
       expect(error.message).toBe('Role result not found');
       expect(error.getStatus()).toBe(404);
+    });
+  });
+
+  describe('shortlistCandidate', () => {
+    it("updates a role_result scoped to the caller's organization", async () => {
+      prisma.role_result.findFirst.mockResolvedValue({ uid: 'result-1' });
+      const updated = { uid: 'result-1', shortlist: true };
+      prisma.role_result.update.mockResolvedValue(updated);
+
+      const result = await service.shortlistCandidate(
+        'result-1',
+        true,
+        'org-1',
+      );
+
+      expect(prisma.role_result.findFirst).toHaveBeenCalledWith({
+        where: {
+          uid: 'result-1',
+          role: { project: { organization_id: 'org-1' } },
+        },
+      });
+      expect(prisma.role_result.update).toHaveBeenCalledWith({
+        where: { uid: 'result-1' },
+        data: { shortlist: true },
+      });
+      expect(result).toBe(updated);
+    });
+
+    it('throws a 404 RequestException rather than updating when the role_result belongs to a different organization (IDOR guard)', async () => {
+      prisma.role_result.findFirst.mockResolvedValue(null);
+
+      const error = await captureError(
+        service.shortlistCandidate('result-1', true, 'org-1'),
+      );
+
+      expect(error).toBeInstanceOf(RequestException);
+      expect(error.message).toBe('Role result not found');
+      expect(error.getStatus()).toBe(404);
+      expect(prisma.role_result.update).not.toHaveBeenCalled();
+    });
+
+    it("logs CANDIDATE_SHORTLISTED under the caller's organization when shortlisting", async () => {
+      prisma.role_result.findFirst.mockResolvedValue({ uid: 'result-1' });
+      prisma.role_result.update.mockResolvedValue({ uid: 'result-1' });
+
+      await service.shortlistCandidate('result-1', true, 'org-1');
+
+      expect(prisma.organization_log.create).toHaveBeenCalledWith({
+        data: {
+          type: 'CANDIDATE_SHORTLISTED',
+          message: 'Candidate shortlisted for role result result-1',
+          role_result_id: 'result-1',
+          organization_id: 'org-1',
+        },
+      });
+    });
+
+    it('logs CANDIDATE_UNSHORTLISTED when un-shortlisting', async () => {
+      prisma.role_result.findFirst.mockResolvedValue({ uid: 'result-1' });
+      prisma.role_result.update.mockResolvedValue({ uid: 'result-1' });
+
+      await service.shortlistCandidate('result-1', false, 'org-1');
+
+      expect(prisma.organization_log.create).toHaveBeenCalledWith({
+        data: {
+          type: 'CANDIDATE_UNSHORTLISTED',
+          message: 'Candidate unshortlisted for role result result-1',
+          role_result_id: 'result-1',
+          organization_id: 'org-1',
+        },
+      });
     });
   });
 

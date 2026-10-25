@@ -18,6 +18,7 @@ import { Observable, from } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
+import { JobSpecImportService } from './job-spec-import.service';
 import { RoleFilterDto } from './dto/role_filter.dto';
 import {
   CreateRoleDto,
@@ -26,6 +27,10 @@ import {
   RunSearchDto,
   UpdateRoleDto,
 } from './dto/role.dto';
+import {
+  ImportJobSpecDto,
+  JobSpecImportResponseDto,
+} from './dto/job-spec-import.dto';
 import { ClerkAuthGuard } from '../auth/guards/clerk-auth.guard';
 import { CurrentAuth } from '../auth/current-auth.decorator';
 import type { ClerkAuthContext } from '../auth/auth.types';
@@ -48,6 +53,7 @@ export class RolesController {
     private readonly searchService: SearchService,
     private readonly logsService: LogsService,
     private readonly clerkService: ClerkService,
+    private readonly jobSpecImportService: JobSpecImportService,
   ) {}
 
   @Get()
@@ -202,21 +208,24 @@ export class RolesController {
       ]),
     ).pipe(
       switchMap(([role, userName]) =>
-        this.searchService.streamSearch(roleId, auth.userId, userName).pipe(
-          tap((event) => {
-            if (event.type === 'done') {
-              const results = (event.data as { result: role_result[] }).result;
-              void this.logsService.log({
-                organization_id: orgId,
-                user_id: auth.userId,
-                type: 'ROLE_SEARCH',
-                role_id: roleId,
-                tokens_used: this.sumTokensUsed(results),
-                message: `Ran search for role "${role.name}", found ${results.length} candidate(s)`,
-              });
-            }
-          }),
-        ),
+        this.searchService
+          .streamSearch(roleId, auth.userId, userName, role.name)
+          .pipe(
+            tap((event) => {
+              if (event.type === 'done') {
+                const results = (event.data as { result: role_result[] })
+                  .result;
+                void this.logsService.log({
+                  organization_id: orgId,
+                  user_id: auth.userId,
+                  type: 'ROLE_SEARCH',
+                  role_id: roleId,
+                  tokens_used: this.sumTokensUsed(results),
+                  message: `Ran search for role "${role.name}", found ${results.length} candidate(s)`,
+                });
+              }
+            }),
+          ),
       ),
     );
   }
@@ -311,5 +320,24 @@ export class RolesController {
       orgId,
     );
     return result;
+  }
+
+  @Post('/:roleId/job-spec-import')
+  @Serialize(JobSpecImportResponseDto)
+  async importJobSpec(
+    @Param('roleId') roleId: string,
+    @Body() body: ImportJobSpecDto,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    const orgId = requireOrgId(auth);
+    // check if the user can access the role first
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    const userName = await this.resolveUserName(auth.userId);
+    return this.jobSpecImportService.importJobSpec(
+      roleId,
+      body,
+      auth.userId,
+      userName,
+    );
   }
 }

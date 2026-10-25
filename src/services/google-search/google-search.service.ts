@@ -45,8 +45,11 @@ export class GoogleSearchService {
     this.client = axios.create({ timeout: 20_000 });
   }
 
-  async search(filters: ParsedRoleFilters): Promise<GoogleSearchItem[]> {
-    const queries = this.buildXrayQueries(filters);
+  async search(
+    filters: ParsedRoleFilters,
+    roleName?: string,
+  ): Promise<GoogleSearchItem[]> {
+    const queries = this.buildXrayQueries(filters, roleName);
     this.logger.debug(`Running ${queries.length} Google x-ray query(s)`);
 
     const results = await Promise.all(
@@ -100,6 +103,7 @@ export class GoogleSearchService {
     query: string,
     start = 1,
   ): Promise<GoogleSearchItem[]> {
+    console.log('QUERY', query);
     const params = {
       key: this.aiConf.googleSearchApiKey,
       cx: this.aiConf.googleSearchEngineId,
@@ -122,11 +126,23 @@ export class GoogleSearchService {
     return `(${siteList.join(' OR ')})`;
   }
 
-  private buildXrayQueries(filters: ParsedRoleFilters): string[] {
-    const mainTitle = filters.jobTitles.find(
+  // Falls back to the role's own name whenever a title slot has nothing
+  // configured — either because the row doesn't exist at all, or it exists
+  // but was saved with an empty title list — so a role search never goes
+  // out with zero title signal just because job_titles filters weren't set.
+  private buildXrayQueries(
+    filters: ParsedRoleFilters,
+    roleName?: string,
+  ): string[] {
+    const mainTitleRow = filters.jobTitles.find(
       (row) => row.value.option === 'main_title',
     );
-    if (!mainTitle) return [];
+    const mainTitles = mainTitleRow?.value.titles.length
+      ? mainTitleRow.value.titles
+      : roleName
+        ? [roleName]
+        : [];
+    if (mainTitles.length === 0) return [];
 
     const siteFilter = this.buildSiteFilter();
     const requiredSkills = filters.skills
@@ -149,16 +165,22 @@ export class GoogleSearchService {
     ];
 
     const queries = new Set<string>();
-    for (const title of mainTitle.value.titles) {
+    for (const title of mainTitles) {
       queries.add(
         this.joinNonEmpty([siteFilter, this.quote(title), ...commonParts]),
       );
     }
 
-    const alternativeTitles =
-      filters.jobTitles
-        .find((row) => row.value.option === 'alternative_title')
-        ?.value.titles.slice(0, 3) ?? [];
+    const alternativeTitleRow = filters.jobTitles.find(
+      (row) => row.value.option === 'alternative_title',
+    );
+    const alternativeTitles = (
+      alternativeTitleRow?.value.titles.length
+        ? alternativeTitleRow.value.titles
+        : roleName
+          ? [roleName]
+          : []
+    ).slice(0, 3);
     for (const alternativeTitle of alternativeTitles) {
       queries.add(
         this.joinNonEmpty([

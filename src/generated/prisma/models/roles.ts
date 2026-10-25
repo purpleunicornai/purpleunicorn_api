@@ -210,6 +210,7 @@ export type rolesWhereInput = {
   role_filters?: Prisma.Role_filtersListRelationFilter
   role_result?: Prisma.Role_resultListRelationFilter
   logs?: Prisma.Organization_logListRelationFilter
+  job_spec_import?: Prisma.Job_spec_importListRelationFilter
 }
 
 export type rolesOrderByWithRelationInput = {
@@ -225,6 +226,7 @@ export type rolesOrderByWithRelationInput = {
   role_filters?: Prisma.role_filtersOrderByRelationAggregateInput
   role_result?: Prisma.role_resultOrderByRelationAggregateInput
   logs?: Prisma.organization_logOrderByRelationAggregateInput
+  job_spec_import?: Prisma.job_spec_importOrderByRelationAggregateInput
 }
 
 export type rolesWhereUniqueInput = Prisma.AtLeast<{
@@ -243,6 +245,7 @@ export type rolesWhereUniqueInput = Prisma.AtLeast<{
   role_filters?: Prisma.Role_filtersListRelationFilter
   role_result?: Prisma.Role_resultListRelationFilter
   logs?: Prisma.Organization_logListRelationFilter
+  job_spec_import?: Prisma.Job_spec_importListRelationFilter
 }, "uid" | "uid">
 
 export type rolesOrderByWithAggregationInput = {
@@ -285,6 +288,7 @@ export type rolesCreateInput = {
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importCreateNestedManyWithoutRoleInput
 }
 
 export type rolesUncheckedCreateInput = {
@@ -299,6 +303,7 @@ export type rolesUncheckedCreateInput = {
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
 }
 
 export type rolesUpdateInput = {
@@ -313,6 +318,7 @@ export type rolesUpdateInput = {
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesUncheckedUpdateInput = {
@@ -327,6 +333,7 @@ export type rolesUncheckedUpdateInput = {
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesCreateManyInput = {
@@ -361,6 +368,11 @@ export type rolesUncheckedUpdateManyInput = {
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
+export type RolesScalarRelationFilter = {
+  is?: Prisma.rolesWhereInput
+  isNot?: Prisma.rolesWhereInput
+}
+
 export type RolesNullableScalarRelationFilter = {
   is?: Prisma.rolesWhereInput | null
   isNot?: Prisma.rolesWhereInput | null
@@ -374,11 +386,6 @@ export type RolesListRelationFilter = {
 
 export type rolesOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type RolesScalarRelationFilter = {
-  is?: Prisma.rolesWhereInput
-  isNot?: Prisma.rolesWhereInput
 }
 
 export type rolesCountOrderByAggregateInput = {
@@ -412,6 +419,20 @@ export type rolesMinOrderByAggregateInput = {
   description?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   created_by?: Prisma.SortOrder
+}
+
+export type rolesCreateNestedOneWithoutJob_spec_importInput = {
+  create?: Prisma.XOR<Prisma.rolesCreateWithoutJob_spec_importInput, Prisma.rolesUncheckedCreateWithoutJob_spec_importInput>
+  connectOrCreate?: Prisma.rolesCreateOrConnectWithoutJob_spec_importInput
+  connect?: Prisma.rolesWhereUniqueInput
+}
+
+export type rolesUpdateOneRequiredWithoutJob_spec_importNestedInput = {
+  create?: Prisma.XOR<Prisma.rolesCreateWithoutJob_spec_importInput, Prisma.rolesUncheckedCreateWithoutJob_spec_importInput>
+  connectOrCreate?: Prisma.rolesCreateOrConnectWithoutJob_spec_importInput
+  upsert?: Prisma.rolesUpsertWithoutJob_spec_importInput
+  connect?: Prisma.rolesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.rolesUpdateToOneWithWhereWithoutJob_spec_importInput, Prisma.rolesUpdateWithoutJob_spec_importInput>, Prisma.rolesUncheckedUpdateWithoutJob_spec_importInput>
 }
 
 export type rolesCreateNestedOneWithoutLogsInput = {
@@ -500,6 +521,78 @@ export type rolesUpdateOneRequiredWithoutRole_resultNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.rolesUpdateToOneWithWhereWithoutRole_resultInput, Prisma.rolesUpdateWithoutRole_resultInput>, Prisma.rolesUncheckedUpdateWithoutRole_resultInput>
 }
 
+export type rolesCreateWithoutJob_spec_importInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  name: string
+  description?: string | null
+  summary?: string | null
+  created_by?: string | null
+  project: Prisma.projectsCreateNestedOneWithoutRolesInput
+  role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
+  role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
+  logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
+}
+
+export type rolesUncheckedCreateWithoutJob_spec_importInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  project_id: string
+  name: string
+  description?: string | null
+  summary?: string | null
+  created_by?: string | null
+  role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
+  role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
+  logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
+}
+
+export type rolesCreateOrConnectWithoutJob_spec_importInput = {
+  where: Prisma.rolesWhereUniqueInput
+  create: Prisma.XOR<Prisma.rolesCreateWithoutJob_spec_importInput, Prisma.rolesUncheckedCreateWithoutJob_spec_importInput>
+}
+
+export type rolesUpsertWithoutJob_spec_importInput = {
+  update: Prisma.XOR<Prisma.rolesUpdateWithoutJob_spec_importInput, Prisma.rolesUncheckedUpdateWithoutJob_spec_importInput>
+  create: Prisma.XOR<Prisma.rolesCreateWithoutJob_spec_importInput, Prisma.rolesUncheckedCreateWithoutJob_spec_importInput>
+  where?: Prisma.rolesWhereInput
+}
+
+export type rolesUpdateToOneWithWhereWithoutJob_spec_importInput = {
+  where?: Prisma.rolesWhereInput
+  data: Prisma.XOR<Prisma.rolesUpdateWithoutJob_spec_importInput, Prisma.rolesUncheckedUpdateWithoutJob_spec_importInput>
+}
+
+export type rolesUpdateWithoutJob_spec_importInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
+  role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
+  role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
+  logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
+}
+
+export type rolesUncheckedUpdateWithoutJob_spec_importInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
+  role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
+  logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
+}
+
 export type rolesCreateWithoutLogsInput = {
   uid?: string
   created?: Date | string
@@ -511,6 +604,7 @@ export type rolesCreateWithoutLogsInput = {
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importCreateNestedManyWithoutRoleInput
 }
 
 export type rolesUncheckedCreateWithoutLogsInput = {
@@ -524,6 +618,7 @@ export type rolesUncheckedCreateWithoutLogsInput = {
   created_by?: string | null
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
 }
 
 export type rolesCreateOrConnectWithoutLogsInput = {
@@ -553,6 +648,7 @@ export type rolesUpdateWithoutLogsInput = {
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesUncheckedUpdateWithoutLogsInput = {
@@ -566,6 +662,7 @@ export type rolesUncheckedUpdateWithoutLogsInput = {
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesCreateWithoutProjectInput = {
@@ -579,6 +676,7 @@ export type rolesCreateWithoutProjectInput = {
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importCreateNestedManyWithoutRoleInput
 }
 
 export type rolesUncheckedCreateWithoutProjectInput = {
@@ -592,6 +690,7 @@ export type rolesUncheckedCreateWithoutProjectInput = {
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
 }
 
 export type rolesCreateOrConnectWithoutProjectInput = {
@@ -645,6 +744,7 @@ export type rolesCreateWithoutRole_filtersInput = {
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importCreateNestedManyWithoutRoleInput
 }
 
 export type rolesUncheckedCreateWithoutRole_filtersInput = {
@@ -658,6 +758,7 @@ export type rolesUncheckedCreateWithoutRole_filtersInput = {
   created_by?: string | null
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
 }
 
 export type rolesCreateOrConnectWithoutRole_filtersInput = {
@@ -687,6 +788,7 @@ export type rolesUpdateWithoutRole_filtersInput = {
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesUncheckedUpdateWithoutRole_filtersInput = {
@@ -700,6 +802,7 @@ export type rolesUncheckedUpdateWithoutRole_filtersInput = {
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesCreateWithoutRole_resultInput = {
@@ -713,6 +816,7 @@ export type rolesCreateWithoutRole_resultInput = {
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importCreateNestedManyWithoutRoleInput
 }
 
 export type rolesUncheckedCreateWithoutRole_resultInput = {
@@ -726,6 +830,7 @@ export type rolesUncheckedCreateWithoutRole_resultInput = {
   created_by?: string | null
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
+  job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
 }
 
 export type rolesCreateOrConnectWithoutRole_resultInput = {
@@ -755,6 +860,7 @@ export type rolesUpdateWithoutRole_resultInput = {
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesUncheckedUpdateWithoutRole_resultInput = {
@@ -768,6 +874,7 @@ export type rolesUncheckedUpdateWithoutRole_resultInput = {
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesCreateManyProjectInput = {
@@ -791,6 +898,7 @@ export type rolesUpdateWithoutProjectInput = {
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesUncheckedUpdateWithoutProjectInput = {
@@ -804,6 +912,7 @@ export type rolesUncheckedUpdateWithoutProjectInput = {
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
+  job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
 }
 
 export type rolesUncheckedUpdateManyWithoutProjectInput = {
@@ -825,12 +934,14 @@ export type RolesCountOutputType = {
   role_filters: number
   role_result: number
   logs: number
+  job_spec_import: number
 }
 
 export type RolesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role_filters?: boolean | RolesCountOutputTypeCountRole_filtersArgs
   role_result?: boolean | RolesCountOutputTypeCountRole_resultArgs
   logs?: boolean | RolesCountOutputTypeCountLogsArgs
+  job_spec_import?: boolean | RolesCountOutputTypeCountJob_spec_importArgs
 }
 
 /**
@@ -864,6 +975,13 @@ export type RolesCountOutputTypeCountLogsArgs<ExtArgs extends runtime.Types.Exte
   where?: Prisma.organization_logWhereInput
 }
 
+/**
+ * RolesCountOutputType without action
+ */
+export type RolesCountOutputTypeCountJob_spec_importArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.job_spec_importWhereInput
+}
+
 
 export type rolesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   uid?: boolean
@@ -878,6 +996,7 @@ export type rolesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   role_filters?: boolean | Prisma.roles$role_filtersArgs<ExtArgs>
   role_result?: boolean | Prisma.roles$role_resultArgs<ExtArgs>
   logs?: boolean | Prisma.roles$logsArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.roles$job_spec_importArgs<ExtArgs>
   _count?: boolean | Prisma.RolesCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["roles"]>
 
@@ -922,6 +1041,7 @@ export type rolesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   role_filters?: boolean | Prisma.roles$role_filtersArgs<ExtArgs>
   role_result?: boolean | Prisma.roles$role_resultArgs<ExtArgs>
   logs?: boolean | Prisma.roles$logsArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.roles$job_spec_importArgs<ExtArgs>
   _count?: boolean | Prisma.RolesCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type rolesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -938,6 +1058,7 @@ export type $rolesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     role_filters: Prisma.$role_filtersPayload<ExtArgs>[]
     role_result: Prisma.$role_resultPayload<ExtArgs>[]
     logs: Prisma.$organization_logPayload<ExtArgs>[]
+    job_spec_import: Prisma.$job_spec_importPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
@@ -1346,6 +1467,7 @@ export interface Prisma__rolesClient<T, Null = never, ExtArgs extends runtime.Ty
   role_filters<T extends Prisma.roles$role_filtersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$role_filtersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_filtersPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   role_result<T extends Prisma.roles$role_resultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$role_resultArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_resultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   logs<T extends Prisma.roles$logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$organization_logPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  job_spec_import<T extends Prisma.roles$job_spec_importArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$job_spec_importArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$job_spec_importPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1853,6 +1975,30 @@ export type roles$logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.Organization_logScalarFieldEnum | Prisma.Organization_logScalarFieldEnum[]
+}
+
+/**
+ * roles.job_spec_import
+ */
+export type roles$job_spec_importArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the job_spec_import
+   */
+  select?: Prisma.job_spec_importSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the job_spec_import
+   */
+  omit?: Prisma.job_spec_importOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.job_spec_importInclude<ExtArgs> | null
+  where?: Prisma.job_spec_importWhereInput
+  orderBy?: Prisma.job_spec_importOrderByWithRelationInput | Prisma.job_spec_importOrderByWithRelationInput[]
+  cursor?: Prisma.job_spec_importWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Job_spec_importScalarFieldEnum | Prisma.Job_spec_importScalarFieldEnum[]
 }
 
 /**

@@ -1,0 +1,20 @@
+enum JobSpecImportType {
+  TEXT
+  FILE
+}
+
+// This model represents a job specification import, which can be either a text import or a file import.
+// It contains metadata about the import, such as the original text, the role filter items associated with the import, and information about the user who created the import.
+model job_spec_import {
+  uid               String             @id @unique @default(uuid()) @db.Uuid
+  created           DateTime           @default(now())
+  updated           DateTime           @updatedAt
+  role_id           String             @db.Uuid
+  role              roles              @relation(fields: [role_id], references: [uid], onDelete: Cascade)
+  original_text     String?
+  role_filter_items role_filter_item[]
+  created_by        String?
+  created_by_id     String?
+  ai_model_used     String?
+  tokens_used       Int?
+}

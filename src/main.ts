@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
@@ -8,7 +9,15 @@ import { ConfigType } from '@nestjs/config';
 import baseConfig from './config/base.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    cors: true,
+  });
+
+  // Base64 inflates file size by ~33% (job-spec-import accepts files up to
+  // 5MB decoded), so the raw request body needs headroom above Express's
+  // 100kb default or a 5MB-and-under file would still be rejected before
+  // JobSpecImportService's own size check ever runs.
+  app.useBodyParser('json', { limit: '7mb' });
 
   app.useGlobalPipes(
     new ValidationPipe({

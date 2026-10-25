@@ -30,6 +30,14 @@ export const SourceType = {
 export type SourceType = (typeof SourceType)[keyof typeof SourceType]
 
 
+export const JobSpecImportType = {
+  TEXT: 'TEXT',
+  FILE: 'FILE'
+} as const
+
+export type JobSpecImportType = (typeof JobSpecImportType)[keyof typeof JobSpecImportType]
+
+
 export const OrganizationCreditsType = {
   AI_TOKENS: 'AI_TOKENS',
   ROCKET_REACH: 'ROCKET_REACH',

@@ -60,6 +60,11 @@ export type candidate_experience = Prisma.candidate_experienceModel
  */
 export type candidate_source = Prisma.candidate_sourceModel
 /**
+ * Model job_spec_import
+ * 
+ */
+export type job_spec_import = Prisma.job_spec_importModel
+/**
  * Model organization_credits
  * 
  */

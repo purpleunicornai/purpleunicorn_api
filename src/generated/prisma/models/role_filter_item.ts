@@ -29,6 +29,7 @@ export type Role_filter_itemMinAggregateOutputType = {
   created: Date | null
   updated: Date | null
   role_filter_id: string | null
+  job_spec_import_id: string | null
   category: string | null
   value: string | null
   priority: $Enums.RoleFilterPriority | null
@@ -40,6 +41,7 @@ export type Role_filter_itemMaxAggregateOutputType = {
   created: Date | null
   updated: Date | null
   role_filter_id: string | null
+  job_spec_import_id: string | null
   category: string | null
   value: string | null
   priority: $Enums.RoleFilterPriority | null
@@ -51,6 +53,7 @@ export type Role_filter_itemCountAggregateOutputType = {
   created: number
   updated: number
   role_filter_id: number
+  job_spec_import_id: number
   category: number
   value: number
   list_value: number
@@ -65,6 +68,7 @@ export type Role_filter_itemMinAggregateInputType = {
   created?: true
   updated?: true
   role_filter_id?: true
+  job_spec_import_id?: true
   category?: true
   value?: true
   priority?: true
@@ -76,6 +80,7 @@ export type Role_filter_itemMaxAggregateInputType = {
   created?: true
   updated?: true
   role_filter_id?: true
+  job_spec_import_id?: true
   category?: true
   value?: true
   priority?: true
@@ -87,6 +92,7 @@ export type Role_filter_itemCountAggregateInputType = {
   created?: true
   updated?: true
   role_filter_id?: true
+  job_spec_import_id?: true
   category?: true
   value?: true
   list_value?: true
@@ -171,7 +177,8 @@ export type Role_filter_itemGroupByOutputType = {
   uid: string
   created: Date
   updated: Date
-  role_filter_id: string
+  role_filter_id: string | null
+  job_spec_import_id: string | null
   category: string
   value: string | null
   list_value: string[]
@@ -204,13 +211,15 @@ export type role_filter_itemWhereInput = {
   uid?: Prisma.UuidFilter<"role_filter_item"> | string
   created?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
   updated?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
-  role_filter_id?: Prisma.UuidFilter<"role_filter_item"> | string
+  role_filter_id?: Prisma.UuidNullableFilter<"role_filter_item"> | string | null
+  job_spec_import_id?: Prisma.UuidNullableFilter<"role_filter_item"> | string | null
   category?: Prisma.StringFilter<"role_filter_item"> | string
   value?: Prisma.StringNullableFilter<"role_filter_item"> | string | null
   list_value?: Prisma.StringNullableListFilter<"role_filter_item">
   priority?: Prisma.EnumRoleFilterPriorityFilter<"role_filter_item"> | $Enums.RoleFilterPriority
   non_negotiable?: Prisma.BoolFilter<"role_filter_item"> | boolean
-  role_filter?: Prisma.XOR<Prisma.Role_filtersScalarRelationFilter, Prisma.role_filtersWhereInput>
+  role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
+  job_spec_import?: Prisma.XOR<Prisma.Job_spec_importNullableScalarRelationFilter, Prisma.job_spec_importWhereInput> | null
   children?: Prisma.Role_filter_childListRelationFilter
 }
 
@@ -218,13 +227,15 @@ export type role_filter_itemOrderByWithRelationInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
-  role_filter_id?: Prisma.SortOrder
+  role_filter_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  job_spec_import_id?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   value?: Prisma.SortOrderInput | Prisma.SortOrder
   list_value?: Prisma.SortOrder
   priority?: Prisma.SortOrder
   non_negotiable?: Prisma.SortOrder
   role_filter?: Prisma.role_filtersOrderByWithRelationInput
+  job_spec_import?: Prisma.job_spec_importOrderByWithRelationInput
   children?: Prisma.role_filter_childOrderByRelationAggregateInput
 }
 
@@ -235,13 +246,15 @@ export type role_filter_itemWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.role_filter_itemWhereInput | Prisma.role_filter_itemWhereInput[]
   created?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
   updated?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
-  role_filter_id?: Prisma.UuidFilter<"role_filter_item"> | string
+  role_filter_id?: Prisma.UuidNullableFilter<"role_filter_item"> | string | null
+  job_spec_import_id?: Prisma.UuidNullableFilter<"role_filter_item"> | string | null
   category?: Prisma.StringFilter<"role_filter_item"> | string
   value?: Prisma.StringNullableFilter<"role_filter_item"> | string | null
   list_value?: Prisma.StringNullableListFilter<"role_filter_item">
   priority?: Prisma.EnumRoleFilterPriorityFilter<"role_filter_item"> | $Enums.RoleFilterPriority
   non_negotiable?: Prisma.BoolFilter<"role_filter_item"> | boolean
-  role_filter?: Prisma.XOR<Prisma.Role_filtersScalarRelationFilter, Prisma.role_filtersWhereInput>
+  role_filter?: Prisma.XOR<Prisma.Role_filtersNullableScalarRelationFilter, Prisma.role_filtersWhereInput> | null
+  job_spec_import?: Prisma.XOR<Prisma.Job_spec_importNullableScalarRelationFilter, Prisma.job_spec_importWhereInput> | null
   children?: Prisma.Role_filter_childListRelationFilter
 }, "uid" | "uid">
 
@@ -249,7 +262,8 @@ export type role_filter_itemOrderByWithAggregationInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
-  role_filter_id?: Prisma.SortOrder
+  role_filter_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  job_spec_import_id?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   value?: Prisma.SortOrderInput | Prisma.SortOrder
   list_value?: Prisma.SortOrder
@@ -267,7 +281,8 @@ export type role_filter_itemScalarWhereWithAggregatesInput = {
   uid?: Prisma.UuidWithAggregatesFilter<"role_filter_item"> | string
   created?: Prisma.DateTimeWithAggregatesFilter<"role_filter_item"> | Date | string
   updated?: Prisma.DateTimeWithAggregatesFilter<"role_filter_item"> | Date | string
-  role_filter_id?: Prisma.UuidWithAggregatesFilter<"role_filter_item"> | string
+  role_filter_id?: Prisma.UuidNullableWithAggregatesFilter<"role_filter_item"> | string | null
+  job_spec_import_id?: Prisma.UuidNullableWithAggregatesFilter<"role_filter_item"> | string | null
   category?: Prisma.StringWithAggregatesFilter<"role_filter_item"> | string
   value?: Prisma.StringNullableWithAggregatesFilter<"role_filter_item"> | string | null
   list_value?: Prisma.StringNullableListFilter<"role_filter_item">
@@ -284,7 +299,8 @@ export type role_filter_itemCreateInput = {
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
   priority?: $Enums.RoleFilterPriority
   non_negotiable?: boolean
-  role_filter: Prisma.role_filtersCreateNestedOneWithoutRole_filter_itemsInput
+  role_filter?: Prisma.role_filtersCreateNestedOneWithoutRole_filter_itemsInput
+  job_spec_import?: Prisma.job_spec_importCreateNestedOneWithoutRole_filter_itemsInput
   children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
 }
 
@@ -292,7 +308,8 @@ export type role_filter_itemUncheckedCreateInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  role_filter_id: string
+  role_filter_id?: string | null
+  job_spec_import_id?: string | null
   category: string
   value?: string | null
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
@@ -310,7 +327,8 @@ export type role_filter_itemUpdateInput = {
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
   priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
   non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  role_filter?: Prisma.role_filtersUpdateOneRequiredWithoutRole_filter_itemsNestedInput
+  role_filter?: Prisma.role_filtersUpdateOneWithoutRole_filter_itemsNestedInput
+  job_spec_import?: Prisma.job_spec_importUpdateOneWithoutRole_filter_itemsNestedInput
   children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
 }
 
@@ -318,7 +336,8 @@ export type role_filter_itemUncheckedUpdateInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  role_filter_id?: Prisma.StringFieldUpdateOperationsInput | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  job_spec_import_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
@@ -331,7 +350,8 @@ export type role_filter_itemCreateManyInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  role_filter_id: string
+  role_filter_id?: string | null
+  job_spec_import_id?: string | null
   category: string
   value?: string | null
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
@@ -354,7 +374,8 @@ export type role_filter_itemUncheckedUpdateManyInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  role_filter_id?: Prisma.StringFieldUpdateOperationsInput | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  job_spec_import_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
@@ -362,11 +383,22 @@ export type role_filter_itemUncheckedUpdateManyInput = {
   non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
+export type Role_filter_itemListRelationFilter = {
+  every?: Prisma.role_filter_itemWhereInput
+  some?: Prisma.role_filter_itemWhereInput
+  none?: Prisma.role_filter_itemWhereInput
+}
+
+export type role_filter_itemOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type role_filter_itemCountOrderByAggregateInput = {
   uid?: Prisma.SortOrder
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_filter_id?: Prisma.SortOrder
+  job_spec_import_id?: Prisma.SortOrder
   category?: Prisma.SortOrder
   value?: Prisma.SortOrder
   list_value?: Prisma.SortOrder
@@ -379,6 +411,7 @@ export type role_filter_itemMaxOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_filter_id?: Prisma.SortOrder
+  job_spec_import_id?: Prisma.SortOrder
   category?: Prisma.SortOrder
   value?: Prisma.SortOrder
   priority?: Prisma.SortOrder
@@ -390,6 +423,7 @@ export type role_filter_itemMinOrderByAggregateInput = {
   created?: Prisma.SortOrder
   updated?: Prisma.SortOrder
   role_filter_id?: Prisma.SortOrder
+  job_spec_import_id?: Prisma.SortOrder
   category?: Prisma.SortOrder
   value?: Prisma.SortOrder
   priority?: Prisma.SortOrder
@@ -401,14 +435,46 @@ export type Role_filter_itemScalarRelationFilter = {
   isNot?: Prisma.role_filter_itemWhereInput
 }
 
-export type Role_filter_itemListRelationFilter = {
-  every?: Prisma.role_filter_itemWhereInput
-  some?: Prisma.role_filter_itemWhereInput
-  none?: Prisma.role_filter_itemWhereInput
+export type role_filter_itemCreateNestedManyWithoutJob_spec_importInput = {
+  create?: Prisma.XOR<Prisma.role_filter_itemCreateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput> | Prisma.role_filter_itemCreateWithoutJob_spec_importInput[] | Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput[]
+  connectOrCreate?: Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput | Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput[]
+  createMany?: Prisma.role_filter_itemCreateManyJob_spec_importInputEnvelope
+  connect?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
 }
 
-export type role_filter_itemOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
+export type role_filter_itemUncheckedCreateNestedManyWithoutJob_spec_importInput = {
+  create?: Prisma.XOR<Prisma.role_filter_itemCreateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput> | Prisma.role_filter_itemCreateWithoutJob_spec_importInput[] | Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput[]
+  connectOrCreate?: Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput | Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput[]
+  createMany?: Prisma.role_filter_itemCreateManyJob_spec_importInputEnvelope
+  connect?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+}
+
+export type role_filter_itemUpdateManyWithoutJob_spec_importNestedInput = {
+  create?: Prisma.XOR<Prisma.role_filter_itemCreateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput> | Prisma.role_filter_itemCreateWithoutJob_spec_importInput[] | Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput[]
+  connectOrCreate?: Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput | Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput[]
+  upsert?: Prisma.role_filter_itemUpsertWithWhereUniqueWithoutJob_spec_importInput | Prisma.role_filter_itemUpsertWithWhereUniqueWithoutJob_spec_importInput[]
+  createMany?: Prisma.role_filter_itemCreateManyJob_spec_importInputEnvelope
+  set?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  disconnect?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  delete?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  connect?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  update?: Prisma.role_filter_itemUpdateWithWhereUniqueWithoutJob_spec_importInput | Prisma.role_filter_itemUpdateWithWhereUniqueWithoutJob_spec_importInput[]
+  updateMany?: Prisma.role_filter_itemUpdateManyWithWhereWithoutJob_spec_importInput | Prisma.role_filter_itemUpdateManyWithWhereWithoutJob_spec_importInput[]
+  deleteMany?: Prisma.role_filter_itemScalarWhereInput | Prisma.role_filter_itemScalarWhereInput[]
+}
+
+export type role_filter_itemUncheckedUpdateManyWithoutJob_spec_importNestedInput = {
+  create?: Prisma.XOR<Prisma.role_filter_itemCreateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput> | Prisma.role_filter_itemCreateWithoutJob_spec_importInput[] | Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput[]
+  connectOrCreate?: Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput | Prisma.role_filter_itemCreateOrConnectWithoutJob_spec_importInput[]
+  upsert?: Prisma.role_filter_itemUpsertWithWhereUniqueWithoutJob_spec_importInput | Prisma.role_filter_itemUpsertWithWhereUniqueWithoutJob_spec_importInput[]
+  createMany?: Prisma.role_filter_itemCreateManyJob_spec_importInputEnvelope
+  set?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  disconnect?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  delete?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  connect?: Prisma.role_filter_itemWhereUniqueInput | Prisma.role_filter_itemWhereUniqueInput[]
+  update?: Prisma.role_filter_itemUpdateWithWhereUniqueWithoutJob_spec_importInput | Prisma.role_filter_itemUpdateWithWhereUniqueWithoutJob_spec_importInput[]
+  updateMany?: Prisma.role_filter_itemUpdateManyWithWhereWithoutJob_spec_importInput | Prisma.role_filter_itemUpdateManyWithWhereWithoutJob_spec_importInput[]
+  deleteMany?: Prisma.role_filter_itemScalarWhereInput | Prisma.role_filter_itemScalarWhereInput[]
 }
 
 export type role_filter_itemCreatelist_valueInput = {
@@ -480,6 +546,74 @@ export type role_filter_itemUncheckedUpdateManyWithoutRole_filterNestedInput = {
   deleteMany?: Prisma.role_filter_itemScalarWhereInput | Prisma.role_filter_itemScalarWhereInput[]
 }
 
+export type role_filter_itemCreateWithoutJob_spec_importInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
+  role_filter?: Prisma.role_filtersCreateNestedOneWithoutRole_filter_itemsInput
+  children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
+}
+
+export type role_filter_itemUncheckedCreateWithoutJob_spec_importInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  role_filter_id?: string | null
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
+  children?: Prisma.role_filter_childUncheckedCreateNestedManyWithoutParentInput
+}
+
+export type role_filter_itemCreateOrConnectWithoutJob_spec_importInput = {
+  where: Prisma.role_filter_itemWhereUniqueInput
+  create: Prisma.XOR<Prisma.role_filter_itemCreateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput>
+}
+
+export type role_filter_itemCreateManyJob_spec_importInputEnvelope = {
+  data: Prisma.role_filter_itemCreateManyJob_spec_importInput | Prisma.role_filter_itemCreateManyJob_spec_importInput[]
+  skipDuplicates?: boolean
+}
+
+export type role_filter_itemUpsertWithWhereUniqueWithoutJob_spec_importInput = {
+  where: Prisma.role_filter_itemWhereUniqueInput
+  update: Prisma.XOR<Prisma.role_filter_itemUpdateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedUpdateWithoutJob_spec_importInput>
+  create: Prisma.XOR<Prisma.role_filter_itemCreateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedCreateWithoutJob_spec_importInput>
+}
+
+export type role_filter_itemUpdateWithWhereUniqueWithoutJob_spec_importInput = {
+  where: Prisma.role_filter_itemWhereUniqueInput
+  data: Prisma.XOR<Prisma.role_filter_itemUpdateWithoutJob_spec_importInput, Prisma.role_filter_itemUncheckedUpdateWithoutJob_spec_importInput>
+}
+
+export type role_filter_itemUpdateManyWithWhereWithoutJob_spec_importInput = {
+  where: Prisma.role_filter_itemScalarWhereInput
+  data: Prisma.XOR<Prisma.role_filter_itemUpdateManyMutationInput, Prisma.role_filter_itemUncheckedUpdateManyWithoutJob_spec_importInput>
+}
+
+export type role_filter_itemScalarWhereInput = {
+  AND?: Prisma.role_filter_itemScalarWhereInput | Prisma.role_filter_itemScalarWhereInput[]
+  OR?: Prisma.role_filter_itemScalarWhereInput[]
+  NOT?: Prisma.role_filter_itemScalarWhereInput | Prisma.role_filter_itemScalarWhereInput[]
+  uid?: Prisma.UuidFilter<"role_filter_item"> | string
+  created?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
+  updated?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
+  role_filter_id?: Prisma.UuidNullableFilter<"role_filter_item"> | string | null
+  job_spec_import_id?: Prisma.UuidNullableFilter<"role_filter_item"> | string | null
+  category?: Prisma.StringFilter<"role_filter_item"> | string
+  value?: Prisma.StringNullableFilter<"role_filter_item"> | string | null
+  list_value?: Prisma.StringNullableListFilter<"role_filter_item">
+  priority?: Prisma.EnumRoleFilterPriorityFilter<"role_filter_item"> | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFilter<"role_filter_item"> | boolean
+}
+
 export type role_filter_itemCreateWithoutChildrenInput = {
   uid?: string
   created?: Date | string
@@ -489,14 +623,16 @@ export type role_filter_itemCreateWithoutChildrenInput = {
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
   priority?: $Enums.RoleFilterPriority
   non_negotiable?: boolean
-  role_filter: Prisma.role_filtersCreateNestedOneWithoutRole_filter_itemsInput
+  role_filter?: Prisma.role_filtersCreateNestedOneWithoutRole_filter_itemsInput
+  job_spec_import?: Prisma.job_spec_importCreateNestedOneWithoutRole_filter_itemsInput
 }
 
 export type role_filter_itemUncheckedCreateWithoutChildrenInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
-  role_filter_id: string
+  role_filter_id?: string | null
+  job_spec_import_id?: string | null
   category: string
   value?: string | null
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
@@ -529,14 +665,16 @@ export type role_filter_itemUpdateWithoutChildrenInput = {
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
   priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
   non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  role_filter?: Prisma.role_filtersUpdateOneRequiredWithoutRole_filter_itemsNestedInput
+  role_filter?: Prisma.role_filtersUpdateOneWithoutRole_filter_itemsNestedInput
+  job_spec_import?: Prisma.job_spec_importUpdateOneWithoutRole_filter_itemsNestedInput
 }
 
 export type role_filter_itemUncheckedUpdateWithoutChildrenInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  role_filter_id?: Prisma.StringFieldUpdateOperationsInput | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  job_spec_import_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
@@ -553,6 +691,7 @@ export type role_filter_itemCreateWithoutRole_filterInput = {
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
   priority?: $Enums.RoleFilterPriority
   non_negotiable?: boolean
+  job_spec_import?: Prisma.job_spec_importCreateNestedOneWithoutRole_filter_itemsInput
   children?: Prisma.role_filter_childCreateNestedManyWithoutParentInput
 }
 
@@ -560,6 +699,7 @@ export type role_filter_itemUncheckedCreateWithoutRole_filterInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
+  job_spec_import_id?: string | null
   category: string
   value?: string | null
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
@@ -594,25 +734,61 @@ export type role_filter_itemUpdateManyWithWhereWithoutRole_filterInput = {
   data: Prisma.XOR<Prisma.role_filter_itemUpdateManyMutationInput, Prisma.role_filter_itemUncheckedUpdateManyWithoutRole_filterInput>
 }
 
-export type role_filter_itemScalarWhereInput = {
-  AND?: Prisma.role_filter_itemScalarWhereInput | Prisma.role_filter_itemScalarWhereInput[]
-  OR?: Prisma.role_filter_itemScalarWhereInput[]
-  NOT?: Prisma.role_filter_itemScalarWhereInput | Prisma.role_filter_itemScalarWhereInput[]
-  uid?: Prisma.UuidFilter<"role_filter_item"> | string
-  created?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
-  updated?: Prisma.DateTimeFilter<"role_filter_item"> | Date | string
-  role_filter_id?: Prisma.UuidFilter<"role_filter_item"> | string
-  category?: Prisma.StringFilter<"role_filter_item"> | string
-  value?: Prisma.StringNullableFilter<"role_filter_item"> | string | null
-  list_value?: Prisma.StringNullableListFilter<"role_filter_item">
-  priority?: Prisma.EnumRoleFilterPriorityFilter<"role_filter_item"> | $Enums.RoleFilterPriority
-  non_negotiable?: Prisma.BoolFilter<"role_filter_item"> | boolean
+export type role_filter_itemCreateManyJob_spec_importInput = {
+  uid?: string
+  created?: Date | string
+  updated?: Date | string
+  role_filter_id?: string | null
+  category: string
+  value?: string | null
+  list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
+  priority?: $Enums.RoleFilterPriority
+  non_negotiable?: boolean
+}
+
+export type role_filter_itemUpdateWithoutJob_spec_importInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role_filter?: Prisma.role_filtersUpdateOneWithoutRole_filter_itemsNestedInput
+  children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
+}
+
+export type role_filter_itemUncheckedUpdateWithoutJob_spec_importInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  children?: Prisma.role_filter_childUncheckedUpdateManyWithoutParentNestedInput
+}
+
+export type role_filter_itemUncheckedUpdateManyWithoutJob_spec_importInput = {
+  uid?: Prisma.StringFieldUpdateOperationsInput | string
+  created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  role_filter_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
+  priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
+  non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type role_filter_itemCreateManyRole_filterInput = {
   uid?: string
   created?: Date | string
   updated?: Date | string
+  job_spec_import_id?: string | null
   category: string
   value?: string | null
   list_value?: Prisma.role_filter_itemCreatelist_valueInput | string[]
@@ -629,6 +805,7 @@ export type role_filter_itemUpdateWithoutRole_filterInput = {
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
   priority?: Prisma.EnumRoleFilterPriorityFieldUpdateOperationsInput | $Enums.RoleFilterPriority
   non_negotiable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  job_spec_import?: Prisma.job_spec_importUpdateOneWithoutRole_filter_itemsNestedInput
   children?: Prisma.role_filter_childUpdateManyWithoutParentNestedInput
 }
 
@@ -636,6 +813,7 @@ export type role_filter_itemUncheckedUpdateWithoutRole_filterInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  job_spec_import_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
@@ -648,6 +826,7 @@ export type role_filter_itemUncheckedUpdateManyWithoutRole_filterInput = {
   uid?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  job_spec_import_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   list_value?: Prisma.role_filter_itemUpdatelist_valueInput | string[]
@@ -691,12 +870,14 @@ export type role_filter_itemSelect<ExtArgs extends runtime.Types.Extensions.Inte
   created?: boolean
   updated?: boolean
   role_filter_id?: boolean
+  job_spec_import_id?: boolean
   category?: boolean
   value?: boolean
   list_value?: boolean
   priority?: boolean
   non_negotiable?: boolean
-  role_filter?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_filter_item$role_filterArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.role_filter_item$job_spec_importArgs<ExtArgs>
   children?: boolean | Prisma.role_filter_item$childrenArgs<ExtArgs>
   _count?: boolean | Prisma.Role_filter_itemCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["role_filter_item"]>
@@ -706,12 +887,14 @@ export type role_filter_itemSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   created?: boolean
   updated?: boolean
   role_filter_id?: boolean
+  job_spec_import_id?: boolean
   category?: boolean
   value?: boolean
   list_value?: boolean
   priority?: boolean
   non_negotiable?: boolean
-  role_filter?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_filter_item$role_filterArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.role_filter_item$job_spec_importArgs<ExtArgs>
 }, ExtArgs["result"]["role_filter_item"]>
 
 export type role_filter_itemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -719,12 +902,14 @@ export type role_filter_itemSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   created?: boolean
   updated?: boolean
   role_filter_id?: boolean
+  job_spec_import_id?: boolean
   category?: boolean
   value?: boolean
   list_value?: boolean
   priority?: boolean
   non_negotiable?: boolean
-  role_filter?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_filter_item$role_filterArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.role_filter_item$job_spec_importArgs<ExtArgs>
 }, ExtArgs["result"]["role_filter_item"]>
 
 export type role_filter_itemSelectScalar = {
@@ -732,6 +917,7 @@ export type role_filter_itemSelectScalar = {
   created?: boolean
   updated?: boolean
   role_filter_id?: boolean
+  job_spec_import_id?: boolean
   category?: boolean
   value?: boolean
   list_value?: boolean
@@ -739,30 +925,35 @@ export type role_filter_itemSelectScalar = {
   non_negotiable?: boolean
 }
 
-export type role_filter_itemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_filter_id" | "category" | "value" | "list_value" | "priority" | "non_negotiable", ExtArgs["result"]["role_filter_item"]>
+export type role_filter_itemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "role_filter_id" | "job_spec_import_id" | "category" | "value" | "list_value" | "priority" | "non_negotiable", ExtArgs["result"]["role_filter_item"]>
 export type role_filter_itemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  role_filter?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_filter_item$role_filterArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.role_filter_item$job_spec_importArgs<ExtArgs>
   children?: boolean | Prisma.role_filter_item$childrenArgs<ExtArgs>
   _count?: boolean | Prisma.Role_filter_itemCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type role_filter_itemIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  role_filter?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_filter_item$role_filterArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.role_filter_item$job_spec_importArgs<ExtArgs>
 }
 export type role_filter_itemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  role_filter?: boolean | Prisma.role_filtersDefaultArgs<ExtArgs>
+  role_filter?: boolean | Prisma.role_filter_item$role_filterArgs<ExtArgs>
+  job_spec_import?: boolean | Prisma.role_filter_item$job_spec_importArgs<ExtArgs>
 }
 
 export type $role_filter_itemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "role_filter_item"
   objects: {
-    role_filter: Prisma.$role_filtersPayload<ExtArgs>
+    role_filter: Prisma.$role_filtersPayload<ExtArgs> | null
+    job_spec_import: Prisma.$job_spec_importPayload<ExtArgs> | null
     children: Prisma.$role_filter_childPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     uid: string
     created: Date
     updated: Date
-    role_filter_id: string
+    role_filter_id: string | null
+    job_spec_import_id: string | null
     category: string
     value: string | null
     list_value: string[]
@@ -1162,7 +1353,8 @@ readonly fields: role_filter_itemFieldRefs;
  */
 export interface Prisma__role_filter_itemClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  role_filter<T extends Prisma.role_filtersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filtersDefaultArgs<ExtArgs>>): Prisma.Prisma__role_filtersClient<runtime.Types.Result.GetResult<Prisma.$role_filtersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  role_filter<T extends Prisma.role_filter_item$role_filterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filter_item$role_filterArgs<ExtArgs>>): Prisma.Prisma__role_filtersClient<runtime.Types.Result.GetResult<Prisma.$role_filtersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  job_spec_import<T extends Prisma.role_filter_item$job_spec_importArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filter_item$job_spec_importArgs<ExtArgs>>): Prisma.Prisma__job_spec_importClient<runtime.Types.Result.GetResult<Prisma.$job_spec_importPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   children<T extends Prisma.role_filter_item$childrenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.role_filter_item$childrenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_filter_childPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1197,6 +1389,7 @@ export interface role_filter_itemFieldRefs {
   readonly created: Prisma.FieldRef<"role_filter_item", 'DateTime'>
   readonly updated: Prisma.FieldRef<"role_filter_item", 'DateTime'>
   readonly role_filter_id: Prisma.FieldRef<"role_filter_item", 'String'>
+  readonly job_spec_import_id: Prisma.FieldRef<"role_filter_item", 'String'>
   readonly category: Prisma.FieldRef<"role_filter_item", 'String'>
   readonly value: Prisma.FieldRef<"role_filter_item", 'String'>
   readonly list_value: Prisma.FieldRef<"role_filter_item", 'String[]'>
@@ -1600,6 +1793,44 @@ export type role_filter_itemDeleteManyArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many role_filter_items to delete.
    */
   limit?: number
+}
+
+/**
+ * role_filter_item.role_filter
+ */
+export type role_filter_item$role_filterArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the role_filters
+   */
+  select?: Prisma.role_filtersSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the role_filters
+   */
+  omit?: Prisma.role_filtersOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.role_filtersInclude<ExtArgs> | null
+  where?: Prisma.role_filtersWhereInput
+}
+
+/**
+ * role_filter_item.job_spec_import
+ */
+export type role_filter_item$job_spec_importArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the job_spec_import
+   */
+  select?: Prisma.job_spec_importSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the job_spec_import
+   */
+  omit?: Prisma.job_spec_importOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.job_spec_importInclude<ExtArgs> | null
+  where?: Prisma.job_spec_importWhereInput
 }
 
 /**
