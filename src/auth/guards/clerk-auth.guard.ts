@@ -19,7 +19,7 @@ export class ClerkAuthGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<Request>();
     const token = extractBearerToken(req);
 
-    this.logger.debug(`Validating token: ${token}`);
+    //this.logger.debug(`Validating token: ${token}`);
 
     if (!token) {
       throw new UnauthorizedException(

@@ -14,6 +14,24 @@ import utc from 'dayjs/plugin/utc';
 
 dayjs.extend(utc);
 
+// pdf-parse's "fake worker" (its Node fallback for a real Worker thread)
+// loads pdf.worker.mjs via a dynamically-constructed path at request time,
+// invisible to Vercel's build-time file tracer — so the file silently gets
+// dropped from the deployed function and that load fails in production
+// with "Cannot find module .../pdf.worker.mjs". A literal, statically-
+// resolvable require.resolve() call here is enough for the tracer to pick
+// the file up and include it, regardless of which file Vercel treats as
+// the actual serverless entrypoint. Wrapped in try/catch since Jest's
+// resolver doesn't resolve .mjs subpaths the way Node's real require does
+// (irrelevant to the tracer, which works via static analysis, not
+// execution) — the resolved path itself is never actually used.
+try {
+  require.resolve('pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs');
+} catch {
+  // Resolution failing here (e.g. under Jest) has no effect on Vercel's
+  // build-time tracing — see comment above.
+}
+
 @Injectable()
 export class JobSpecImportService {
   private readonly logger = new Logger(JobSpecImportService.name);

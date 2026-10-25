@@ -3,7 +3,7 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 300,
-      "includeFiles": "node_modules/@countrystatecity/countries/dist/data/**"
+      "includeFiles": "node_modules/{@countrystatecity/countries/dist/data/**,pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs}"
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
