@@ -775,6 +775,70 @@ describe('GoogleSearchService', () => {
     });
   });
 
+  describe('with SEARCH_PROVIDER=serper', () => {
+    it('sends the same x-ray query with the role country, and keeps paging past a short Google page', async () => {
+      const serper = new GoogleSearchService({
+        searchProvider: 'serper',
+        serperApiKey: 'test-serper-key',
+      } as any);
+      const post = jest
+        .spyOn(serper.client, 'post')
+        .mockResolvedValueOnce({
+          data: { organic: buildPage(0, 9) },
+        })
+        .mockResolvedValueOnce({ data: { organic: buildPage(9, 25) } })
+        .mockResolvedValue({ data: { organic: [] } });
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Financial Manager'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+        education: [
+          {
+            value: {
+              qualifications: ['CA(SA)'],
+              institutions: [],
+              institutionType: 'include',
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+        location: {
+          value: {
+            countryCode: 'ZA',
+            regions: [],
+            remoteWork: false,
+            workAuthorizationRequired: false,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+        },
+      });
+
+      const result = await serper.search(filters);
+
+      const [expectedQuery] = (serper as any).buildXrayQueries(
+        filters,
+        undefined,
+        [],
+      );
+      expect(post.mock.calls[0][1]).toEqual({
+        q: expectedQuery,
+        num: 10,
+        page: 1,
+        gl: 'za',
+      });
+      expect(post.mock.calls[1][1]).toMatchObject({ page: 2 });
+      expect(expectedQuery).toContain('"South Africa"');
+      expect(expectedQuery).toContain('"CA(SA)"');
+      expect(result).toHaveLength(34);
+    });
+  });
+
   describe('searchCandidate', () => {
     it('makes no request and returns no items when the candidate has no name', async () => {
       const get = jest.spyOn(service.client, 'get');

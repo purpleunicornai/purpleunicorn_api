@@ -10,6 +10,12 @@ import {
   qualificationAliases,
   resolveRegionNames,
 } from '../../roles/search/filter-terms';
+import {
+  createSearchProvider,
+  PAGE_SIZE,
+  SearchProvider,
+  SearchProviderKeys,
+} from './search-providers';
 
 type CandidateWithExperience = candidate & {
   experience: candidate_experience[];
@@ -26,10 +32,10 @@ export interface GoogleSearchItem {
   [key: string]: unknown;
 }
 
-// Google's Custom Search JSON API caps a single request at 10 results (`num`)
-// and paginates via `start`; `start` + `num` - 1 cannot exceed 100, so 100
-// results per query is a hard ceiling the API enforces, not a choice made here.
-const RESULTS_PER_PAGE = 10;
+// Every backend pages 10 results at a time. 100 per query was Google CSE's
+// hard cap (start + num - 1 <= 100) and is kept for the SERP backends too,
+// so each query costs at most 10 billed calls whichever backend runs it.
+const RESULTS_PER_PAGE = PAGE_SIZE;
 const MAX_RESULTS_PER_QUERY = 100;
 // A candidate deep-search is about precisely finding one person, not casting
 // a wide net, so it doesn't need the role-search's full 100-result budget.
@@ -44,15 +50,20 @@ const RELAX_BELOW_RESULTS = 30;
 export class GoogleSearchService {
   private readonly logger = new Logger(GoogleSearchService.name);
   public client: AxiosInstance;
+  private readonly provider: SearchProvider;
 
+  // SEARCH_PROVIDER picks the backend (google | serper | serpapi); unset
+  // means Google CSE, so nothing changes until it's flipped.
   constructor(
     @Inject(AiConfig.KEY)
-    private readonly aiConf: Pick<
+    aiConf: Pick<
       ConfigType<typeof AiConfig>,
       'googleSearchApiKey' | 'googleSearchEngineId'
-    >,
+    > &
+      SearchProviderKeys,
   ) {
     this.client = axios.create({ timeout: 20_000 });
+    this.provider = createSearchProvider(this.client, aiConf);
   }
 
   async search(
@@ -62,10 +73,13 @@ export class GoogleSearchService {
     const regionNames = filters.location
       ? await resolveRegionNames(filters.location.value)
       : [];
+    const countryCode = filters.location?.value.countryCode || undefined;
     const queries = this.buildXrayQueries(filters, roleName, regionNames);
     this.logger.debug(`Running ${queries.length} Google x-ray query(s)`);
 
-    const strict = this.dedupeByLink(await this.runQueries(queries));
+    const strict = this.dedupeByLink(
+      await this.runQueries(queries, countryCode),
+    );
     if (strict.length >= RELAX_BELOW_RESULTS) return strict;
 
     const relaxed = this.buildXrayQueries(
@@ -79,12 +93,20 @@ export class GoogleSearchService {
     this.logger.debug(
       `Only ${strict.length} result(s); running ${relaxed.length} relaxed query(s)`,
     );
-    return this.dedupeByLink([...strict, ...(await this.runQueries(relaxed))]);
+    return this.dedupeByLink([
+      ...strict,
+      ...(await this.runQueries(relaxed, countryCode)),
+    ]);
   }
 
-  private async runQueries(queries: string[]): Promise<GoogleSearchItem[]> {
+  private async runQueries(
+    queries: string[],
+    countryCode?: string,
+  ): Promise<GoogleSearchItem[]> {
     const results = await Promise.all(
-      queries.map((query) => this.searchQueryPaginated(query)),
+      queries.map((query) =>
+        this.searchQueryPaginated(query, MAX_RESULTS_PER_QUERY, countryCode),
+      ),
     );
     return results.flat();
   }
@@ -131,6 +153,7 @@ export class GoogleSearchService {
   private async searchQueryPaginated(
     query: string,
     maxResults = MAX_RESULTS_PER_QUERY,
+    countryCode?: string,
   ): Promise<GoogleSearchItem[]> {
     const items: GoogleSearchItem[] = [];
 
@@ -139,37 +162,26 @@ export class GoogleSearchService {
     // query's results. Keep what this query already found and move on.
     try {
       for (let start = 1; start <= maxResults; start += RESULTS_PER_PAGE) {
-        const page = await this.searchQuery(query, start);
-        items.push(...page);
+        const page = await this.searchQuery(query, start, countryCode);
+        items.push(...page.items);
 
-        if (page.length < RESULTS_PER_PAGE) break;
+        if (!page.hasMore) break;
       }
     } catch (error) {
       this.logger.warn(
-        `Google query failed after ${items.length} result(s): ${error instanceof Error ? error.message : String(error)}`,
+        `${this.provider.name} query failed after ${items.length} result(s): ${error instanceof Error ? error.message : String(error)}`,
       );
     }
 
     return items;
   }
 
-  private async searchQuery(
-    query: string,
-    start = 1,
-  ): Promise<GoogleSearchItem[]> {
+  private searchQuery(query: string, start: number, countryCode?: string) {
     console.log('QUERY', query);
-    const params = {
-      key: this.aiConf.googleSearchApiKey,
-      cx: this.aiConf.googleSearchEngineId,
-      q: query,
-      num: String(RESULTS_PER_PAGE),
-      start: String(start),
-    };
-    const requestUrl = `https://www.googleapis.com/customsearch/v1?${new URLSearchParams(params).toString()}`;
-
-    this.logger.debug(`Running Google search: ${query} (start=${start})`);
-    const response = await this.client.get(requestUrl);
-    return response.data.items ?? [];
+    this.logger.debug(
+      `Running ${this.provider.name} search: ${query} (start=${start})`,
+    );
+    return this.provider.fetchPage({ query, start, countryCode });
   }
 
   private buildSiteFilter(): string {
