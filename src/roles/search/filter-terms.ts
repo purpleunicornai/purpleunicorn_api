@@ -1,5 +1,5 @@
 import { getStateByCode } from '@countrystatecity/countries';
-import { ParsedLocation } from './role-filter-parser';
+import { ParsedLocation, ParsedRoleFilters } from './role-filter-parser';
 
 // Professional designations recruiters type in shorthand that profiles
 // spell several ways. Each key is a normalizeTerm() form; the first alias is
@@ -55,6 +55,38 @@ export function sameCountry(
   if (value.toUpperCase() === requiredCode.trim().toUpperCase()) return true;
   const name = countryName(requiredCode);
   return !!name && normalizeTerm(value) === normalizeTerm(name);
+}
+
+// The country to enforce as a hard requirement, or undefined when location
+// is only a preference. ESSENTIAL counts as required here: recruiters set a
+// country as "essential" and expect people elsewhere to be dropped, not just
+// ranked lower. Remote roles are never country-gated.
+export function requiredCountryCode(
+  filters: ParsedRoleFilters,
+): string | undefined {
+  const location = filters.location;
+  if (!location?.value.countryCode || location.value.remoteWork) {
+    return undefined;
+  }
+  if (location.priority !== 'ESSENTIAL' && !location.nonNegotiable) {
+    return undefined;
+  }
+  return location.value.countryCode;
+}
+
+// True only when the candidate's country is known, differs from the
+// required one, and they haven't said they'd relocate. An unknown country
+// is left to scoring rather than dropped.
+export function isKnownWrongCountry(
+  filters: ParsedRoleFilters,
+  candidateCountry: string | null | undefined,
+  openToRelocation: boolean | null | undefined,
+): boolean {
+  const required = requiredCountryCode(filters);
+  if (!required || !candidateCountry?.trim() || openToRelocation === true) {
+    return false;
+  }
+  return !sameCountry(candidateCountry, required);
 }
 
 // The filter UI stores the state/province as its ISO code (e.g. "WC"), which

@@ -215,8 +215,9 @@ export class GoogleSearchService {
   ): string {
     const location = filters.location?.value;
     if (!location) return '';
-    const regions =
-      regionNames ?? location.regions.map((region) => region.value);
+    const regions = (
+      regionNames ?? location.regions.map((region) => region.value)
+    ).filter((region) => region.trim());
     if (regions.length > 0) return this.orClause(regions);
     const country = countryName(location.countryCode);
     return country ? this.quote(country) : '';

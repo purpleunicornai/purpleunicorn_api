@@ -1,4 +1,5 @@
 import { parseRoleFilters } from './role-filter-parser';
+import { GoogleSearchService } from '../../services/google-search/google-search.service';
 import {
   role_filter_item,
   role_filter_child,
@@ -64,6 +65,75 @@ describe('parseRoleFilters', () => {
       priority: 'ESSENTIAL',
       nonNegotiable: false,
     });
+  });
+
+  it('keeps the strictest of several location rows and drops blank regions', () => {
+    // Shape copied from a real role: an ESSENTIAL ZA row saved with a blank
+    // province, then an OPTIONAL ZA row with Gauteng.
+    const items = [
+      buildItem({
+        uid: 'loc-1',
+        category: 'location',
+        value: 'ZA',
+        priority: 'ESSENTIAL',
+        children: [buildChild({ title: 'province', value: '' })],
+      }),
+      buildItem({
+        uid: 'loc-2',
+        category: 'location',
+        value: 'ZA',
+        priority: 'OPTIONAL',
+        children: [buildChild({ title: 'province', value: 'GP' })],
+      }),
+    ];
+
+    const result = parseRoleFilters(items);
+
+    expect(result.location).toEqual({
+      value: {
+        countryCode: 'ZA',
+        regions: [{ type: 'province', value: 'GP' }],
+        remoteWork: false,
+        workAuthorizationRequired: false,
+      },
+      priority: 'ESSENTIAL',
+      nonNegotiable: false,
+    });
+  });
+
+  it('turns saved ZA + CA(SA) rows into a Google query scoped to South Africa with the CA(SA) aliases', () => {
+    const items = [
+      buildItem({
+        uid: 'title',
+        category: 'job_titles',
+        list_value: ['Financial Manager'],
+        children: [buildChild({ title: 'title_option', value: 'main_title' })],
+      }),
+      buildItem({
+        uid: 'loc',
+        category: 'location',
+        value: 'ZA',
+        priority: 'OPTIONAL',
+        children: [buildChild({ title: 'province', value: '' })],
+      }),
+      buildItem({
+        uid: 'edu',
+        category: 'education',
+        list_value: ['CA (SA)'],
+        priority: 'OPTIONAL',
+      }),
+    ];
+    const google = new GoogleSearchService({
+      googleSearchApiKey: 'k',
+      googleSearchEngineId: 'cx',
+    });
+
+    const [query] = (google as any).buildXrayQueries(
+      parseRoleFilters(items),
+    ) as string[];
+
+    expect(query).toContain('"South Africa"');
+    expect(query).toContain('("CA(SA)" OR "Chartered Accountant" OR SAICA)');
   });
 
   it('reads remote_work and work_authorization booleans from location children', () => {

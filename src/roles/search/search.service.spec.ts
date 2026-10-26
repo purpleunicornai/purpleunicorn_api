@@ -840,6 +840,46 @@ describe('SearchService', () => {
       });
     });
 
+    it('does not save a new candidate known to be outside an essential country', async () => {
+      const role = buildRole();
+      prisma.role_filters.findFirst.mockResolvedValue(
+        buildStoredFilterSet({
+          role_filter_items: [
+            buildFilterItem(),
+            buildFilterItem({
+              uid: 'item-loc',
+              category: 'location',
+              value: 'ZA',
+              list_value: [],
+            }),
+          ],
+        }),
+      );
+      googleSearchService.search.mockResolvedValue([
+        { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
+      ]);
+      geminiService.formatCandidates.mockResolvedValue({
+        matches: [
+          {
+            candidate: buildCandidateFields({
+              current_location_country_code: 'US',
+              open_to_relocation: false,
+            }),
+            summary: 'US based',
+            reasoning: 'Wrong country.',
+            skills_matched: [],
+            score: 70,
+          },
+        ],
+        tokensUsed: 50,
+      });
+
+      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+
+      expect(prisma.candidate.create).not.toHaveBeenCalled();
+      expect(prisma.role_result.create).not.toHaveBeenCalled();
+    });
+
     it('stamps search_run_date on the filter set even when no candidates are found', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());

@@ -1,5 +1,7 @@
+import { ParsedRoleFilters } from './role-filter-parser';
 import {
   countryName,
+  isKnownWrongCountry,
   qualificationAliases,
   resolveRegionNames,
   sameCountry,
@@ -44,6 +46,41 @@ describe('filter-terms', () => {
     expect(sameCountry('South Africa', 'ZA')).toBe(true);
     expect(sameCountry('US', 'ZA')).toBe(false);
     expect(sameCountry(null, 'ZA')).toBe(false);
+  });
+
+  it('flags only a known, different country when the location is required', () => {
+    const filters = (
+      priority: 'ESSENTIAL' | 'OPTIONAL',
+      remoteWork = false,
+    ): ParsedRoleFilters => ({
+      jobTitles: [],
+      skills: [],
+      languages: [],
+      companies: [],
+      education: [],
+      location: {
+        value: {
+          countryCode: 'ZA',
+          regions: [],
+          remoteWork,
+          workAuthorizationRequired: false,
+        },
+        priority,
+        nonNegotiable: false,
+      },
+    });
+
+    expect(isKnownWrongCountry(filters('ESSENTIAL'), 'US', false)).toBe(true);
+    expect(isKnownWrongCountry(filters('ESSENTIAL'), 'za', false)).toBe(false);
+    expect(
+      isKnownWrongCountry(filters('ESSENTIAL'), 'South Africa', null),
+    ).toBe(false);
+    expect(isKnownWrongCountry(filters('ESSENTIAL'), null, false)).toBe(false);
+    expect(isKnownWrongCountry(filters('ESSENTIAL'), 'US', true)).toBe(false);
+    expect(isKnownWrongCountry(filters('OPTIONAL'), 'US', false)).toBe(false);
+    expect(isKnownWrongCountry(filters('ESSENTIAL', true), 'US', false)).toBe(
+      false,
+    );
   });
 
   it('resolves stored province codes to names and passes city names through', async () => {

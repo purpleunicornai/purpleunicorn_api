@@ -39,6 +39,7 @@ import {
 } from './candidate-scoring.service';
 import { ExistingCandidateSearchService } from './existing-candidate-search.service';
 import { GithubSearchService } from '../../services/github/github-search.service';
+import { isKnownWrongCountry } from './filter-terms';
 
 // Both a freshly-extracted match (GeminiCandidateMatch) and an
 // already-known candidate's judgment (GeminiKnownCandidateMatch) carry
@@ -610,6 +611,21 @@ export class SearchService {
 
     const roleResults: role_result[] = [];
     for (const match of result.matches) {
+      // Google still returns some people outside a required country (a
+      // profile can mention "South Africa" without being based there), so
+      // drop anyone whose stated country is known to be wrong.
+      if (
+        isKnownWrongCountry(
+          filters,
+          match.candidate.current_location_country_code,
+          match.candidate.open_to_relocation,
+        )
+      ) {
+        this.logger.debug(
+          `Skipping ${match.candidate.source_url ?? 'result'}: based in ${match.candidate.current_location_country_code}`,
+        );
+        continue;
+      }
       const candidateRecord = await this.upsertCandidate(match.candidate);
       const scoreResult = this.candidateScoringService.scoreCandidate(
         filters,
