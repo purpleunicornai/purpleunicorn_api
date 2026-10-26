@@ -764,6 +764,7 @@ describe('SearchService', () => {
       expect(candidateScoringService.scoreCandidate).toHaveBeenCalledWith(
         expect.anything(),
         candidate,
+        { qualifications: undefined },
       );
       expect(prisma.role_result.create).toHaveBeenCalledWith({
         data: {

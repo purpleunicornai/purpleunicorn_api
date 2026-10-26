@@ -138,8 +138,83 @@ describe('GoogleSearchService', () => {
         '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
           'site:stackoverflow.com/users OR site:researchgate.net OR site:about.me OR ' +
           'site:behance.net OR site:dribbble.com OR site:angel.co OR site:wellfound.com OR ' +
-          'site:kaggle.com OR site:medium.com OR site:dev.to) "Software Engineer" TypeScript AWS "New York"',
+          'site:kaggle.com OR site:medium.com OR site:dev.to) "Software Engineer" "New York" TypeScript AWS',
       );
+    });
+
+    it('scopes to the country name and requires the education qualification (or an alias) right after the title', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Financial Manager'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+        skills: [
+          { value: ['IFRS'], priority: 'ESSENTIAL', nonNegotiable: false },
+        ],
+        education: [
+          {
+            value: {
+              qualifications: ['CA(SA)'],
+              institutions: [],
+              institutionType: 'include',
+            },
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+          },
+        ],
+        location: {
+          value: {
+            countryCode: 'ZA',
+            regions: [],
+            remoteWork: false,
+            workAuthorizationRequired: false,
+          },
+          priority: 'OPTIONAL',
+          nonNegotiable: false,
+        },
+      });
+
+      const [query] = (service as any).buildXrayQueries(filters);
+
+      expect(query).toMatch(
+        /\) "Financial Manager" "South Africa" \("CA\(SA\)" OR "Chartered Accountant" OR SAICA\) IFRS$/,
+      );
+    });
+
+    it('uses resolved region names instead of the stored province code', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Accountant'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+        location: {
+          value: {
+            countryCode: 'ZA',
+            regions: [
+              { type: 'province', value: 'WC' },
+              { type: 'province', value: 'Cape Town' },
+            ],
+            remoteWork: false,
+            workAuthorizationRequired: false,
+          },
+          priority: 'ESSENTIAL',
+          nonNegotiable: false,
+        },
+      });
+
+      const [query] = (service as any).buildXrayQueries(filters, undefined, [
+        'Western Cape',
+        'Cape Town',
+      ]);
+
+      expect(query).toContain('Accountant ("Western Cape" OR "Cape Town")');
+      expect(query).not.toContain(' WC');
     });
 
     it('OR-groups optional skills', () => {

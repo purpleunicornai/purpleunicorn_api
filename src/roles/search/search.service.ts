@@ -614,6 +614,7 @@ export class SearchService {
       const scoreResult = this.candidateScoringService.scoreCandidate(
         filters,
         candidateRecord,
+        { qualifications: match.qualifications_matched },
       );
       // Gemini is instructed to copy source_url verbatim from the input
       // item's link, so it doubles as the key for recovering which engine

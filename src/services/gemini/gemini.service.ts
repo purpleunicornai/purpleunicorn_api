@@ -8,6 +8,7 @@ import { GoogleSearchItem } from '../google-search/google-search.service';
 import { candidate, candidate_source } from '../../generated/prisma/client';
 import { InstitutionType } from '../../generated/prisma/enums';
 import { CandidateWithHistory } from '../../roles/search/candidate-scoring.service';
+import { countryName } from '../../roles/search/filter-terms';
 
 // Exported so callers persisting a role_result's ai_platform/ai_model
 // (SearchService) can record exactly which model actually produced the
@@ -56,6 +57,10 @@ const matchSchema = z.object({
   summary: z.string(),
   reasoning: z.string(),
   skills_matched: z.array(z.string()),
+  // Education criteria the result shows evidence of, copied from the
+  // criteria verbatim. Kept off candidateSchema because the candidate table
+  // has no column for it — it only feeds CandidateScoringService.
+  qualifications_matched: z.array(z.string()).optional(),
   score: z.number().int().min(0).max(100),
 });
 
@@ -424,6 +429,8 @@ export class GeminiService {
       ...filters.education.map((row) => ({
         category: 'education',
         qualifications: row.value.qualifications,
+        institutions: row.value.institutions,
+        institutionType: row.value.institutionType,
         priority: row.priority,
         nonNegotiable: row.nonNegotiable,
       })),
@@ -432,6 +439,7 @@ export class GeminiService {
             {
               category: 'location',
               countryCode: filters.location.value.countryCode,
+              country: countryName(filters.location.value.countryCode),
               regions: filters.location.value.regions,
               remoteWork: filters.location.value.remoteWork,
               priority: filters.location.priority,
@@ -485,6 +493,9 @@ export class GeminiService {
       'Set "source_title" to the search result\'s title verbatim, "source_name" to the platform the result came from (e.g. "LinkedIn"), and "source_url" to the result\'s link — include "source_url" only if one is actually present.',
       'When a result includes an "image" URL, copy it verbatim into "image_url" — do not fabricate one when it is absent.',
       'Do not guess contact details (email, phone) unless they literally appear in the text.',
+      'Set "current_location_country_code" to the ISO 3166-1 alpha-2 code of where the person is based (e.g. "ZA", "US", "GB") only when the result states or clearly implies it; omit it otherwise.',
+      'Set "qualifications_matched" to the education qualifications from the criteria (copied verbatim from the criteria) that the result shows evidence of — e.g. "CA(SA)" when the result says "CA (SA)" or "Chartered Accountant (SA)". Leave it empty when there is no evidence.',
+      'Location and education criteria are real requirements, not keywords: a candidate based outside the required country (and not shown to be open to relocation), or with no evidence of a required qualification, must get a low "score" and the reasoning must say so.',
       'Then compare the candidate against the role criteria below: each criterion has a "priority" ("ESSENTIAL" or "OPTIONAL") and a "nonNegotiable" flag — weigh ESSENTIAL and non-negotiable criteria most heavily. Write a short "summary" explaining how well they match, a more detailed "reasoning" for that assessment, a "skills_matched" array listing which required/optional skills they actually have evidence of, and a "score" from 0-100 rating the overall match quality.',
       '',
       `Role criteria: ${JSON.stringify(criteria)}`,

@@ -443,6 +443,55 @@ describe('CandidateScoringService', () => {
     });
   });
 
+  describe('education designations like CA(SA)', () => {
+    const caFilters = (nonNegotiable = false) =>
+      buildFilters({
+        education: [
+          {
+            value: {
+              qualifications: ['CA(SA)'],
+              institutions: [],
+              institutionType: 'include',
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable,
+          },
+        ],
+      });
+
+    it('credits the designation when it appears in the headline, however it is punctuated', () => {
+      const candidate = buildCandidate({
+        current_title: 'Financial Manager | CA (SA)',
+      });
+
+      const result = service.scoreCandidate(caFilters(), candidate);
+
+      expect(findCategory(result.breakdown, 'education')).toEqual(
+        expect.objectContaining({ earned: 80 }),
+      );
+    });
+
+    it('credits evidence Gemini read off the search result', () => {
+      const result = service.scoreCandidate(caFilters(), buildCandidate(), {
+        qualifications: ['CA(SA)'],
+      });
+
+      expect(findCategory(result.breakdown, 'education')).toEqual(
+        expect.objectContaining({ earned: 80 }),
+      );
+    });
+
+    it('does not match inside unrelated words', () => {
+      const candidate = buildCandidate({
+        summary: 'Finance lead in Casablanca',
+      });
+
+      const result = service.scoreCandidate(caFilters(true), candidate);
+
+      expect(result.disqualified).toBe(true);
+    });
+  });
+
   describe('companies category', () => {
     it('awards full credit when the candidate has worked at one of the included companies', () => {
       const filters = buildFilters({
@@ -516,6 +565,40 @@ describe('CandidateScoringService', () => {
   });
 
   describe('location category', () => {
+    const zaFilters = buildFilters({
+      location: {
+        value: {
+          countryCode: 'ZA',
+          regions: [],
+          remoteWork: false,
+          workAuthorizationRequired: false,
+        },
+        priority: 'ESSENTIAL',
+        nonNegotiable: true,
+      },
+    });
+
+    it.each(['ZA', 'za', 'South Africa'])(
+      'treats a candidate country of %s as the required ZA',
+      (country) => {
+        const result = service.scoreCandidate(
+          zaFilters,
+          buildCandidate({ current_location_country_code: country }),
+        );
+
+        expect(result.disqualified).toBe(false);
+      },
+    );
+
+    it('disqualifies a US-based candidate when South Africa is non-negotiable', () => {
+      const result = service.scoreCandidate(
+        zaFilters,
+        buildCandidate({ current_location_country_code: 'US' }),
+      );
+
+      expect(result.disqualified).toBe(true);
+    });
+
     it('awards full credit when the candidate is in the required country', () => {
       const filters = buildFilters({
         location: {

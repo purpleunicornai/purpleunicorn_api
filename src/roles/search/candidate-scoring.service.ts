@@ -5,6 +5,11 @@ import {
   candidate_experience,
   candidate_education,
 } from '../../generated/prisma/client';
+import {
+  qualificationAliases,
+  sameCountry,
+  textContainsTerm,
+} from './filter-terms';
 
 export type CandidateWithHistory = candidate & {
   experience: candidate_experience[];
@@ -16,6 +21,13 @@ export interface CandidateScoreCategory {
   weight: number;
   earned: number;
   applicable: boolean;
+}
+
+// Facts Gemini read off a search result that have no column on the
+// candidate record yet (a fresh search result never has education rows,
+// since candidate_education needs a start date a snippet rarely gives).
+export interface CandidateMatchEvidence {
+  qualifications?: string[];
 }
 
 export interface CandidateScoreResult {
@@ -39,6 +51,7 @@ export class CandidateScoringService {
   scoreCandidate(
     filters: ParsedRoleFilters,
     candidate: CandidateWithHistory,
+    evidence: CandidateMatchEvidence = {},
   ): CandidateScoreResult {
     const rows: ScoredRow[] = [
       ...filters.skills.map((row) =>
@@ -62,7 +75,11 @@ export class CandidateScoringService {
         this.scoreRow('companies', row, this.fractionCompanies(row, candidate)),
       ),
       ...filters.education.map((row) =>
-        this.scoreRow('education', row, this.fractionEducation(row, candidate)),
+        this.scoreRow(
+          'education',
+          row,
+          this.fractionEducation(row, candidate, evidence),
+        ),
       ),
       ...(filters.location
         ? [
@@ -185,6 +202,7 @@ export class CandidateScoringService {
       institutionType: 'include' | 'exclude';
     }>,
     candidate: CandidateWithHistory,
+    evidence: CandidateMatchEvidence,
   ): number {
     const institutionNames = candidate.education.map((entry) =>
       this.normalize(entry.institution_name),
@@ -199,11 +217,22 @@ export class CandidateScoringService {
 
     if (row.value.qualifications.length === 0) return 1;
 
-    const degrees = candidate.education.map((entry) =>
-      this.normalize(entry.degree ?? ''),
-    );
+    // Designations like CA(SA) usually live in the headline or bio rather
+    // than a degree row, and a fresh search result has no education rows at
+    // all — so all of these count, matched punctuation-insensitively.
+    const texts = [
+      ...candidate.education.flatMap((entry) => [
+        entry.degree,
+        entry.field_of_study,
+      ]),
+      candidate.current_title,
+      candidate.summary,
+      ...(evidence.qualifications ?? []),
+    ];
     const matched = row.value.qualifications.filter((qualification) =>
-      degrees.some((degree) => degree.includes(this.normalize(qualification))),
+      qualificationAliases(qualification).some((alias) =>
+        texts.some((text) => textContainsTerm(text, alias)),
+      ),
     ).length;
     return matched / row.value.qualifications.length;
   }
@@ -220,8 +249,10 @@ export class CandidateScoringService {
 
     if (row.value.countryCode) {
       const matches =
-        candidate.current_location_country_code === row.value.countryCode ||
-        candidate.open_to_relocation === true;
+        sameCountry(
+          candidate.current_location_country_code,
+          row.value.countryCode,
+        ) || candidate.open_to_relocation === true;
       checks.push(matches ? 1 : 0);
     }
     if (row.value.remoteWork) {

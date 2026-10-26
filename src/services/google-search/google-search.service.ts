@@ -5,6 +5,11 @@ import axios, { AxiosInstance } from 'axios';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { DEFAULT_XRAY_SITES } from '../../common/constants/google';
 import { candidate, candidate_experience } from '../../generated/prisma/client';
+import {
+  countryName,
+  qualificationAliases,
+  resolveRegionNames,
+} from '../../roles/search/filter-terms';
 
 type CandidateWithExperience = candidate & {
   experience: candidate_experience[];
@@ -49,7 +54,10 @@ export class GoogleSearchService {
     filters: ParsedRoleFilters,
     roleName?: string,
   ): Promise<GoogleSearchItem[]> {
-    const queries = this.buildXrayQueries(filters, roleName);
+    const regionNames = filters.location
+      ? await resolveRegionNames(filters.location.value)
+      : [];
+    const queries = this.buildXrayQueries(filters, roleName, regionNames);
     this.logger.debug(`Running ${queries.length} Google x-ray query(s)`);
 
     const results = await Promise.all(
@@ -133,6 +141,7 @@ export class GoogleSearchService {
   private buildXrayQueries(
     filters: ParsedRoleFilters,
     roleName?: string,
+    regionNames?: string[],
   ): string[] {
     const mainTitleRow = filters.jobTitles.find(
       (row) => row.value.option === 'main_title',
@@ -151,16 +160,18 @@ export class GoogleSearchService {
     const optionalSkills = filters.skills
       .filter((row) => row.priority === 'OPTIONAL')
       .flatMap((row) => row.value);
-    const locationNames =
-      filters.location?.value.regions.map((region) => region.value) ?? [];
     const includedCompanies = filters.companies
       .filter((row) => row.value.type === 'include')
       .flatMap((row) => row.value.names);
 
+    // Location and education go straight after the title: Google ignores
+    // query words past its ~32-word limit, and the site filter alone uses
+    // about 25, so anything appended last was the first thing dropped.
     const commonParts = [
+      this.buildLocationClause(filters, regionNames),
+      this.buildEducationClause(filters),
       this.andClause(requiredSkills),
       this.orClause(optionalSkills),
-      this.orClause(locationNames),
       this.orClause(includedCompanies),
     ];
 
@@ -192,6 +203,39 @@ export class GoogleSearchService {
     }
 
     return [...queries].filter((query) => query.length > siteFilter.length);
+  }
+
+  // Before this, only the raw region values were sent — the province is
+  // stored as its ISO code ("WC"), and the country was never sent at all, so
+  // a South Africa search went out worldwide. Regions are the most specific
+  // signal when set; otherwise the country name scopes the search.
+  private buildLocationClause(
+    filters: ParsedRoleFilters,
+    regionNames?: string[],
+  ): string {
+    const location = filters.location?.value;
+    if (!location) return '';
+    const regions =
+      regionNames ?? location.regions.map((region) => region.value);
+    if (regions.length > 0) return this.orClause(regions);
+    const country = countryName(location.countryCode);
+    return country ? this.quote(country) : '';
+  }
+
+  // Education was never part of the query, so a CA(SA) requirement only
+  // affected scoring after Google had already returned whoever it liked.
+  // Any one of the listed qualifications (or a known alias) must appear.
+  private buildEducationClause(filters: ParsedRoleFilters): string {
+    const qualifications = filters.education
+      .flatMap((row) => row.value.qualifications)
+      .flatMap((qualification) => qualificationAliases(qualification));
+    const institutions = filters.education
+      .filter((row) => row.value.institutionType === 'include')
+      .flatMap((row) => row.value.institutions);
+    return this.joinNonEmpty([
+      this.orClause([...new Set(qualifications)]),
+      this.orClause([...new Set(institutions)]),
+    ]);
   }
 
   // Identity-based queries for enriching one already-found person, rather
@@ -251,9 +295,11 @@ export class GoogleSearchService {
   }
 
   private quote(value: string): string {
-    const trimmed = value.trim();
+    const trimmed = value.trim().replace(/"/g, '');
     if (!trimmed) return '';
-    return trimmed.includes(' ') ? `"${trimmed}"` : trimmed;
+    // Spaces and brackets both need quoting — an unquoted "CA(SA)" would be
+    // read as a group and break the surrounding OR clause.
+    return /[^\w.+#-]/.test(trimmed) ? `"${trimmed}"` : trimmed;
   }
 
   private joinNonEmpty(parts: string[]): string {
