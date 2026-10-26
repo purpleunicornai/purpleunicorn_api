@@ -63,6 +63,15 @@ function buildCandidate(
   };
 }
 
+// Distinct links per page, so the link de-dupe in search() doesn't collapse
+// what are meant to be different people.
+function buildPage(start: number, length = 10) {
+  return Array.from({ length }, (_, i) => ({
+    title: `Candidate ${start + i}`,
+    link: `https://linkedin.com/in/candidate-${start + i}`,
+  }));
+}
+
 function buildFilters(
   overrides: Partial<ParsedRoleFilters> = {},
 ): ParsedRoleFilters {
@@ -560,16 +569,11 @@ describe('GoogleSearchService', () => {
     });
 
     it('pages through results up to the 100-result API cap, stopping once a page is short', async () => {
-      const fullPage = Array.from({ length: 10 }, (_, i) => ({
-        title: `Candidate ${i}`,
-        link: `https://linkedin.com/in/candidate-${i}`,
-      }));
-      const lastPage = fullPage.slice(0, 4);
       const get = jest
         .spyOn(service.client, 'get')
-        .mockResolvedValueOnce({ data: { items: fullPage } })
-        .mockResolvedValueOnce({ data: { items: fullPage } })
-        .mockResolvedValueOnce({ data: { items: lastPage } });
+        .mockResolvedValueOnce({ data: { items: buildPage(0) } })
+        .mockResolvedValueOnce({ data: { items: buildPage(10) } })
+        .mockResolvedValueOnce({ data: { items: buildPage(20, 4) } });
 
       const result = await service.search(
         buildFilters({
@@ -600,13 +604,12 @@ describe('GoogleSearchService', () => {
     });
 
     it('never requests past the 100-result API cap even if every page is full', async () => {
-      const fullPage = Array.from({ length: 10 }, (_, i) => ({
-        title: `Candidate ${i}`,
-        link: `https://linkedin.com/in/candidate-${i}`,
-      }));
-      const get = jest
-        .spyOn(service.client, 'get')
-        .mockResolvedValue({ data: { items: fullPage } });
+      let start = 0;
+      const get = jest.spyOn(service.client, 'get').mockImplementation(() => {
+        const items = buildPage(start);
+        start += 10;
+        return Promise.resolve({ data: { items } });
+      });
 
       const result = await service.search(
         buildFilters({
@@ -626,6 +629,149 @@ describe('GoogleSearchService', () => {
         expect.stringContaining('start=91'),
       );
       expect(result).toHaveLength(100);
+    });
+
+    it('drops the same profile returned by more than one query', async () => {
+      jest.spyOn(service.client, 'get').mockResolvedValue({
+        data: {
+          items: [
+            { title: 'Jane', link: 'https://linkedin.com/in/jane' },
+            { title: 'Jane', link: 'https://linkedin.com/in/jane/?trk=x' },
+          ],
+        },
+      });
+
+      const result = await service.search(
+        buildFilters({
+          jobTitles: [
+            {
+              value: {
+                titles: ['Engineer', 'Developer'],
+                option: 'main_title',
+              },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+          ],
+        }),
+      );
+
+      expect(result).toEqual([
+        { title: 'Jane', link: 'https://linkedin.com/in/jane' },
+      ]);
+    });
+
+    it('keeps results already fetched when a later page fails', async () => {
+      jest
+        .spyOn(service.client, 'get')
+        .mockResolvedValueOnce({ data: { items: buildPage(0) } })
+        .mockRejectedValueOnce(new Error('429 quota'))
+        .mockResolvedValue({ data: { items: [] } });
+
+      const result = await service.search(
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+          ],
+        }),
+      );
+
+      expect(result.slice(0, 10)).toEqual(buildPage(0));
+    });
+
+    it('retries without skills or companies, but keeps location and education, when the strict query is thin', async () => {
+      const get = jest
+        .spyOn(service.client, 'get')
+        .mockResolvedValueOnce({ data: { items: buildPage(0, 3) } })
+        .mockResolvedValueOnce({ data: { items: buildPage(100, 5) } });
+
+      const result = await service.search(
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Financial Manager'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+            {
+              value: { titles: [], option: 'alternative_title' },
+              priority: 'OPTIONAL',
+              nonNegotiable: false,
+            },
+          ],
+          skills: [
+            {
+              value: ['IFRS', 'SAP'],
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+          ],
+          education: [
+            {
+              value: {
+                qualifications: ['CA(SA)'],
+                institutions: [],
+                institutionType: 'include',
+              },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+          ],
+          location: {
+            value: {
+              countryCode: 'ZA',
+              regions: [],
+              remoteWork: false,
+              workAuthorizationRequired: false,
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        }),
+      );
+
+      const queries = get.mock.calls.map(([url]) =>
+        new URL(url).searchParams.get('q'),
+      );
+      expect(queries).toHaveLength(2);
+      expect(queries[0]).toMatch(/ IFRS SAP$/);
+      expect(queries[1]).toMatch(
+        /\) "Financial Manager" "South Africa" \("CA\(SA\)" OR "Chartered Accountant" OR SAICA\)$/,
+      );
+      expect(result).toHaveLength(8);
+    });
+
+    it('does not run relaxed queries when the strict search already found enough', async () => {
+      let start = 0;
+      const get = jest.spyOn(service.client, 'get').mockImplementation(() => {
+        const items = start < 30 ? buildPage(start) : [];
+        start += 10;
+        return Promise.resolve({ data: { items } });
+      });
+
+      await service.search(
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+          ],
+          skills: [
+            { value: ['Go'], priority: 'ESSENTIAL', nonNegotiable: false },
+          ],
+        }),
+      );
+
+      const queries = new Set(
+        get.mock.calls.map(([url]) => new URL(url).searchParams.get('q')),
+      );
+      expect(queries.size).toBe(1);
     });
   });
 

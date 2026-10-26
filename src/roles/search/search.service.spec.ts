@@ -880,6 +880,49 @@ describe('SearchService', () => {
       expect(prisma.role_result.create).not.toHaveBeenCalled();
     });
 
+    it('skips a batch Gemini fails on and still saves the other batches', async () => {
+      const role = buildRole();
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      googleSearchService.search.mockResolvedValue(
+        Array.from({ length: 25 }, (_, i) => ({
+          title: `Candidate ${i}`,
+          link: `https://linkedin.com/in/c${i}`,
+        })),
+      );
+      geminiService.formatCandidates
+        .mockRejectedValueOnce(new Error('Gemini timeout'))
+        .mockResolvedValueOnce({
+          matches: [
+            {
+              candidate: buildCandidateFields(),
+              summary: 'Good',
+              reasoning: 'Fits.',
+              skills_matched: [],
+              score: 80,
+            },
+          ],
+          tokensUsed: 10,
+        });
+      prisma.candidate.create.mockResolvedValue({ uid: 'candidate-1' });
+      candidateScoringService.scoreCandidate.mockReturnValue({
+        score: 70,
+        disqualified: false,
+        breakdown: [],
+      });
+      prisma.role_result.create.mockResolvedValue({ uid: 'result-1' });
+
+      const results = await service.search(
+        'role-1',
+        role as any,
+        'user-1',
+        'Jane Admin',
+      );
+
+      expect(geminiService.formatCandidates).toHaveBeenCalledTimes(2);
+      expect(results).toEqual([{ uid: 'result-1' }]);
+      expect(prisma.role_filters.updateMany).toHaveBeenCalled();
+    });
+
     it('stamps search_run_date on the filter set even when no candidates are found', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());

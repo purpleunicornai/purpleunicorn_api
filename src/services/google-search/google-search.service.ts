@@ -34,6 +34,11 @@ const MAX_RESULTS_PER_QUERY = 100;
 // A candidate deep-search is about precisely finding one person, not casting
 // a wide net, so it doesn't need the role-search's full 100-result budget.
 const CANDIDATE_MAX_RESULTS_PER_QUERY = 20;
+// Every term in an x-ray query is mandatory, so a role with several skills
+// can come back nearly empty. Below this many unique results, the search
+// retries with only title + location + education (skills and companies
+// dropped) — those three stay, so the precision filters still hold.
+const RELAX_BELOW_RESULTS = 30;
 
 @Injectable()
 export class GoogleSearchService {
@@ -60,11 +65,43 @@ export class GoogleSearchService {
     const queries = this.buildXrayQueries(filters, roleName, regionNames);
     this.logger.debug(`Running ${queries.length} Google x-ray query(s)`);
 
+    const strict = this.dedupeByLink(await this.runQueries(queries));
+    if (strict.length >= RELAX_BELOW_RESULTS) return strict;
+
+    const relaxed = this.buildXrayQueries(
+      filters,
+      roleName,
+      regionNames,
+      true,
+    ).filter((query) => !queries.includes(query));
+    if (relaxed.length === 0) return strict;
+
+    this.logger.debug(
+      `Only ${strict.length} result(s); running ${relaxed.length} relaxed query(s)`,
+    );
+    return this.dedupeByLink([...strict, ...(await this.runQueries(relaxed))]);
+  }
+
+  private async runQueries(queries: string[]): Promise<GoogleSearchItem[]> {
     const results = await Promise.all(
       queries.map((query) => this.searchQueryPaginated(query)),
     );
-
     return results.flat();
+  }
+
+  // The same profile comes back from several title variants; sending it to
+  // Gemini more than once only costs tokens and batch slots.
+  private dedupeByLink(items: GoogleSearchItem[]): GoogleSearchItem[] {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      const key = item.link
+        ?.trim()
+        .replace(/[?#].*$/, '')
+        .replace(/\/+$/, '');
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   // Digs deeper on a single already-identified candidate to build out their
@@ -97,11 +134,20 @@ export class GoogleSearchService {
   ): Promise<GoogleSearchItem[]> {
     const items: GoogleSearchItem[] = [];
 
-    for (let start = 1; start <= maxResults; start += RESULTS_PER_PAGE) {
-      const page = await this.searchQuery(query, start);
-      items.push(...page);
+    // One failed page (a quota 429, a timeout) used to reject the whole
+    // Promise.all in search() and abort the run, throwing away every other
+    // query's results. Keep what this query already found and move on.
+    try {
+      for (let start = 1; start <= maxResults; start += RESULTS_PER_PAGE) {
+        const page = await this.searchQuery(query, start);
+        items.push(...page);
 
-      if (page.length < RESULTS_PER_PAGE) break;
+        if (page.length < RESULTS_PER_PAGE) break;
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Google query failed after ${items.length} result(s): ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     return items;
@@ -142,6 +188,7 @@ export class GoogleSearchService {
     filters: ParsedRoleFilters,
     roleName?: string,
     regionNames?: string[],
+    relaxed = false,
   ): string[] {
     const mainTitleRow = filters.jobTitles.find(
       (row) => row.value.option === 'main_title',
@@ -170,9 +217,13 @@ export class GoogleSearchService {
     const commonParts = [
       this.buildLocationClause(filters, regionNames),
       this.buildEducationClause(filters),
-      this.andClause(requiredSkills),
-      this.orClause(optionalSkills),
-      this.orClause(includedCompanies),
+      ...(relaxed
+        ? []
+        : [
+            this.andClause(requiredSkills),
+            this.orClause(optionalSkills),
+            this.orClause(includedCompanies),
+          ]),
     ];
 
     const queries = new Set<string>();

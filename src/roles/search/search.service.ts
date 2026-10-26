@@ -95,10 +95,7 @@ export class SearchService {
       role.name,
     );
     for (const batch of this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE)) {
-      const formatted = await this.geminiService.formatCandidates(
-        batch,
-        filters,
-      );
+      const formatted = await this.formatBatch(batch, filters);
       const saved = await this.saveCandidateMatches(
         role.uid,
         filterSet.uid,
@@ -503,10 +500,7 @@ export class SearchService {
             this.logger.debug(
               `Formatting batch ${i + 1}/${batches.length} for roleId=${roleId}`,
             );
-            const formatted = await this.geminiService.formatCandidates(
-              batches[i],
-              filters,
-            );
+            const formatted = await this.formatBatch(batches[i], filters);
             const saved = await this.saveCandidateMatches(
               roleId,
               filterSet.uid,
@@ -763,6 +757,31 @@ export class SearchService {
         search_run_by_id: userId,
       },
     });
+  }
+
+  // A single Gemini timeout or malformed response used to abort the whole
+  // search and lose every later batch. Skip just that batch instead.
+  private async formatBatch(
+    batch: GoogleSearchItem[],
+    filters: ParsedRoleFilters,
+  ): Promise<{ matches: GeminiCandidateMatch[]; tokensUsed: number }> {
+    try {
+      const formatted = await this.geminiService.formatCandidates(
+        batch,
+        filters,
+      );
+      if (formatted.matches.length < batch.length) {
+        this.logger.debug(
+          `Gemini returned ${formatted.matches.length} of ${batch.length} result(s) in a batch`,
+        );
+      }
+      return formatted;
+    } catch (error) {
+      this.logger.warn(
+        `Skipping a batch of ${batch.length} result(s): Gemini failed with ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return { matches: [], tokensUsed: 0 };
+    }
   }
 
   private chunk<T>(items: T[], size: number): T[][] {
