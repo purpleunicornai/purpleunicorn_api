@@ -9,6 +9,14 @@ import { candidate, candidate_source } from '../../generated/prisma/client';
 import { InstitutionType } from '../../generated/prisma/enums';
 import { CandidateWithHistory } from '../../roles/search/candidate-scoring.service';
 import { countryName } from '../../roles/search/filter-terms';
+import {
+  EXPANSION_CATEGORIES,
+  ExpansionSeeds,
+  ExpansionsByCategory,
+  MAX_TERM_LENGTH,
+  MAX_TERMS_PER_SEED,
+  normalizeExpansionGroups,
+} from '../../roles/search/criterion-expansions';
 
 // Exported so callers persisting a role_result's ai_platform/ai_model
 // (SearchService) can record exactly which model actually produced the
@@ -20,6 +28,9 @@ export const GEMINI_PLATFORM = 'Gemini';
 // (e.g. an oversized batch) fails with a clear timeout error instead of
 // hanging the caller indefinitely.
 const GEMINI_CALL_TIMEOUT_MS = 120_000;
+// Expansion runs while the recruiter waits on a filter save, so it gets a
+// much shorter leash; on timeout the save goes ahead with literal terms.
+const EXPAND_SEARCH_TERMS_TIMEOUT_MS = 15_000;
 
 const candidateSchema = z.object({
   // These three map directly onto a candidate_source row created alongside
@@ -226,6 +237,22 @@ function hasRealSignal(item: GeminiJobSpecFilterItem): boolean {
   return !!(item.list_value && item.list_value.length > 0);
 }
 
+const searchTermExpansionSchema = z.object({
+  groups: z.array(
+    z.object({
+      category: z.enum(EXPANSION_CATEGORIES),
+      seed: z.string(),
+      terms: z.array(z.string()),
+    }),
+  ),
+});
+
+export interface ExpandSearchTermsResult {
+  byCategory: ExpansionsByCategory;
+  model: string;
+  tokensUsed: number;
+}
+
 export interface ParseJobSpecResult {
   items: GeminiJobSpecFilterItem[];
   tokensUsed: number;
@@ -353,6 +380,38 @@ export class GeminiService {
 
     return {
       items: filteredItems,
+      tokensUsed: usage.totalTokens ?? 0,
+    };
+  }
+
+  // Elaborates each title/skill seed into the adjacent phrasings people
+  // actually put on their profiles (the nuanced ones like "side hustle" are
+  // what surface unusual candidates), for use as x-ray OR groups. The model
+  // output is normalized centrally: seed first, and a seed it gave no
+  // alternate for is left out so the next save asks again.
+  async expandSearchTerms({
+    seeds,
+    roleName,
+  }: {
+    seeds: ExpansionSeeds;
+    roleName: string;
+  }): Promise<ExpandSearchTermsResult> {
+    this.logger.debug('Expanding search terms with Gemini');
+
+    const { generateText, Output } = await this.loadAi();
+    const model = await this.getModel();
+
+    const { output, usage } = await generateText({
+      model,
+      prompt: this.buildExpandSearchTermsPrompt(seeds, roleName),
+      output: Output.object({ schema: searchTermExpansionSchema }),
+      timeout: EXPAND_SEARCH_TERMS_TIMEOUT_MS,
+      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
+    });
+
+    return {
+      byCategory: normalizeExpansionGroups(seeds, output.groups),
+      model: GEMINI_MODEL,
       tokensUsed: usage.totalTokens ?? 0,
     };
   }
@@ -593,6 +652,22 @@ export class GeminiService {
       `Known candidate: ${JSON.stringify(knownCandidate)}`,
       '',
       `Search results: ${JSON.stringify(results)}`,
+    ].join('\n');
+  }
+
+  private buildExpandSearchTermsPrompt(
+    seeds: ExpansionSeeds,
+    roleName: string,
+  ): string {
+    return [
+      'You are helping a recruiter write Boolean x-ray searches (Google "site:" searches over public profiles) that find unusual, high-potential candidates.',
+      'For every seed below, return one group with "category" and "seed" copied verbatim from the input, and "terms": the seed itself first, then alternative phrasings a real person would put on their profile or CV for the same thing.',
+      'Include nuanced, adjacent signals, not only synonyms: e.g. the job title "founder" -> ["founder", "co-founder", "entrepreneur", "startup", "side hustle"].',
+      'Stay in the same industry and seniority as the seed and the role. Each term is a word or short phrase people actually write (no Boolean operators, no quotes, no company names, no generic single words like "manager", "experience" or "professional" on their own).',
+      `At most ${MAX_TERMS_PER_SEED} terms per seed including the seed, each at most ${MAX_TERM_LENGTH} characters. Return a group for every seed, even when the seed is the only good term.`,
+      '',
+      `Role: ${JSON.stringify(roleName)}`,
+      `Seeds: ${JSON.stringify(seeds)}`,
     ].join('\n');
   }
 

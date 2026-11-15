@@ -635,6 +635,112 @@ describe('GeminiService', () => {
     });
   });
 
+  describe('expandSearchTerms', () => {
+    const seeds = { job_titles: ['founder'], skills: ['Python'] };
+
+    it('asks the configured model for structured groups with a short timeout and no thinking', async () => {
+      generateText.mockResolvedValue({
+        output: { groups: [] },
+        usage: { totalTokens: 0 },
+      });
+
+      await service.expandSearchTerms({ seeds, roleName: 'Founding Engineer' });
+
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          output: expect.anything(),
+          timeout: 15_000,
+          providerOptions: {
+            google: { thinkingConfig: { thinkingBudget: 0 } },
+          },
+        }),
+      );
+      const prompt = generateText.mock.calls[0][0].prompt as string;
+      expect(prompt).toContain('"founder"');
+      expect(prompt).toContain('"Python"');
+      expect(prompt).toContain('Founding Engineer');
+      expect(prompt).toContain('side hustle');
+    });
+
+    it('returns normalized groups: seed first, deduped, capped, over-long terms dropped', async () => {
+      generateText.mockResolvedValue({
+        output: {
+          groups: [
+            {
+              category: 'job_titles',
+              seed: 'Founder',
+              terms: [
+                'Co-Founder',
+                'founder',
+                'co-founder',
+                ' entrepreneur ',
+                'startup',
+                'side   hustle',
+                '',
+                'x'.repeat(61),
+                'owner',
+                'founding team',
+                'self-employed',
+                'bootstrapped',
+              ],
+            },
+          ],
+        },
+        usage: { totalTokens: 77 },
+      });
+
+      const result = await service.expandSearchTerms({
+        seeds,
+        roleName: 'Founding Engineer',
+      });
+
+      expect(result).toEqual({
+        byCategory: {
+          job_titles: [
+            {
+              seed: 'founder',
+              terms: [
+                'founder',
+                'Co-Founder',
+                'entrepreneur',
+                'startup',
+                'side hustle',
+                'owner',
+                'founding team',
+                'self-employed',
+              ],
+            },
+          ],
+        },
+        model: 'gemini-2.5-flash',
+        tokensUsed: 77,
+      });
+    });
+
+    it('leaves out a seed the model skipped or only echoed back, so the next save asks again', async () => {
+      generateText.mockResolvedValue({
+        output: {
+          groups: [
+            {
+              category: 'job_titles',
+              seed: 'founder',
+              terms: ['Founder', ' founder '],
+            },
+          ],
+        },
+        usage: { totalTokens: 5 },
+      });
+
+      const result = await service.expandSearchTerms({
+        seeds,
+        roleName: 'Founding Engineer',
+      });
+
+      expect(result.byCategory).toEqual({});
+    });
+  });
+
   describe('parseJobSpec', () => {
     it('calls generateText with the configured model and a prompt containing the job spec text', async () => {
       generateText.mockResolvedValue({

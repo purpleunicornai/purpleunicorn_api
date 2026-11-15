@@ -3,6 +3,7 @@ import { ProjectsService } from '../projects/projects.service';
 import { PrismaService } from '../common/database/prisma.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { RoleFilterDto } from './dto/role_filter.dto';
+import { GeminiService } from '../services/gemini/gemini.service';
 
 async function captureError(
   promise: Promise<unknown>,
@@ -48,6 +49,7 @@ function buildPrisma() {
       delete: jest.fn(),
     },
     role_filters: {
+      findFirst: jest.fn().mockResolvedValue(null),
       create: jest.fn(),
       updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
@@ -82,17 +84,32 @@ function buildProjectsService(): jest.Mocked<ProjectsService> {
   } as unknown as jest.Mocked<ProjectsService>;
 }
 
+// Gemini is the only thing that can't run locally; by default it finds
+// nothing to add, so a save stores no expansions.
+function buildGeminiService(): jest.Mocked<GeminiService> {
+  return {
+    expandSearchTerms: jest.fn().mockResolvedValue({
+      byCategory: {},
+      model: 'gemini-2.5-flash',
+      tokensUsed: 0,
+    }),
+  } as unknown as jest.Mocked<GeminiService>;
+}
+
 describe('RolesService', () => {
   let prisma: ReturnType<typeof buildPrisma>;
   let projectsService: jest.Mocked<ProjectsService>;
+  let geminiService: jest.Mocked<GeminiService>;
   let service: RolesService;
 
   beforeEach(() => {
     prisma = buildPrisma();
     projectsService = buildProjectsService();
+    geminiService = buildGeminiService();
     service = new RolesService(
       prisma as unknown as PrismaService,
       projectsService,
+      geminiService,
     );
   });
 
@@ -401,6 +418,317 @@ describe('RolesService', () => {
       expect(error.message).toBe('Role not found');
       expect(error.getStatus()).toBe(404);
       expect(prisma.role_filters.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createFilter search-term expansions', () => {
+    const founderGroup = {
+      seed: 'founder',
+      terms: [
+        'founder',
+        'co-founder',
+        'entrepreneur',
+        'startup',
+        'side hustle',
+      ],
+    };
+    const roleNameGroup = {
+      seed: 'Fullstack Developer',
+      terms: ['Fullstack Developer', 'Full Stack Engineer'],
+    };
+    const pythonGroup = { seed: 'Python', terms: ['Python', 'Django'] };
+    const founderDto = (skills: string[] = []): RoleFilterDto => ({
+      filters: [
+        {
+          category: 'job_titles',
+          list_value: ['founder'],
+          priority: 'essential',
+        },
+        ...(skills.length
+          ? [{ category: 'skills', list_value: skills, priority: 'essential' }]
+          : []),
+      ],
+    });
+    const savedMetadata = () =>
+      prisma.role_filters.create.mock.calls[0][0].data.metadata;
+
+    beforeEach(() => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-2' });
+    });
+
+    it('saves the AI-elaborated OR groups for new titles on the filter set', async () => {
+      geminiService.expandSearchTerms.mockResolvedValue({
+        byCategory: { job_titles: [founderGroup, roleNameGroup] },
+        model: 'gemini-2.5-flash',
+        tokensUsed: 42,
+      });
+
+      await service.createFilter('role-1', founderDto(), 'org-1', 'user-1');
+
+      // The role name is a seed too: with no alternative_title row the query
+      // builder falls back to it.
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith({
+        seeds: { job_titles: ['founder', 'Fullstack Developer'], skills: [] },
+        roleName: 'Fullstack Developer',
+      });
+      expect(savedMetadata()).toEqual({
+        criterionExpansions: {
+          version: 1,
+          generatedAt: expect.stringMatching(/^\d{4}-\d\d-\d\dT/),
+          model: 'gemini-2.5-flash',
+          byCategory: { job_titles: [founderGroup, roleNameGroup] },
+        },
+      });
+    });
+
+    it('reuses the saved groups with no AI call when the criteria are unchanged', async () => {
+      const previous = {
+        criterionExpansions: {
+          version: 1,
+          generatedAt: '2026-11-01T10:00:00.000Z',
+          model: 'gemini-2.5-flash',
+          byCategory: {
+            job_titles: [founderGroup, roleNameGroup],
+            skills: [pythonGroup],
+          },
+        },
+      };
+      prisma.role_filters.findFirst.mockResolvedValue({ metadata: previous });
+
+      // Different casing/whitespace is still the same criterion.
+      await service.createFilter(
+        'role-1',
+        founderDto([' python ']),
+        'org-1',
+        'user-1',
+      );
+
+      expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+      expect(savedMetadata()).toEqual(previous);
+    });
+
+    it('asks Gemini only for criteria that have no saved group yet', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue({
+        metadata: {
+          criterionExpansions: {
+            version: 1,
+            generatedAt: '2026-11-01T10:00:00.000Z',
+            model: 'gemini-2.5-flash',
+            byCategory: { job_titles: [founderGroup, roleNameGroup] },
+          },
+        },
+      });
+      geminiService.expandSearchTerms.mockResolvedValue({
+        byCategory: { skills: [pythonGroup] },
+        model: 'gemini-2.5-flash',
+        tokensUsed: 10,
+      });
+
+      await service.createFilter(
+        'role-1',
+        founderDto(['Python']),
+        'org-1',
+        'user-1',
+      );
+
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledTimes(1);
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith({
+        seeds: { job_titles: [], skills: ['Python'] },
+        roleName: 'Fullstack Developer',
+      });
+      const saved = savedMetadata().criterionExpansions;
+      expect(saved.byCategory).toEqual({
+        job_titles: [founderGroup, roleNameGroup],
+        skills: [pythonGroup],
+      });
+      expect(saved.generatedAt).not.toBe('2026-11-01T10:00:00.000Z');
+    });
+
+    it('drops groups for criteria that were removed, without an AI call', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue({
+        metadata: {
+          criterionExpansions: {
+            version: 1,
+            generatedAt: '2026-11-01T10:00:00.000Z',
+            model: 'gemini-2.5-flash',
+            byCategory: {
+              job_titles: [founderGroup, roleNameGroup],
+              skills: [pythonGroup],
+            },
+          },
+        },
+      });
+
+      await service.createFilter('role-1', founderDto(), 'org-1', 'user-1');
+
+      expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+      expect(savedMetadata()).toEqual({
+        criterionExpansions: {
+          version: 1,
+          generatedAt: '2026-11-01T10:00:00.000Z',
+          model: 'gemini-2.5-flash',
+          byCategory: { job_titles: [founderGroup, roleNameGroup] },
+        },
+      });
+    });
+
+    it('still saves the filter with literal terms when Gemini fails, and only archives the old set after the AI call', async () => {
+      let archivedBeforeAi = false;
+      geminiService.expandSearchTerms.mockImplementation(() => {
+        archivedBeforeAi = prisma.role_filters.updateMany.mock.calls.length > 0;
+        return Promise.reject(new Error('secret prompt text in error'));
+      });
+      const warn = jest
+        .spyOn(
+          (service as unknown as { logger: { warn: jest.Mock } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      const result = await service.createFilter(
+        'role-1',
+        founderDto(['Python']),
+        'org-1',
+        'user-1',
+      );
+
+      expect(archivedBeforeAi).toBe(false);
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
+      expect(savedMetadata()).toEqual({});
+      expect(result.filter).toEqual({ uid: 'filter-2' });
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).not.toContain('secret prompt text');
+    });
+
+    it('asks again on the next save for a criterion Gemini gave no terms for', async () => {
+      // Python came back without alternates, so normalization left it out.
+      geminiService.expandSearchTerms.mockResolvedValue({
+        byCategory: { job_titles: [founderGroup, roleNameGroup] },
+        model: 'gemini-2.5-flash',
+        tokensUsed: 42,
+      });
+      await service.createFilter(
+        'role-1',
+        founderDto(['Python']),
+        'org-1',
+        'user-1',
+      );
+      const firstSave = savedMetadata();
+      expect(firstSave.criterionExpansions.byCategory).toEqual({
+        job_titles: [founderGroup, roleNameGroup],
+      });
+
+      prisma.role_filters.findFirst.mockResolvedValue({ metadata: firstSave });
+      geminiService.expandSearchTerms.mockResolvedValue({
+        byCategory: { skills: [pythonGroup] },
+        model: 'gemini-2.5-flash',
+        tokensUsed: 10,
+      });
+      await service.createFilter(
+        'role-1',
+        founderDto(['Python']),
+        'org-1',
+        'user-1',
+      );
+
+      expect(geminiService.expandSearchTerms).toHaveBeenLastCalledWith({
+        seeds: { job_titles: [], skills: ['Python'] },
+        roleName: 'Fullstack Developer',
+      });
+      expect(
+        prisma.role_filters.create.mock.calls[1][0].data.metadata
+          .criterionExpansions.byCategory,
+      ).toEqual({
+        job_titles: [founderGroup, roleNameGroup],
+        skills: [pythonGroup],
+      });
+    });
+
+    it('keeps a valid saved seed-only group and reuses it with no AI call', async () => {
+      const previous = {
+        criterionExpansions: {
+          version: 1,
+          generatedAt: '2026-11-01T10:00:00.000Z',
+          model: 'gemini-2.5-flash',
+          byCategory: {
+            job_titles: [
+              { seed: 'founder', terms: ['founder'] },
+              roleNameGroup,
+            ],
+          },
+        },
+      };
+      prisma.role_filters.findFirst.mockResolvedValue({ metadata: previous });
+
+      await service.createFilter('role-1', founderDto(), 'org-1', 'user-1');
+
+      expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+      expect(savedMetadata()).toEqual(previous);
+    });
+
+    it('keeps the previous stamp when Gemini returns nothing usable for the new criteria', async () => {
+      const previous = {
+        criterionExpansions: {
+          version: 1,
+          generatedAt: '2026-11-01T10:00:00.000Z',
+          model: 'gemini-2.5-flash',
+          byCategory: { job_titles: [founderGroup, roleNameGroup] },
+        },
+      };
+      prisma.role_filters.findFirst.mockResolvedValue({ metadata: previous });
+
+      await service.createFilter(
+        'role-1',
+        founderDto(['Python']),
+        'org-1',
+        'user-1',
+      );
+
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledTimes(1);
+      expect(savedMetadata()).toEqual(previous);
+    });
+
+    it('keeps only the previous groups when Gemini fails for new criteria', async () => {
+      const previous = {
+        criterionExpansions: {
+          version: 1,
+          generatedAt: '2026-11-01T10:00:00.000Z',
+          model: 'gemini-2.5-flash',
+          byCategory: { job_titles: [founderGroup, roleNameGroup] },
+        },
+      };
+      prisma.role_filters.findFirst.mockResolvedValue({ metadata: previous });
+      geminiService.expandSearchTerms.mockRejectedValue(new Error('timeout'));
+      jest
+        .spyOn(
+          (service as unknown as { logger: { warn: jest.Mock } }).logger,
+          'warn',
+        )
+        .mockImplementation(() => undefined);
+
+      await service.createFilter(
+        'role-1',
+        founderDto(['Python']),
+        'org-1',
+        'user-1',
+      );
+
+      // No [Python] placeholder, so the next save retries it.
+      expect(savedMetadata()).toEqual(previous);
+    });
+
+    it('ignores unreadable previous metadata and treats every criterion as new', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue({
+        metadata: { criterionExpansions: { version: 2 } },
+      });
+
+      await service.createFilter('role-1', founderDto(), 'org-1', 'user-1');
+
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith({
+        seeds: { job_titles: ['founder', 'Fullstack Developer'], skills: [] },
+        roleName: 'Fullstack Developer',
+      });
     });
   });
 

@@ -1,6 +1,8 @@
-import { GoogleSearchService } from './google-search.service';
+import { GoogleSearchService, isXraySiteLink } from './google-search.service';
+import serpApiMixedFixture from './__fixtures__/serpapi-mixed-search.json';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { candidate, candidate_experience } from '../../generated/prisma/client';
+import { CriterionExpansions } from '../../roles/search/criterion-expansions';
 
 type CandidateWithExperience = candidate & {
   experience: candidate_experience[];
@@ -84,6 +86,65 @@ function buildFilters(
     ...overrides,
   };
 }
+
+const SITES =
+  '(site:linkedin.com/in OR site:indeed.com/r OR site:xing.com/profile OR ' +
+  'site:stackoverflow.com/users OR site:researchgate.net OR site:about.me OR ' +
+  'site:behance.net OR site:dribbble.com OR site:angel.co OR site:wellfound.com OR ' +
+  'site:kaggle.com OR site:medium.com OR site:dev.to)';
+
+function buildExpansions(
+  byCategory: CriterionExpansions['byCategory'],
+): CriterionExpansions {
+  return {
+    version: 1,
+    generatedAt: '2026-11-06T09:00:00.000Z',
+    model: 'gemini-2.5-flash',
+    byCategory,
+  };
+}
+
+const FOUNDER_EXPANSIONS = buildExpansions({
+  job_titles: [
+    {
+      seed: 'founder',
+      terms: [
+        'founder',
+        'co-founder',
+        'entrepreneur',
+        'startup',
+        'side hustle',
+      ],
+    },
+  ],
+});
+
+function mainTitle(title: string): ParsedRoleFilters['jobTitles'][number] {
+  return {
+    value: { titles: [title], option: 'main_title' },
+    priority: 'ESSENTIAL',
+    nonNegotiable: false,
+  };
+}
+
+const UK_LOCATION: ParsedRoleFilters['location'] = {
+  value: {
+    countryCode: 'GB',
+    regions: [],
+    remoteWork: false,
+    workAuthorizationRequired: false,
+  },
+  priority: 'ESSENTIAL',
+  nonNegotiable: false,
+};
+
+type BuildXrayQueries = (
+  filters: ParsedRoleFilters,
+  roleName?: string,
+  regionNames?: string[],
+  relaxed?: boolean,
+  expansions?: CriterionExpansions | null,
+) => string[];
 
 describe('GoogleSearchService', () => {
   let service: GoogleSearchService;
@@ -397,6 +458,209 @@ describe('GoogleSearchService', () => {
       const queries = (service as any).buildXrayQueries(filters, undefined);
 
       expect(queries).toEqual([]);
+    });
+  });
+
+  describe('buildXrayQueries with saved criterion expansions', () => {
+    const build: BuildXrayQueries = (...args) =>
+      (
+        service as unknown as { buildXrayQueries: BuildXrayQueries }
+      ).buildXrayQueries(...args);
+
+    it('sends the founder title as an OR group right before the location, split to stay inside the 32-word limit', () => {
+      const queries = build(
+        buildFilters({
+          jobTitles: [mainTitle('founder')],
+          location: UK_LOCATION,
+        }),
+        undefined,
+        undefined,
+        false,
+        FOUNDER_EXPANSIONS,
+      );
+
+      // The site filter is 25 words and "United Kingdom" 2, leaving 5 for
+      // the title group: the seed's chunk first, the rest in a second query.
+      expect(queries).toEqual([
+        `${SITES} (founder OR co-founder OR entrepreneur) "United Kingdom"`,
+        `${SITES} (startup OR "side hustle") "United Kingdom"`,
+      ]);
+    });
+
+    it('chunks an expanded title to fit alongside the location and a literal essential skill', () => {
+      const queries = build(
+        buildFilters({
+          jobTitles: [mainTitle('founder')],
+          skills: [
+            { value: ['Python'], priority: 'ESSENTIAL', nonNegotiable: false },
+          ],
+          location: UK_LOCATION,
+        }),
+        undefined,
+        undefined,
+        false,
+        FOUNDER_EXPANSIONS,
+      );
+
+      // 25 site + 2 location + 1 skill leaves 4 words for the title group.
+      expect(queries).toEqual([
+        `${SITES} (founder OR co-founder) "United Kingdom" Python`,
+        `${SITES} (entrepreneur OR startup) "United Kingdom" Python`,
+        `${SITES} "side hustle" "United Kingdom" Python`,
+      ]);
+      for (const query of queries) {
+        expect(query.split(/\s+/).length).toBeLessThanOrEqual(32);
+      }
+    });
+
+    it('builds exactly the original queries when nothing is expanded', () => {
+      const filters = buildFilters({
+        jobTitles: [
+          mainTitle('Financial Manager'),
+          {
+            value: { titles: ['Finance Lead'], option: 'alternative_title' },
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+          },
+        ],
+        skills: [
+          {
+            value: ['IFRS', 'SAP'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+          {
+            value: ['Power BI', 'Excel'],
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+          },
+        ],
+        location: UK_LOCATION,
+      });
+      // A saved group for a criterion that isn't in this filter set changes
+      // nothing either.
+      const unrelated = buildExpansions({
+        skills: [{ seed: 'Python', terms: ['Python', 'Django'] }],
+      });
+
+      const original = build(filters, 'Role');
+      expect(original).toEqual([
+        `${SITES} "Financial Manager" "United Kingdom" IFRS SAP ("Power BI" OR Excel)`,
+        `${SITES} "Finance Lead" "United Kingdom" IFRS SAP ("Power BI" OR Excel)`,
+      ]);
+      expect(build(filters, 'Role', undefined, false, null)).toEqual(original);
+      expect(build(filters, 'Role', undefined, false, unrelated)).toEqual(
+        original,
+      );
+    });
+
+    it('with two oversized groups, shares the free words so every query fits, covering every term but not every combination', () => {
+      const queries = build(
+        buildFilters({
+          jobTitles: [mainTitle('Data Engineer')],
+          skills: [
+            {
+              value: ['Python', 'SQL'],
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+            {
+              value: ['AWS', 'GCP'],
+              priority: 'OPTIONAL',
+              nonNegotiable: false,
+            },
+          ],
+        }),
+        undefined,
+        undefined,
+        false,
+        buildExpansions({
+          skills: [
+            { seed: 'Python', terms: ['Python', 'Django', 'machine learning'] },
+            { seed: 'aws', terms: ['AWS', 'Amazon Web Services', 'gcp'] },
+          ],
+        }),
+      );
+
+      // 25 site + 2 title + 1 SQL leaves 4 words for both groups, 2 each, so
+      // each chunk is one term. Each later term is paired with the other
+      // group's seed only, not with its later terms.
+      expect(queries).toEqual([
+        `${SITES} "Data Engineer" Python SQL AWS`,
+        `${SITES} "Data Engineer" Django SQL AWS`,
+        `${SITES} "Data Engineer" "machine learning" SQL AWS`,
+        `${SITES} "Data Engineer" Python SQL "Amazon Web Services"`,
+        `${SITES} "Data Engineer" Python SQL gcp`,
+      ]);
+      for (const query of queries) {
+        expect(query.split(/\s+/).length).toBeLessThanOrEqual(32);
+      }
+    });
+
+    it('splits an oversized skill group into extra queries, keeping the title and location in each and the seed in the first', () => {
+      const queries = build(
+        buildFilters({
+          jobTitles: [mainTitle('Data Engineer')],
+          skills: [
+            { value: ['Python'], priority: 'ESSENTIAL', nonNegotiable: false },
+          ],
+          location: UK_LOCATION,
+        }),
+        undefined,
+        undefined,
+        false,
+        buildExpansions({
+          skills: [
+            {
+              seed: 'Python',
+              terms: [
+                'Python',
+                'Django',
+                'Flask',
+                'FastAPI',
+                'Pandas',
+                'NumPy',
+              ],
+            },
+          ],
+        }),
+      );
+
+      // 25 site + 2 title + 2 location leaves 3 words for the skill group.
+      expect(queries).toEqual([
+        `${SITES} "Data Engineer" "United Kingdom" (Python OR Django)`,
+        `${SITES} "Data Engineer" "United Kingdom" (Flask OR FastAPI)`,
+        `${SITES} "Data Engineer" "United Kingdom" (Pandas OR NumPy)`,
+      ]);
+    });
+
+    it('search() sends the saved OR groups, and the thin-result retry keeps the expanded title', async () => {
+      const get = jest
+        .spyOn(service.client, 'get')
+        .mockResolvedValue({ data: { items: [] } });
+
+      await service.search(
+        buildFilters({
+          jobTitles: [mainTitle('founder')],
+          skills: [
+            { value: ['Python'], priority: 'ESSENTIAL', nonNegotiable: false },
+          ],
+        }),
+        undefined,
+        FOUNDER_EXPANSIONS,
+      );
+
+      const queries = get.mock.calls.map(([url]) =>
+        new URL(url).searchParams.get('q'),
+      );
+      // The strict queries leave room for the literal skill; the retry,
+      // without it, fits one more term per chunk.
+      expect(queries).toEqual([
+        `${SITES} (founder OR co-founder OR entrepreneur) Python`,
+        `${SITES} (startup OR "side hustle") Python`,
+        `${SITES} (founder OR co-founder OR entrepreneur OR startup)`,
+        `${SITES} "side hustle"`,
+      ]);
     });
   });
 
@@ -836,6 +1100,154 @@ describe('GoogleSearchService', () => {
       expect(expectedQuery).toContain('"South Africa"');
       expect(expectedQuery).toContain('"CA(SA)"');
       expect(result).toHaveLength(34);
+    });
+  });
+
+  describe('off-site results', () => {
+    it('keeps x-ray profile links (any subdomain) and drops job boards and look-alike hosts', () => {
+      expect(isXraySiteLink('https://za.linkedin.com/in/jane')).toBe(true);
+      expect(isXraySiteLink('https://www.linkedin.com/in/jane/?trk=x')).toBe(
+        true,
+      );
+      expect(isXraySiteLink('https://www.indeed.com/r/Jane-Doe/abc')).toBe(
+        true,
+      );
+      expect(isXraySiteLink('https://stackoverflow.com/users/1/jane')).toBe(
+        true,
+      );
+      expect(isXraySiteLink('https://dev.to/jane')).toBe(true);
+      expect(
+        isXraySiteLink('https://za.linkedin.com/jobs/managing-finances-jobs'),
+      ).toBe(false);
+      expect(isXraySiteLink('https://linkedin.com/industry/foo')).toBe(false);
+      expect(isXraySiteLink('https://linkedin.com/inbox')).toBe(false);
+      expect(
+        isXraySiteLink('https://za.indeed.com/q-finance-manager-jobs.html'),
+      ).toBe(false);
+      expect(isXraySiteLink('https://linkedin.com.example.org/in/x')).toBe(
+        false,
+      );
+      expect(isXraySiteLink('not a url')).toBe(false);
+    });
+
+    it('with SEARCH_PROVIDER=serpapi, returns only profile links from a mixed jobs/profiles page', async () => {
+      const serpapi = new GoogleSearchService({
+        googleSearchApiKey: undefined,
+        googleSearchEngineId: undefined,
+        searchProvider: 'serpapi',
+        serpApiKey: 'test-serpapi-key',
+      });
+      jest
+        .spyOn(serpapi.client, 'get')
+        .mockResolvedValueOnce({ data: serpApiMixedFixture })
+        .mockResolvedValue({ data: { organic_results: [] } });
+
+      const result = await serpapi.search(
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Financial Manager'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+          ],
+        }),
+      );
+
+      expect(result.map((item) => item.link)).toEqual([
+        'https://za.linkedin.com/in/thandi-mokoena-ca-sa',
+        'https://www.linkedin.com/in/pietervanwyk',
+      ]);
+    });
+
+    it('with SEARCH_PROVIDER=vertex, sends the same x-ray query and drops off-site results', async () => {
+      const vertex = new GoogleSearchService({
+        googleSearchApiKey: undefined,
+        googleSearchEngineId: undefined,
+        searchProvider: 'vertex',
+        vertexProjectId: 'my-project',
+        vertexEngineId: 'xray-app',
+        vertexApiKey: 'test-key',
+      });
+      const post = jest
+        .spyOn(vertex.client, 'post')
+        .mockResolvedValueOnce({
+          data: {
+            results: [
+              {
+                document: {
+                  derivedStructData: {
+                    title: 'Finance jobs',
+                    link: 'https://za.linkedin.com/jobs/finance-jobs',
+                  },
+                },
+              },
+              {
+                document: {
+                  derivedStructData: {
+                    title: 'Jane Doe | LinkedIn',
+                    link: 'https://za.linkedin.com/in/janedoe',
+                  },
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: {} });
+      const filters = buildFilters({
+        jobTitles: [
+          {
+            value: { titles: ['Financial Manager'], option: 'main_title' },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        ],
+      });
+
+      const result = await vertex.search(filters);
+
+      const [expectedQuery] = (
+        vertex as unknown as {
+          buildXrayQueries: (f: typeof filters) => string[];
+        }
+      ).buildXrayQueries(filters);
+      expect(post.mock.calls[0][1]).toMatchObject({ query: expectedQuery });
+      expect(result.map((item) => item.link)).toEqual([
+        'https://za.linkedin.com/in/janedoe',
+      ]);
+    });
+
+    it('keeps paging past a page that is all job listings', async () => {
+      const serper = new GoogleSearchService({
+        googleSearchApiKey: undefined,
+        googleSearchEngineId: undefined,
+        searchProvider: 'serper',
+        serperApiKey: 'test-serper-key',
+      });
+      const jobsPage = Array.from({ length: 10 }, (_, i) => ({
+        title: `Job ${i}`,
+        link: `https://za.linkedin.com/jobs/job-${i}`,
+      }));
+      const post = jest
+        .spyOn(serper.client, 'post')
+        .mockResolvedValueOnce({ data: { organic: jobsPage } })
+        .mockResolvedValueOnce({ data: { organic: buildPage(0, 5) } })
+        .mockResolvedValue({ data: { organic: [] } });
+
+      const result = await serper.search(
+        buildFilters({
+          jobTitles: [
+            {
+              value: { titles: ['Engineer'], option: 'main_title' },
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
+          ],
+        }),
+      );
+
+      expect(post.mock.calls[1][1]).toMatchObject({ page: 2 });
+      expect(result).toEqual(buildPage(0, 5));
     });
   });
 

@@ -146,7 +146,7 @@ export class RolesController {
     @Body() body: RoleFilterDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
-    console.log('ATEEMPTING TO CREAT NEW FILRES', body);
+    console.log('ATEEMPTING TO CREAT NEW FILTRES', body);
     const orgId = requireOrgId(auth);
     const { filter, isFirst } = await this.rolesService.createFilter(
       roleId,

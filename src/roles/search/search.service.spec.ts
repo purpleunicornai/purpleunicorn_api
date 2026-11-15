@@ -97,6 +97,7 @@ function buildGeminiService(): jest.Mocked<GeminiService> {
     enrichCandidate: jest
       .fn()
       .mockResolvedValue({ enrichment: {}, tokensUsed: 0 }),
+    expandSearchTerms: jest.fn(),
   } as unknown as jest.Mocked<GeminiService>;
 }
 
@@ -756,6 +757,7 @@ describe('SearchService', () => {
           ],
         }),
         'Fullstack Developer',
+        null,
       );
       expect(geminiService.formatCandidates).toHaveBeenCalledWith(
         items,
@@ -1469,6 +1471,81 @@ describe('SearchService', () => {
       expect((doneEvent.data as any).result).toEqual([
         { uid: 'result-known-1' },
       ]);
+    });
+  });
+
+  describe('saved criterion expansions', () => {
+    const expansions = {
+      version: 1,
+      generatedAt: '2026-11-06T09:00:00.000Z',
+      model: 'gemini-2.5-flash',
+      byCategory: {
+        job_titles: [
+          {
+            seed: 'founder',
+            terms: [
+              'founder',
+              'co-founder',
+              'entrepreneur',
+              'startup',
+              'side hustle',
+            ],
+          },
+        ],
+      },
+    };
+    const savedFilterSet = () =>
+      buildStoredFilterSet({ metadata: { criterionExpansions: expansions } });
+
+    it('search() runs Google with the expansions saved on the filter set, without a new AI expansion', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(savedFilterSet());
+
+      await service.search(
+        'role-1',
+        buildRole() as any,
+        'user-1',
+        'Jane Admin',
+      );
+
+      expect(googleSearchService.search).toHaveBeenCalledWith(
+        expect.anything(),
+        'Fullstack Developer',
+        expansions,
+      );
+      expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+    });
+
+    it('streamSearch() runs Google with the same saved expansions, without a new AI expansion', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(savedFilterSet());
+
+      await collectEvents(
+        service.streamSearch('role-1', 'user-1', 'Jane Admin', 'Founder'),
+      );
+
+      expect(googleSearchService.search).toHaveBeenCalledWith(
+        expect.anything(),
+        'Founder',
+        expansions,
+      );
+      expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the literal search when the saved metadata is not a valid expansion block', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(
+        buildStoredFilterSet({
+          metadata: { criterionExpansions: { ...expansions, version: 2 } },
+        }),
+      );
+
+      await collectEvents(
+        service.streamSearch('role-1', 'user-1', 'Jane Admin', 'Founder'),
+      );
+
+      expect(googleSearchService.search).toHaveBeenCalledWith(
+        expect.anything(),
+        'Founder',
+        null,
+      );
     });
   });
 

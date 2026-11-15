@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/database/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
@@ -6,6 +6,15 @@ import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
 import { RoleFilterDto } from './dto/role_filter.dto';
 import { Prisma, role_filters, roles } from '../generated/prisma/client';
 import { RoleFilterPriority } from '../generated/prisma/enums';
+import { GeminiService } from '../services/gemini/gemini.service';
+import {
+  collectExpansionSeeds,
+  GeneratedExpansions,
+  hasSeeds,
+  mergeExpansions,
+  parseCriterionExpansions,
+  seedsMissingFrom,
+} from './search/criterion-expansions';
 
 const ROLE_WITH_DETAILS_INCLUDE = {
   project: {
@@ -43,9 +52,12 @@ type RoleWithDetails = Prisma.rolesGetPayload<{
 
 @Injectable()
 export class RolesService {
+  private readonly logger = new Logger(RolesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly projectsService: ProjectsService,
+    private readonly geminiService: GeminiService,
   ) {}
 
   async findAllForProject(
@@ -118,7 +130,21 @@ export class RolesService {
     };
     isFirst: boolean;
   }> {
-    await this.getRole(roleId, orgId, userId);
+    const role = await this.getRole(roleId, orgId, userId);
+
+    // Search-term expansion (an AI call) finishes before anything is
+    // archived, so a slow or failed call can't leave the role without an
+    // active filter set.
+    const previous = await this.prisma.role_filters.findFirst({
+      where: { role_id: roleId, archived: false },
+      select: { metadata: true },
+    });
+    const metadata = await this.buildFilterMetadata(
+      roleId,
+      dto,
+      role.name,
+      previous?.metadata,
+    );
 
     // Archive the previous filter set to mark it as superseded, so we can
     // keep a history of filter sets for the role.
@@ -130,7 +156,7 @@ export class RolesService {
     const filter = await this.prisma.role_filters.create({
       data: {
         role_id: roleId,
-        metadata: {},
+        metadata,
         role_filter_items: {
           create: dto.filters.map((item) => ({
             category: item.category,
@@ -153,6 +179,44 @@ export class RolesService {
     });
 
     return { filter, isFirst: count === 0 };
+  }
+
+  // Reuses the previous filter set's saved OR groups for unchanged titles and
+  // skills, and asks Gemini (one call) only for new ones — an unchanged save
+  // makes no AI call and stores identical metadata. If Gemini fails, new
+  // terms just stay literal in the query; the save still goes through.
+  private async buildFilterMetadata(
+    roleId: string,
+    dto: RoleFilterDto,
+    roleName: string,
+    previousMetadata: unknown,
+  ): Promise<Prisma.InputJsonObject> {
+    const seeds = collectExpansionSeeds(dto.filters, roleName);
+    const previous = parseCriterionExpansions(previousMetadata);
+    const missing = seedsMissingFrom(previous, seeds);
+
+    let generated: GeneratedExpansions | null = null;
+    if (hasSeeds(missing)) {
+      try {
+        const result = await this.geminiService.expandSearchTerms({
+          seeds: missing,
+          roleName,
+        });
+        generated = {
+          byCategory: result.byCategory,
+          model: result.model,
+          generatedAt: new Date().toISOString(),
+        };
+      } catch (error) {
+        // Error name only: AI SDK messages can echo request/response content.
+        this.logger.warn(
+          `Search term expansion failed for role=${roleId} (${error instanceof Error ? error.name : 'unknown error'}); saving literal terms`,
+        );
+      }
+    }
+
+    const criterionExpansions = mergeExpansions({ seeds, previous, generated });
+    return criterionExpansions ? { criterionExpansions } : {};
   }
 
   async update(

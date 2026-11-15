@@ -1,6 +1,10 @@
 import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
 import { parseRoleFilters, ParsedRoleFilters } from './role-filter-parser';
 import {
+  CriterionExpansions,
+  parseCriterionExpansions,
+} from './criterion-expansions';
+import {
   GoogleSearchItem,
   GoogleSearchService,
 } from '../../services/google-search/google-search.service';
@@ -80,6 +84,7 @@ export class SearchService {
   ): Promise<role_result[]> {
     const filterSet = await this.getRoleFilters(roleId);
     const filters = parseRoleFilters(filterSet.role_filter_items);
+    const expansions = parseCriterionExpansions(filterSet.metadata);
 
     const roleResults: role_result[] = [];
     roleResults.push(
@@ -93,6 +98,7 @@ export class SearchService {
     const { items, sourceByLink } = await this.searchForItems(
       filters,
       role.name,
+      expansions,
     );
     for (const batch of this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE)) {
       const formatted = await this.formatBatch(batch, filters);
@@ -433,6 +439,7 @@ export class SearchService {
           });
           this.logger.debug('Parsing role filters');
           const filters = parseRoleFilters(filterSet.role_filter_items);
+          const expansions = parseCriterionExpansions(filterSet.metadata);
           subscriber.next({
             type: 'stage',
             data: { stage: 'parsing filters', status: 'done' },
@@ -474,6 +481,7 @@ export class SearchService {
           const { items, sourceByLink } = await this.searchForItems(
             filters,
             roleName,
+            expansions,
           );
           this.logger.debug(
             `Finished searching candidates for roleId=${roleId}, found ${items?.length} items`,
@@ -657,7 +665,8 @@ export class SearchService {
   // still tell which engine actually found it, to record on role_result.
   private async searchForItems(
     filters: ParsedRoleFilters,
-    roleName?: string,
+    roleName: string | undefined,
+    expansions: CriterionExpansions | null,
   ): Promise<{
     items: GoogleSearchItem[];
     sourceByLink: Map<string, string>;
@@ -665,6 +674,7 @@ export class SearchService {
     const googleItems = await this.googleSearchService.search(
       filters,
       roleName,
+      expansions,
     );
     const githubItems = await this.githubSearchService.search(filters);
 
