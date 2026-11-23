@@ -3,15 +3,21 @@ import { PrismaService } from '../common/database/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
-import { RoleFilterDto } from './dto/role_filter.dto';
+import {
+  ChildFilterItemDto,
+  FilterItemDto,
+  RoleFilterDto,
+} from './dto/role_filter.dto';
+import { WorkTypeChild, withWorkTypeChildren } from './search/work-types';
 import { Prisma, role_filters, roles } from '../generated/prisma/client';
 import { RoleFilterPriority } from '../generated/prisma/enums';
-import { GeminiService } from '../services/gemini/gemini.service';
+import { ReasoningService } from '../services/reasoning/reasoning.service';
 import {
   collectExpansionSeeds,
   GeneratedExpansions,
   hasSeeds,
   mergeExpansions,
+  applyExpansionOverrides,
   parseCriterionExpansions,
   seedsMissingFrom,
 } from './search/criterion-expansions';
@@ -50,6 +56,16 @@ type RoleWithDetails = Prisma.rolesGetPayload<{
   include: typeof ROLE_WITH_DETAILS_INCLUDE;
 }>;
 
+// Location rows that say how they may be worked store it as a work_types
+// child, with remote_work kept in sync for older readers.
+function storedChildren(
+  item: FilterItemDto,
+): (ChildFilterItemDto | WorkTypeChild)[] {
+  const children = item.children ?? [];
+  if (item.category !== 'location' || !item.work_types) return children;
+  return withWorkTypeChildren(children, item.work_types);
+}
+
 @Injectable()
 export class RolesService {
   private readonly logger = new Logger(RolesService.name);
@@ -57,7 +73,7 @@ export class RolesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly projectsService: ProjectsService,
-    private readonly geminiService: GeminiService,
+    private readonly reasoningService: ReasoningService,
   ) {}
 
   async findAllForProject(
@@ -165,7 +181,7 @@ export class RolesService {
             priority: item.priority.toUpperCase() as RoleFilterPriority,
             non_negotiable: item.non_negotiable ?? false,
             children: {
-              create: (item.children ?? []).map((child) => ({
+              create: storedChildren(item).map((child) => ({
                 title: child.title,
                 value: child.value,
                 list_value: child.list_value,
@@ -192,16 +208,22 @@ export class RolesService {
     previousMetadata: unknown,
   ): Promise<Prisma.InputJsonObject> {
     const seeds = collectExpansionSeeds(dto.filters, roleName);
-    const previous = parseCriterionExpansions(previousMetadata);
+    // Recruiter edits win over the saved groups and are never regenerated.
+    const previous = applyExpansionOverrides({
+      seeds,
+      previous: parseCriterionExpansions(previousMetadata),
+      overrides: dto.criterion_expansions,
+    });
     const missing = seedsMissingFrom(previous, seeds);
 
     let generated: GeneratedExpansions | null = null;
     if (hasSeeds(missing)) {
       try {
-        const result = await this.geminiService.expandSearchTerms({
-          seeds: missing,
-          roleName,
-        });
+        const ai = await this.reasoningService.forRole(roleId);
+        const result = await ai.provider.expandSearchTerms(
+          { seeds: missing, roleName },
+          { model: ai.model },
+        );
         generated = {
           byCategory: result.byCategory,
           model: result.model,
@@ -243,10 +265,24 @@ export class RolesService {
     return role;
   }
 
-  async getRoleResult(resultId: string, organization_id: string) {
+  // Callers check access to the role first.
+  async listResults(roleId: string) {
+    return this.prisma.role_result.findMany({
+      where: { role_id: roleId, role_filter: { archived: false } },
+      include: { candidate: { include: { sources: true } } },
+      orderBy: [{ score: { sort: 'desc', nulls: 'last' } }, { created: 'asc' }],
+    });
+  }
+
+  async getRoleResult(
+    resultId: string,
+    organization_id: string,
+    roleId: string,
+  ) {
     const result = await this.prisma.role_result.findFirst({
       where: {
         uid: resultId,
+        role_id: roleId,
         role: {
           project: {
             organization_id: organization_id,

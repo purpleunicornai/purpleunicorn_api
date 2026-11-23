@@ -1,4 +1,10 @@
-import { RocketReachService } from './rocket-reach.service';
+import { AxiosError, type AxiosResponse } from 'axios';
+import { personOf, RocketReachService } from './rocket-reach.service';
+
+const lookupPerson = (
+  service: RocketReachService,
+  candidate: Parameters<RocketReachService['lookup']>[0],
+) => service.lookup(candidate).then(personOf);
 import { candidate, candidate_source } from '../../generated/prisma/client';
 
 type CandidateWithSources = candidate & { sources: candidate_source[] };
@@ -65,11 +71,11 @@ describe('RocketReachService', () => {
     service = new RocketReachService({ rocketReachApiKey: 'test-api-key' });
   });
 
-  describe('lookupCandidate', () => {
+  describe('lookup', () => {
     it('returns undefined without calling the API when no usable identifier is available', async () => {
       const get = jest.spyOn(service.client, 'get');
 
-      const result = await service.lookupCandidate(buildCandidate());
+      const result = await lookupPerson(service, buildCandidate());
 
       expect(get).not.toHaveBeenCalled();
       expect(result).toBeUndefined();
@@ -80,7 +86,8 @@ describe('RocketReachService', () => {
         data: { id: 42, status: 'complete', name: 'Jane Doe' },
       });
 
-      await service.lookupCandidate(
+      await lookupPerson(
+        service,
         buildCandidate({
           rocketreach_profile_id: '42',
           // A known profile id should take priority over every other identifier.
@@ -103,7 +110,8 @@ describe('RocketReachService', () => {
         data: { id: 42, status: 'complete', name: 'Jane Doe' },
       });
 
-      await service.lookupCandidate(
+      await lookupPerson(
+        service,
         buildCandidate({
           email: 'jane@example.com',
           sources: [
@@ -133,7 +141,8 @@ describe('RocketReachService', () => {
         data: { id: 42, status: 'complete', name: 'Jane Doe' },
       });
 
-      await service.lookupCandidate(
+      await lookupPerson(
+        service,
         buildCandidate({
           email: 'jane@example.com',
           first_name: 'Jane',
@@ -156,7 +165,8 @@ describe('RocketReachService', () => {
         data: { id: 42, status: 'complete', name: 'Jane Doe' },
       });
 
-      await service.lookupCandidate(
+      await lookupPerson(
+        service,
         buildCandidate({
           first_name: 'Jane',
           last_name: 'Doe',
@@ -176,7 +186,8 @@ describe('RocketReachService', () => {
     it('returns undefined without calling the API when only a name is known (no current_employer)', async () => {
       const get = jest.spyOn(service.client, 'get');
 
-      const result = await service.lookupCandidate(
+      const result = await lookupPerson(
+        service,
         buildCandidate({ first_name: 'Jane', last_name: 'Doe' }),
       );
 
@@ -200,7 +211,8 @@ describe('RocketReachService', () => {
       };
       jest.spyOn(service.client, 'get').mockResolvedValue({ data: person });
 
-      const result = await service.lookupCandidate(
+      const result = await lookupPerson(
+        service,
         buildCandidate({ email: 'jane@example.com' }),
       );
 
@@ -212,7 +224,8 @@ describe('RocketReachService', () => {
         data: { status: 'not queued' },
       });
 
-      const result = await service.lookupCandidate(
+      const result = await lookupPerson(
+        service,
         buildCandidate({ email: 'jane@example.com' }),
       );
 
@@ -224,11 +237,180 @@ describe('RocketReachService', () => {
         .spyOn(service.client, 'get')
         .mockRejectedValue(new Error('Request failed with status code 429'));
 
-      const result = await service.lookupCandidate(
+      const result = await lookupPerson(
+        service,
         buildCandidate({ email: 'jane@example.com' }),
       );
 
       expect(result).toBeUndefined();
     });
+  });
+});
+
+// Polls without waiting in real time.
+class InstantRocketReachService extends RocketReachService {
+  protected wait(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
+describe('RocketReachService without an API key', () => {
+  it.each([undefined, ''])(
+    'is disabled with key %p, and a lookup resolves without calling the API',
+    async (rocketReachApiKey) => {
+      const service = new RocketReachService({ rocketReachApiKey });
+      const get = jest.spyOn(service.client, 'get');
+
+      expect(service.enabled).toBe(false);
+      await expect(
+        lookupPerson(service, buildCandidate({ sources: [buildSource()] })),
+      ).resolves.toBeUndefined();
+      expect(get).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe('RocketReachService lookups that are still in progress', () => {
+  const candidate = () => buildCandidate({ sources: [buildSource()] });
+  let service: InstantRocketReachService;
+
+  beforeEach(() => {
+    service = new InstantRocketReachService({ rocketReachApiKey: 'key' });
+  });
+
+  it('polls checkStatus until the profile completes', async () => {
+    const get = jest
+      .spyOn(service.client, 'get')
+      .mockResolvedValueOnce({ data: { id: 7, status: 'searching' } })
+      .mockResolvedValueOnce({ data: [{ id: 7, status: 'progress' }] })
+      .mockResolvedValueOnce({
+        data: [{ id: 7, status: 'complete', name: 'Jane Doe' }],
+      });
+
+    const person = await lookupPerson(service, candidate());
+
+    expect(person).toEqual({ id: 7, status: 'complete', name: 'Jane Doe' });
+    expect(get).toHaveBeenLastCalledWith(
+      'https://api.rocketreach.co/api/v2/person/checkStatus',
+      { params: { ids: '7' }, headers: { 'Api-Key': 'key' } },
+    );
+  });
+
+  it('gives up (no profile, so nothing to charge) when it never completes', async () => {
+    const get = jest
+      .spyOn(service.client, 'get')
+      .mockResolvedValueOnce({ data: { id: 7, status: 'waiting' } })
+      .mockResolvedValue({ data: [{ id: 7, status: 'waiting' }] });
+
+    await expect(lookupPerson(service, candidate())).resolves.toBeUndefined();
+    expect(get).toHaveBeenCalledTimes(5);
+  });
+
+  it('treats a failed lookup as no match', async () => {
+    jest
+      .spyOn(service.client, 'get')
+      .mockResolvedValue({ data: { id: 7, status: 'failed' } });
+
+    await expect(lookupPerson(service, candidate())).resolves.toBeUndefined();
+  });
+});
+
+describe('RocketReachService lookup outcomes', () => {
+  let service: InstantRocketReachService;
+  const httpError = (status: number) =>
+    new AxiosError('failed', 'ERR_BAD_RESPONSE', undefined, undefined, {
+      status,
+    } as AxiosResponse);
+
+  beforeEach(() => {
+    service = new InstantRocketReachService({ rocketReachApiKey: 'key' });
+  });
+
+  it('reports a find with the query it sent', async () => {
+    jest
+      .spyOn(service.client, 'get')
+      .mockResolvedValue({ data: { id: 7, status: 'complete' } });
+
+    await expect(
+      service.lookup(buildCandidate({ sources: [buildSource()] })),
+    ).resolves.toEqual({
+      outcome: 'found',
+      query: {
+        type: 'linkedin_url',
+        params: { linkedin_url: 'https://www.linkedin.com/in/janedoe' },
+      },
+      person: { id: 7, status: 'complete' },
+    });
+  });
+
+  it.each([
+    ['id', { rocketreach_profile_id: '9' }],
+    ['email', { email: 'jane@example.com' }],
+    ['name_employer', { current_company: 'Acme' }],
+  ])('names the %s query type', async (type, overrides) => {
+    jest.spyOn(service.client, 'get').mockRejectedValue(httpError(404));
+
+    const result = await service.lookup(buildCandidate(overrides));
+
+    expect(result).toMatchObject({ query: { type } });
+  });
+
+  it('reports a 404 as no match', async () => {
+    jest.spyOn(service.client, 'get').mockRejectedValue(httpError(404));
+
+    await expect(
+      service.lookup(buildCandidate({ email: 'jane@example.com' })),
+    ).resolves.toEqual({
+      outcome: 'not_found',
+      query: { type: 'email', params: { email: 'jane@example.com' } },
+    });
+  });
+
+  it('reports a failed profile as no match, with its id', async () => {
+    jest
+      .spyOn(service.client, 'get')
+      .mockResolvedValue({ data: { id: 7, status: 'failed' } });
+
+    await expect(
+      service.lookup(buildCandidate({ email: 'jane@example.com' })),
+    ).resolves.toMatchObject({ outcome: 'not_found', profileId: 7 });
+  });
+
+  it('reports a server error with its status and code, not its message', async () => {
+    jest.spyOn(service.client, 'get').mockRejectedValue(httpError(500));
+
+    await expect(
+      service.lookup(buildCandidate({ email: 'jane@example.com' })),
+    ).resolves.toMatchObject({
+      outcome: 'error',
+      httpStatus: 500,
+      error: 'ERR_BAD_RESPONSE',
+    });
+  });
+
+  it('reports a lookup that never completes as timed out', async () => {
+    jest
+      .spyOn(service.client, 'get')
+      .mockResolvedValueOnce({ data: { id: 7, status: 'searching' } })
+      .mockResolvedValue({ data: [{ id: 7, status: 'searching' }] });
+
+    await expect(
+      service.lookup(buildCandidate({ email: 'jane@example.com' })),
+    ).resolves.toMatchObject({ outcome: 'pending_timeout', profileId: 7 });
+  });
+
+  it('skips, without calling the API, when disabled or with nothing to go on', async () => {
+    const get = jest.spyOn(service.client, 'get');
+
+    await expect(service.lookup(buildCandidate())).resolves.toEqual({
+      outcome: 'skipped',
+      reason: 'no_identifier',
+    });
+    await expect(
+      new RocketReachService({ rocketReachApiKey: '' }).lookup(
+        buildCandidate({ email: 'jane@example.com' }),
+      ),
+    ).resolves.toEqual({ outcome: 'skipped', reason: 'disabled' });
+    expect(get).not.toHaveBeenCalled();
   });
 });

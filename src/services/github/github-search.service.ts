@@ -3,7 +3,7 @@ import AiConfig from '../../config/ai.config';
 import { type ConfigType } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
-import { GoogleSearchItem } from '../google-search/google-search.service';
+import { GoogleSearchItem } from '../search-item';
 import {
   countryName,
   resolveRegionNames,
@@ -75,10 +75,10 @@ export class GithubSearchService {
   }
 
   // GitHub's Search Users API takes qualifiers (location:) rather than
-  // boolean/quoted syntax, so this is deliberately simpler than
-  // GoogleSearchService.buildXrayQueries. Returns undefined — rather than
-  // falling back to a generic term — when the role has neither a title nor
-  // a skill, since a search with no real signal isn't worth the API call.
+  // boolean/quoted syntax, so this is deliberately simpler than the
+  // Vertex query builder. Returns undefined — rather than falling back
+  // to a generic term — when the role has neither a title nor a skill,
+  // since a search with no real signal isn't worth the API call.
   private buildQuery(
     filters: ParsedRoleFilters,
     regionNames?: string[],

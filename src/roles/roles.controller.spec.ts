@@ -7,6 +7,41 @@ import { ClerkService } from '../common/clerk/clerk.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import type { ClerkAuthContext } from '../auth/auth.types';
 import { of, lastValueFrom, toArray } from 'rxjs';
+import type { RocketReachLookupsService } from '../services/rocket-reach/rocket-reach-lookups.service';
+import { PaidResearchService } from './research/paid-research.service';
+import {
+  CreditsService,
+  InsufficientCreditsException,
+} from '../organization/credits/credits.service';
+import type { RocketReachService } from '../services/rocket-reach/rocket-reach.service';
+
+const RESEARCH_CHARGE = {
+  uid: 'charge-1',
+  organization_id: 'org-1',
+  amount: -1,
+  period: '2026-11',
+};
+
+function buildCreditsService(): jest.Mocked<CreditsService> {
+  return {
+    costPerRun: 1,
+    balance: jest.fn().mockResolvedValue(10),
+    charge: jest.fn().mockResolvedValue(RESEARCH_CHARGE),
+    refund: jest.fn().mockResolvedValue(undefined),
+  } as unknown as jest.Mocked<CreditsService>;
+}
+
+// RocketReach off (no API key): research costs the base credit only.
+const rocketReachOff = {
+  enabled: false,
+  canLookUp: () => true,
+  lookup: jest.fn(),
+} as unknown as RocketReachService;
+
+const noRecentLookups = {
+  recentProfile: jest.fn().mockResolvedValue(null),
+  record: jest.fn(),
+} as unknown as RocketReachLookupsService;
 
 function buildAuth(
   overrides: Partial<ClerkAuthContext> = {},
@@ -79,6 +114,7 @@ describe('RolesController', () => {
   let logsService: jest.Mocked<LogsService>;
   let clerkService: jest.Mocked<ClerkService>;
   let jobSpecImportService: jest.Mocked<JobSpecImportService>;
+  let creditsService: jest.Mocked<CreditsService>;
   let controller: RolesController;
 
   beforeEach(() => {
@@ -87,12 +123,19 @@ describe('RolesController', () => {
     logsService = buildLogsService();
     clerkService = buildClerkService();
     jobSpecImportService = buildJobSpecImportService();
+    creditsService = buildCreditsService();
     controller = new RolesController(
       rolesService,
       searchService,
       logsService,
       clerkService,
       jobSpecImportService,
+      new PaidResearchService(
+        creditsService,
+        searchService,
+        rocketReachOff,
+        noRecentLookups,
+      ),
     );
   });
 
@@ -377,16 +420,13 @@ describe('RolesController', () => {
   });
 
   describe('getRoleResult', () => {
-    it('resolves the role for auth, then returns the result with a freshly deep-searched candidate', async () => {
-      const role = { uid: 'role-1' };
-      rolesService.getRole.mockResolvedValue(role as any);
-      const candidate = { uid: 'candidate-1', enriched_at: null };
-      const result = { uid: 'result-1', candidate };
+    it('resolves the role for auth, then returns the result scoped to it without researching', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const result = {
+        uid: 'result-1',
+        candidate: { uid: 'candidate-1', enriched_at: null },
+      };
       rolesService.getRoleResult.mockResolvedValue(result as any);
-      const enrichedCandidate = { uid: 'candidate-1', enriched_at: new Date() };
-      searchService.deepSearchCandidate.mockResolvedValue(
-        enrichedCandidate as any,
-      );
 
       const response = await controller.getRoleResult(
         'role-1',
@@ -402,36 +442,61 @@ describe('RolesController', () => {
       expect(rolesService.getRoleResult).toHaveBeenCalledWith(
         'result-1',
         'org-1',
+        'role-1',
       );
+      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+      expect(logsService.log).not.toHaveBeenCalled();
+      expect(response).toBe(result);
+    });
+  });
+
+  describe('researchCandidate', () => {
+    const jane = {
+      uid: 'candidate-1',
+      first_name: 'Jane',
+      last_name: 'Doe',
+      enriched_at: null,
+      sources: [],
+    };
+
+    function givenResult(candidate: object | null) {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      rolesService.getRoleResult.mockResolvedValueOnce({
+        uid: 'result-1',
+        candidate,
+      } as any);
+    }
+
+    it('charges, forces a deep research, logs it, and returns the result re-read after research', async () => {
+      givenResult(jane);
+      searchService.deepSearchCandidate.mockResolvedValue({
+        ...jane,
+        enriched_at: new Date('2026-11-17T10:00:00Z'),
+      } as any);
+      const refreshed = { uid: 'result-1', summary: 'Researched summary' };
+      rolesService.getRoleResult.mockResolvedValueOnce(refreshed as any);
+
+      const response = await controller.researchCandidate(
+        'role-1',
+        'result-1',
+        buildAuth(),
+      );
+
+      expect(creditsService.charge).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        userId: 'user-1',
+        roleId: 'role-1',
+        roleResultId: 'result-1',
+        candidateId: 'candidate-1',
+        rocketReach: 'none',
+      });
       expect(searchService.deepSearchCandidate).toHaveBeenCalledWith(
         'candidate-1',
         'role-1',
-        false,
+        true,
+        { rocketReach: undefined },
       );
-      expect(response).toEqual({
-        uid: 'result-1',
-        candidate: enrichedCandidate,
-      });
-    });
-
-    it('logs a CANDIDATE_DEEP_SEARCH entry when a fresh search actually ran', async () => {
-      const role = { uid: 'role-1' };
-      rolesService.getRole.mockResolvedValue(role as any);
-      const candidate = { uid: 'candidate-1', enriched_at: null };
-      const result = { uid: 'result-1', candidate };
-      rolesService.getRoleResult.mockResolvedValue(result as any);
-      const enrichedCandidate = {
-        uid: 'candidate-1',
-        first_name: 'Jane',
-        last_name: 'Doe',
-        enriched_at: new Date(),
-      };
-      searchService.deepSearchCandidate.mockResolvedValue(
-        enrichedCandidate as any,
-      );
-
-      await controller.getRoleResult('role-1', 'result-1', buildAuth());
-
+      expect(creditsService.refund).not.toHaveBeenCalled();
       expect(logsService.log).toHaveBeenCalledWith({
         organization_id: 'org-1',
         user_id: 'user-1',
@@ -440,105 +505,87 @@ describe('RolesController', () => {
         role_result_id: 'result-1',
         message: 'Deep search for candidate "Jane Doe"',
       });
+      expect(response).toBe(refreshed);
     });
 
-    it('skips the deep search when the candidate has already been enriched', async () => {
-      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
-      const candidate = { uid: 'candidate-1', enriched_at: new Date() };
-      const result = { uid: 'result-1', candidate };
-      rolesService.getRoleResult.mockResolvedValue(result as any);
-
-      const response = await controller.getRoleResult(
-        'role-1',
-        'result-1',
-        buildAuth(),
-      );
-
-      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
-      expect(logsService.log).not.toHaveBeenCalled();
-      expect(response).toBe(result);
-    });
-
-    it('forces a fresh deep search even when already enriched when refresh=true is passed', async () => {
-      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
-      const candidate = { uid: 'candidate-1', enriched_at: new Date() };
-      const result = { uid: 'result-1', candidate };
-      rolesService.getRoleResult.mockResolvedValue(result as any);
-      const refreshedCandidate = {
-        uid: 'candidate-1',
-        enriched_at: new Date(),
-      };
-      searchService.deepSearchCandidate.mockResolvedValue(
-        refreshedCandidate as any,
-      );
-
-      const response = await controller.getRoleResult(
-        'role-1',
-        'result-1',
-        buildAuth(),
-        'true',
-      );
-
-      expect(searchService.deepSearchCandidate).toHaveBeenCalledWith(
-        'candidate-1',
-        'role-1',
-        true,
-      );
-      expect(logsService.log).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'CANDIDATE_DEEP_SEARCH' }),
-      );
-      expect(response).toEqual({
-        uid: 'result-1',
-        candidate: refreshedCandidate,
-      });
-    });
-
-    it('does not force a refresh when refresh is anything other than the string "true"', async () => {
-      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
-      const candidate = { uid: 'candidate-1', enriched_at: new Date() };
-      const result = { uid: 'result-1', candidate };
-      rolesService.getRoleResult.mockResolvedValue(result as any);
-
-      await controller.getRoleResult(
-        'role-1',
-        'result-1',
-        buildAuth(),
-        'false',
-      );
-
-      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
-    });
-
-    it('skips the deep search when the result has no matched candidate', async () => {
-      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
-      const result = { uid: 'result-1', candidate: null };
-      rolesService.getRoleResult.mockResolvedValue(result as any);
-
-      const response = await controller.getRoleResult(
-        'role-1',
-        'result-1',
-        buildAuth(),
-      );
-
-      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
-      expect(response).toBe(result);
-    });
-
-    it('falls back to the un-enriched result when the deep search fails, without logging', async () => {
-      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
-      const candidate = { uid: 'candidate-1', enriched_at: null };
-      const result = { uid: 'result-1', candidate };
-      rolesService.getRoleResult.mockResolvedValue(result as any);
+    it('surfaces a failed research as a 502 and refunds the whole charge', async () => {
+      givenResult(jane);
       searchService.deepSearchCandidate.mockRejectedValue(new Error('boom'));
 
-      const response = await controller.getRoleResult(
+      const error = await captureError(
+        controller.researchCandidate('role-1', 'result-1', buildAuth()),
+      );
+
+      expect(error.getStatus()).toBe(502);
+      expect(creditsService.refund).toHaveBeenCalledWith(RESEARCH_CHARGE, {
+        credits: 1,
+        part: 'all',
+        reason: 'Deep research failed',
+      });
+      expect(logsService.log).not.toHaveBeenCalled();
+    });
+
+    it('blocks with a 402 carrying the balance and what was needed, without researching', async () => {
+      givenResult(jane);
+      creditsService.charge.mockRejectedValue(
+        new InsufficientCreditsException(0, 1),
+      );
+
+      const error = await captureError(
+        controller.researchCandidate('role-1', 'result-1', buildAuth()),
+      );
+
+      expect(error.getStatus()).toBe(402);
+      expect(error.getResponse()).toMatchObject({ balance: 0, required: 1 });
+      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+    });
+
+    it('rejects with a 422, uncharged, when the candidate has no name to search on', async () => {
+      givenResult({ ...jane, first_name: null, last_name: ' ' });
+
+      const error = await captureError(
+        controller.researchCandidate('role-1', 'result-1', buildAuth()),
+      );
+
+      expect(error.getStatus()).toBe(422);
+      expect(creditsService.charge).not.toHaveBeenCalled();
+      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+    });
+
+    it('rejects with a 422 when the result has no candidate', async () => {
+      givenResult(null);
+
+      const error = await captureError(
+        controller.researchCandidate('role-1', 'result-1', buildAuth()),
+      );
+
+      expect(error.getStatus()).toBe(422);
+      expect(creditsService.charge).not.toHaveBeenCalled();
+      expect(searchService.deepSearchCandidate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('researchQuote', () => {
+    it('quotes the cost against the balance without charging', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      rolesService.getRoleResult.mockResolvedValue({
+        uid: 'result-1',
+        candidate: { uid: 'candidate-1', first_name: 'Jane', sources: [] },
+      } as any);
+      creditsService.balance.mockResolvedValue(0);
+
+      const quote = await controller.researchQuote(
         'role-1',
         'result-1',
         buildAuth(),
       );
 
-      expect(logsService.log).not.toHaveBeenCalled();
-      expect(response).toBe(result);
+      expect(quote).toMatchObject({
+        credits: 1,
+        balance: 0,
+        sufficient: false,
+      });
+      expect(creditsService.charge).not.toHaveBeenCalled();
     });
   });
 

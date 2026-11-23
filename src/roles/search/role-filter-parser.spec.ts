@@ -1,5 +1,4 @@
 import { parseRoleFilters } from './role-filter-parser';
-import { GoogleSearchService } from '../../services/google-search/google-search.service';
 import {
   role_filter_item,
   role_filter_child,
@@ -60,6 +59,7 @@ describe('parseRoleFilters', () => {
         countryCode: 'ZA',
         regions: [{ type: 'province', value: 'GP' }],
         remoteWork: false,
+        workTypes: [],
         workAuthorizationRequired: false,
       },
       priority: 'ESSENTIAL',
@@ -94,46 +94,12 @@ describe('parseRoleFilters', () => {
         countryCode: 'ZA',
         regions: [{ type: 'province', value: 'GP' }],
         remoteWork: false,
+        workTypes: [],
         workAuthorizationRequired: false,
       },
       priority: 'ESSENTIAL',
       nonNegotiable: false,
     });
-  });
-
-  it('turns saved ZA + CA(SA) rows into a Google query scoped to South Africa with the CA(SA) aliases', () => {
-    const items = [
-      buildItem({
-        uid: 'title',
-        category: 'job_titles',
-        list_value: ['Financial Manager'],
-        children: [buildChild({ title: 'title_option', value: 'main_title' })],
-      }),
-      buildItem({
-        uid: 'loc',
-        category: 'location',
-        value: 'ZA',
-        priority: 'OPTIONAL',
-        children: [buildChild({ title: 'province', value: '' })],
-      }),
-      buildItem({
-        uid: 'edu',
-        category: 'education',
-        list_value: ['CA (SA)'],
-        priority: 'OPTIONAL',
-      }),
-    ];
-    const google = new GoogleSearchService({
-      googleSearchApiKey: 'k',
-      googleSearchEngineId: 'cx',
-    });
-
-    const [query] = (google as any).buildXrayQueries(
-      parseRoleFilters(items),
-    ) as string[];
-
-    expect(query).toContain('"South Africa"');
-    expect(query).toContain('("CA(SA)" OR "Chartered Accountant" OR SAICA)');
   });
 
   it('reads remote_work and work_authorization booleans from location children', () => {
@@ -152,6 +118,64 @@ describe('parseRoleFilters', () => {
 
     expect(result.location?.value.remoteWork).toBe(true);
     expect(result.location?.value.workAuthorizationRequired).toBe(true);
+  });
+
+  it('reads work_types into workTypes, keeps remoteWork in sync and never treats it as a region', () => {
+    const items = [
+      buildItem({
+        category: 'location',
+        value: 'ZA',
+        children: [
+          buildChild({ title: 'city', value: 'Cape Town' }),
+          buildChild({
+            title: 'work_types',
+            list_value: ['HYBRID', 'ONSITE', 'bogus'],
+          }),
+          // A stale flag loses to the explicit work types.
+          buildChild({ title: 'remote_work', boolean: true }),
+        ],
+      }),
+    ];
+
+    const result = parseRoleFilters(items);
+
+    expect(result.location?.value).toEqual({
+      countryCode: 'ZA',
+      regions: [{ type: 'city', value: 'Cape Town' }],
+      remoteWork: false,
+      workTypes: ['ONSITE', 'HYBRID'],
+      workAuthorizationRequired: false,
+    });
+  });
+
+  it('sets remoteWork when REMOTE is one of the work types', () => {
+    const items = [
+      buildItem({
+        category: 'location',
+        value: 'ZA',
+        children: [buildChild({ title: 'work_types', list_value: ['REMOTE'] })],
+      }),
+    ];
+
+    const result = parseRoleFilters(items);
+
+    expect(result.location?.value.remoteWork).toBe(true);
+    expect(result.location?.value.workTypes).toEqual(['REMOTE']);
+  });
+
+  it('reads a legacy remote_work-only row as on-site plus remote', () => {
+    const items = [
+      buildItem({
+        category: 'location',
+        value: 'ZA',
+        children: [buildChild({ title: 'remote_work', boolean: true })],
+      }),
+    ];
+
+    expect(parseRoleFilters(items).location?.value.workTypes).toEqual([
+      'ONSITE',
+      'REMOTE',
+    ]);
   });
 
   it('leaves location undefined when there is no location item', () => {

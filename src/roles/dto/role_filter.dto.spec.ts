@@ -1,5 +1,6 @@
+import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { FilterItemDto } from './role_filter.dto';
+import { FilterItemDto, RoleFilterDto } from './role_filter.dto';
 
 describe('FilterItemDto', () => {
   it('rejects a category outside the fixed 7-category vocabulary', async () => {
@@ -53,5 +54,64 @@ describe('FilterItemDto', () => {
 
       expect(errors.some((e) => e.property === 'priority')).toBe(false);
     }
+  });
+});
+
+describe('RoleFilterDto work types and edited expansions', () => {
+  const errorsFor = async (body: unknown) =>
+    validate(plainToInstance(RoleFilterDto, body), {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+  const location = (work_types: unknown) => ({
+    filters: [
+      { category: 'location', value: 'ZA', priority: 'ESSENTIAL', work_types },
+    ],
+  });
+
+  it('accepts ONSITE, HYBRID and REMOTE', async () => {
+    expect(await errorsFor(location(['ONSITE', 'HYBRID', 'REMOTE']))).toEqual(
+      [],
+    );
+  });
+
+  it('rejects an unknown or repeated work type', async () => {
+    expect(await errorsFor(location(['ONSITE', 'FLEXI']))).not.toEqual([]);
+    expect(await errorsFor(location(['REMOTE', 'REMOTE']))).not.toEqual([]);
+  });
+
+  it('accepts edited expansion groups', async () => {
+    expect(
+      await errorsFor({
+        filters: [],
+        criterion_expansions: {
+          job_titles: [{ seed: 'Founder', terms: ['Co-founder'] }],
+          skills: [{ seed: 'Python', terms: [] }],
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it('rejects malformed expansion groups', async () => {
+    expect(
+      await errorsFor({
+        filters: [],
+        criterion_expansions: { job_titles: [{ seed: '', terms: 'x' }] },
+      }),
+    ).not.toEqual([]);
+    expect(
+      await errorsFor({
+        filters: [],
+        criterion_expansions: {
+          skills: [{ seed: 'Python', terms: Array(9).fill('term') }],
+        },
+      }),
+    ).not.toEqual([]);
+    expect(
+      await errorsFor({
+        filters: [],
+        criterion_expansions: { languages: [] },
+      }),
+    ).not.toEqual([]);
   });
 });

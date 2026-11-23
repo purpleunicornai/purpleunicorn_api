@@ -23,6 +23,7 @@ import { RoleFilterDto } from './dto/role_filter.dto';
 import {
   CreateRoleDto,
   RoleDto,
+  RoleFilterResponseDto,
   RoleResultSummaryDto,
   RunSearchDto,
   UpdateRoleDto,
@@ -40,6 +41,11 @@ import { LogsService } from '../common/logs/logs.service';
 import { ClerkService } from '../common/clerk/clerk.service';
 import { role_result } from '../generated/prisma/client';
 import { requireOrgId } from '../common/utils/organizationUtils';
+import { resolveUserName } from './resolve-user-name';
+import {
+  PaidResearchService,
+  type ResearchQuote,
+} from './research/paid-research.service';
 
 @ApiTags('Roles')
 @ApiBearerAuth('bearer')
@@ -54,6 +60,7 @@ export class RolesController {
     private readonly logsService: LogsService,
     private readonly clerkService: ClerkService,
     private readonly jobSpecImportService: JobSpecImportService,
+    private readonly paidResearch: PaidResearchService,
   ) {}
 
   @Get()
@@ -141,12 +148,12 @@ export class RolesController {
   }
 
   @Post('/:roleId/filters')
+  @Serialize(RoleFilterResponseDto)
   async createFilter(
     @Param('roleId') roleId: string,
     @Body() body: RoleFilterDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ) {
-    console.log('ATEEMPTING TO CREAT NEW FILTRES', body);
     const orgId = requireOrgId(auth);
     const { filter, isFirst } = await this.rolesService.createFilter(
       roleId,
@@ -230,78 +237,114 @@ export class RolesController {
     );
   }
 
+  // Every result for the role's active filter set, best match first.
+  @Get('/:roleId/results')
+  @Serialize(RoleResultSummaryDto)
+  async listResults(
+    @Param('roleId') roleId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    return this.rolesService.listResults(roleId);
+  }
+
+  // A plain read: never researches. Deep research spends Gemini credits, so
+  // it only runs from the explicit POST below.
   @Get('/:roleId/result/:resultId')
   @Serialize(RoleResultSummaryDto)
   async getRoleResult(
     @Param('roleId') roleId: string,
     @Param('resultId') resultId: string,
     @CurrentAuth() auth: ClerkAuthContext,
-    @Query('refresh') refresh?: string,
   ) {
     const orgId = requireOrgId(auth);
-    // check if the user can access the role first
     await this.rolesService.getRole(roleId, orgId, auth.userId);
-    const result = await this.rolesService.getRoleResult(resultId, orgId);
+    return this.rolesService.getRoleResult(resultId, orgId, roleId);
+  }
 
-    const force = refresh === 'true';
-    const candidate = result?.candidate;
-    if (candidate && (!candidate.enriched_at || force)) {
-      const previousEnrichedAt = candidate.enriched_at;
-      try {
-        const enrichedCandidate = await this.searchService.deepSearchCandidate(
-          candidate.uid,
-          roleId,
-          force,
-        );
-        result.candidate = enrichedCandidate;
+  // What researching this result would cost the org (one price per run,
+  // RocketReach included) and whether its balance covers it. The UI shows this before the user
+  // confirms; nothing is charged.
+  @Get('/:roleId/result/:resultId/research/quote')
+  async researchQuote(
+    @Param('roleId') roleId: string,
+    @Param('resultId') resultId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ): Promise<ResearchQuote> {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    const { candidate } = await this.rolesService.getRoleResult(
+      resultId,
+      orgId,
+      roleId,
+    );
+    return this.paidResearch.quote(orgId, candidate);
+  }
 
-        // A real search only happened if enriched_at actually moved on —
-        // deepSearchCandidate returns the candidate unchanged when it
-        // short-circuits (no name to search on, or already enriched).
-        if (enrichedCandidate.enriched_at !== previousEnrichedAt) {
-          const name = [
-            enrichedCandidate.first_name,
-            enrichedCandidate.last_name,
-          ]
-            .filter(Boolean)
-            .join(' ');
-          void this.logsService.log({
-            organization_id: orgId,
-            user_id: auth.userId,
-            type: 'CANDIDATE_DEEP_SEARCH',
-            role_id: roleId,
-            role_result_id: resultId,
-            message: `Deep search for candidate "${name || enrichedCandidate.uid}"`,
-          });
-        }
-      } catch (error) {
-        this.logger.warn(
-          `Deep candidate search failed for candidate=${candidate.uid}: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
+  // Deep research for one candidate, run when a user asks for it (and again
+  // on re-run), paid in credits: 402 INSUFFICIENT_CREDITS when the balance
+  // is short, refunded in full when it fails or when RocketReach finds
+  // nothing. Returns the result re-read, since
+  // research rewrites both the candidate and the role_result's summary,
+  // score and findings.
+  @Post('/:roleId/result/:resultId/research')
+  @Serialize(RoleResultSummaryDto)
+  async researchCandidate(
+    @Param('roleId') roleId: string,
+    @Param('resultId') resultId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    const { candidate } = await this.rolesService.getRoleResult(
+      resultId,
+      orgId,
+      roleId,
+    );
+
+    let researched: Awaited<ReturnType<PaidResearchService['research']>>;
+    try {
+      researched = await this.paidResearch.research({
+        organizationId: orgId,
+        userId: auth.userId,
+        roleId,
+        roleResultId: resultId,
+        candidate,
+      });
+    } catch (error) {
+      if (error instanceof RequestException) throw error;
+      this.logger.warn(
+        `Deep research failed for result=${resultId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new RequestException(
+        'Deep research failed. Try again in a moment.',
+        HttpStatus.BAD_GATEWAY,
+        'DEEP_RESEARCH_FAILED',
+      );
     }
 
-    return result;
+    const name = [researched.first_name, researched.last_name]
+      .filter(Boolean)
+      .join(' ');
+    void this.logsService.log({
+      organization_id: orgId,
+      user_id: auth.userId,
+      type: 'CANDIDATE_DEEP_SEARCH',
+      role_id: roleId,
+      role_result_id: resultId,
+      message: `Deep search for candidate "${name || researched.uid}"`,
+    });
+
+    return this.rolesService.getRoleResult(resultId, orgId, roleId);
   }
 
   private sumTokensUsed(results: role_result[]): number {
     return results.reduce((sum, result) => sum + (result.tokens_used ?? 0), 0);
   }
 
-  // Never throws — recording who ran a search is a nice-to-have, not
-  // something that should block the search itself if Clerk's API is slow
-  // or unreachable. Falls back from full name to username to the raw id.
-  private async resolveUserName(userId: string): Promise<string> {
-    try {
-      const user = await this.clerkService.getUser(userId);
-      const fullName = [user.firstName, user.lastName]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-      return fullName || user.username || userId;
-    } catch {
-      return userId;
-    }
+  private resolveUserName(userId: string): Promise<string> {
+    return resolveUserName(this.clerkService, userId);
   }
 
   @Post('/:roleId/result/:resultId/shortlist')

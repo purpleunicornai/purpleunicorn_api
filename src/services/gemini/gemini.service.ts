@@ -2,13 +2,28 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import AiConfig from '../../config/ai.config';
 import { type ConfigType } from '@nestjs/config';
 import { z } from 'zod';
-import type { LanguageModel } from 'ai';
+import {
+  DEFAULT_REASONING_MODEL,
+  type ReasoningCallOptions,
+  type ReasoningProvider,
+  type ReasoningProviderId,
+} from '../reasoning/reasoning-model';
+import type { JSONValue, LanguageModel } from 'ai';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
-import { GoogleSearchItem } from '../google-search/google-search.service';
+import { GoogleSearchItem } from '../search-item';
 import { candidate, candidate_source } from '../../generated/prisma/client';
 import { InstitutionType } from '../../generated/prisma/enums';
 import { CandidateWithHistory } from '../../roles/search/candidate-scoring.service';
 import { countryName } from '../../roles/search/filter-terms';
+import type { Candidate } from '../../roles/search/extract-candidate';
+import type { IndexedCandidateScore } from '../../roles/search/candidate-score';
+import { addUsage, fromSdkUsage, type GeminiUsage } from './gemini-usage';
+import {
+  normalizeCandidate,
+  seedCandidate,
+  type CandidateRecord,
+  type RawCandidate,
+} from '../../roles/search/candidate-profile';
 import {
   EXPANSION_CATEGORIES,
   ExpansionSeeds,
@@ -21,7 +36,16 @@ import {
 // Exported so callers persisting a role_result's ai_platform/ai_model
 // (SearchService) can record exactly which model actually produced the
 // judgment, without hardcoding the string a second time.
-export const GEMINI_MODEL = 'gemini-2.5-flash';
+// The default reasoning model (see reasoning-model.ts).
+export const GEMINI_MODEL = DEFAULT_REASONING_MODEL.model;
+
+// Turns thinking off for speed and cost where the model allows it; Pro-tier
+// models can't disable thinking, so they get their default.
+function noThinking(model: string) {
+  return /flash/i.test(model)
+    ? { google: { thinkingConfig: { thinkingBudget: 0 } } }
+    : undefined;
+}
 export const GEMINI_PLATFORM = 'Gemini';
 
 // Bounds a single generateText call so a stuck or abnormally slow request
@@ -31,6 +55,10 @@ const GEMINI_CALL_TIMEOUT_MS = 120_000;
 // Expansion runs while the recruiter waits on a filter save, so it gets a
 // much shorter leash; on timeout the save goes ahead with literal terms.
 const EXPAND_SEARCH_TERMS_TIMEOUT_MS = 15_000;
+const SCORE_CANDIDATES_TIMEOUT_MS = 30_000;
+const RESEARCH_SEARCH_TIMEOUT_MS = 60_000;
+const RESEARCH_STRUCTURE_TIMEOUT_MS = 30_000;
+const REDIRECT_RESOLVE_TIMEOUT_MS = 3_000;
 
 const candidateSchema = z.object({
   // These three map directly onto a candidate_source row created alongside
@@ -81,6 +109,8 @@ export type GeminiCandidateMatch = z.infer<typeof matchSchema>;
 export interface FormatCandidatesResult {
   matches: GeminiCandidateMatch[];
   tokensUsed: number;
+  // Null when Gemini didn't report the counts (or no call was made).
+  usage: GeminiUsage | null;
 }
 
 // Unlike matchSchema (used when extracting a brand-new candidate from a
@@ -104,6 +134,7 @@ export type GeminiKnownCandidateMatch = z.infer<
 export interface ScoreKnownCandidatesResult {
   matches: GeminiKnownCandidateMatch[];
   tokensUsed: number;
+  usage: GeminiUsage | null;
 }
 
 const candidateExperienceEnrichmentSchema = z.object({
@@ -258,28 +289,202 @@ export interface ParseJobSpecResult {
   tokensUsed: number;
 }
 
-@Injectable()
-export class GeminiService {
-  private readonly logger = new Logger(GeminiService.name);
-  private modelPromise: Promise<LanguageModel> | null = null;
+const extractedCandidateSchema = z.object({
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  country_calling_code: z.string().optional(),
+  current_location_city: z.string().optional(),
+  current_location_country_code: z.string().optional(),
+  current_location_postal_code: z.string().optional(),
+  open_to_relocation: z.boolean().optional(),
+  open_to_remote_work: z.boolean().optional(),
+  current_work_authorization_status: z.string().optional(),
+  experience_years: z.number().int().optional(),
+  experience_roles: z.array(z.string()).optional(),
+  current_title: z.string().optional(),
+  current_company: z.string().optional(),
+  current_salary: z.number().optional(),
+  current_salary_currency: z.string().optional(),
+  current_role_start_date: z.string().optional(),
+  skills: z.array(z.string()).optional(),
+  languages: z.array(z.string()).optional(),
+  diversity: z.array(z.string()).optional(),
+  summary: z.string().optional(),
+  image_url: z.string().optional(),
+});
 
-  constructor(
-    @Inject(AiConfig.KEY)
-    private readonly aiConf: Pick<ConfigType<typeof AiConfig>, 'geminiApiKey'>,
-  ) {}
+const candidateScoresSchema = z.object({
+  scores: z.array(
+    z.object({
+      index: z.number().int(),
+      score: z.number().int().describe('0 to 100'),
+      summary: z.string().describe('One short sentence on fit.'),
+      reasoning: z.string().describe('A slightly more detailed assessment.'),
+      skills_matched: z.array(z.string()),
+      missing: z.array(z.string()),
+      nonNegotiableUnconfirmed: z.array(z.string()),
+      candidate: extractedCandidateSchema.optional(),
+    }),
+  ),
+});
+
+const researchSchema = z.object({
+  summary: z.string(),
+  findings: z.array(
+    z.object({
+      fact: z.string(),
+      sourceNumber: z.number().int(),
+    }),
+  ),
+  identityConfidence: z.enum(['high', 'medium', 'low']),
+  identityReason: z.string(),
+  score: z.number().int().describe('0 to 100'),
+  reasoning: z.string(),
+  // Optional, so an older-shaped response still parses.
+  qualifications: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Professional qualifications, designations and certifications the sourced findings confirm, e.g. "CA(SA)".',
+    ),
+  candidate: extractedCandidateSchema
+    .extend({
+      additional_sources: z.array(candidateSourceEnrichmentSchema).optional(),
+      experience: z.array(candidateExperienceEnrichmentSchema).optional(),
+      education: z.array(candidateEducationEnrichmentSchema).optional(),
+    })
+    .optional(),
+});
+
+const SCORING_INSTRUCTIONS = `You screen recruiting search results against a role.
+For each candidate you only see a short public search snippet of their LinkedIn profile (name, headline, company, location, about 150 characters of text), not the full profile.
+Rules:
+- Score each candidate 0-100 for fit with the role. Job title and seniority fit, location fit and essential criteria weigh most; nice-to-haves add a little.
+- "skills_matched": criteria the snippet clearly supports. "missing": criteria the snippet does not show. Absence of evidence means unconfirmed, not failed; only treat a criterion as failed when the snippet contradicts it (e.g. a different country, an excluded current employer).
+- "nonNegotiableUnconfirmed": only criteria explicitly tagged NON-NEGOTIABLE in the role that the snippet does not confirm. ESSENTIAL alone does not make a criterion non-negotiable. Empty when the role has no NON-NEGOTIABLE criteria or all are confirmed.
+- "summary": one short sentence on fit. "reasoning": a slightly more detailed assessment.
+- Also extract a query-independent "candidate" record from the snippet only, using these field names: first_name, last_name, email, phone, country_calling_code, current_location_city, current_location_country_code (ISO 3166-1 alpha-2), current_location_postal_code, open_to_relocation, open_to_remote_work, current_work_authorization_status, experience_years, experience_roles, current_title, current_company, current_salary, current_salary_currency (ISO 4217), current_role_start_date (ISO 8601; if only a year is known, use YYYY-01-01), skills, languages, diversity, summary, image_url.
+- "skills" is a string array of short canonical skill names the person has, not the role's wishlist. Include a stated certification as a skill. A title like "React Native Developer" may include "react native". If unsure, omit the skill.
+- Do not guess contact details (email, phone), salary, diversity, work authorization, or relocation/remote flags unless they literally appear in the snippet.
+- Never invent facts that are not in the snippet. Leave candidate fields out when the snippet does not support them. Skills may be sparse.
+- Return exactly one entry per candidate, using its index.`;
+
+const RESEARCH_INSTRUCTIONS = `You research a recruiting candidate's public footprint with Google Search.
+Look beyond LinkedIn: GitHub, personal sites, company team pages, talks, articles, open-source work, awards, press, app store listings.
+Rules:
+- Only state facts a search result actually supports. Do not guess.
+- Make sure each fact is about this same person: tie it to their LinkedIn URL, their company or headline, or their name plus location. If a result may be a different person with the same name, say so explicitly.
+- Write short factual sentences. If you find little, say so.`;
+
+const STRUCTURE_INSTRUCTIONS = `You turn grounded research notes about a recruiting candidate into a structured report.
+Rules:
+- Use only facts in the notes that carry a [source N] tag, and cite that N as sourceNumber. Drop anything without a source.
+- A finding is a fact about the person (work, projects, location, employers, education, public output). Leave out remarks about the search itself, such as what a search did or did not turn up.
+- Drop facts the notes flag as possibly a different person, and mention the doubt in identityReason.
+- identityConfidence: "high" when findings tie to the LinkedIn URL or the stated company plus name; "medium" when they tie by name plus role or location only; "low" when the link is weak, conflicting or there are no findings.
+- "score" 0-100 against the role, using the candidate's search profile plus the findings. Unconfirmed criteria are unknown, not failed. "reasoning" explains the score.
+- Also extract a query-independent "candidate" record from the search profile plus the source-backed notes, using these field names: first_name, last_name, email, phone, country_calling_code, current_location_city, current_location_country_code (ISO 3166-1 alpha-2), current_location_postal_code, open_to_relocation, open_to_remote_work, current_work_authorization_status, experience_years, experience_roles, current_title, current_company, current_salary, current_salary_currency (ISO 4217), current_role_start_date (ISO 8601; if only a year is known, use YYYY-01-01), skills (string array of short canonical names the person has, not the role's wishlist; include stated certifications), languages, diversity, summary, image_url.
+- Also extract every distinct employment history entry into "experience": company_name and role are required; include start_date/end_date (ISO dates, approximate if only a year is known) and responsibilities/skills when available.
+- Also extract every distinct education history entry into "education": institution_name and institution_type (one of HIGH_SCHOOL, COLLEGE, UNIVERSITY, COURSE, OTHER) are required; include institution_location/degree/field_of_study/start_date/end_date (ISO dates, approximate if only a year is known) when available.
+- "qualifications": professional qualifications, designations and certifications (e.g. "CA(SA)", "CFA", "AWS Certified Solutions Architect") that a sourced finding confirms. Empty when none are confirmed.
+- List any newly-found platforms in "additional_sources" as objects with "title", "name" (the platform, e.g. "GitHub"), and "url" when found. Do not repeat the LinkedIn URL already in the search profile.
+- Do not guess contact details (email, phone), salary, diversity, work authorization, or relocation/remote flags unless they literally appear in the notes.
+- Never invent facts. Leave fields out when there is no evidence.`;
+
+// research's structured record as Gemini returned it, before the search
+// profile seeds it.
+export type ResearchRecord = NonNullable<
+  z.infer<typeof researchSchema>['candidate']
+>;
+
+export interface CandidateResearch {
+  summary: string;
+  findings: { fact: string; sourceUrl: string }[];
+  identityConfidence: 'high' | 'medium' | 'low';
+  identityReason: string;
+  score: number;
+  reasoning: string;
+  sources: { url: string; title?: string }[];
+  searchQueries: string[];
+  candidate: CandidateRecord;
+  // What the structured output itself states, unseeded: the evidence the
+  // deterministic re-score may use. Never includes the search profile seed.
+  verified: { record: ResearchRecord | null; qualifications: string[] };
+  // Both calls (grounded search + structuring); null if neither reported.
+  // Grounded Google Search requests are billed separately and aren't here.
+  usage: GeminiUsage | null;
+}
+
+function describeCandidate(candidate: Partial<Candidate>): string {
+  return [
+    `name: ${candidate.name}`,
+    candidate.headline && `headline: ${candidate.headline}`,
+    candidate.company && `company: ${candidate.company}`,
+    candidate.location && `location: ${candidate.location}`,
+    candidate.linkedinUrl && `linkedin: ${candidate.linkedinUrl}`,
+    candidate.snippet && `snippet: ${candidate.snippet}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+// Settings a provider adds to a generateText call.
+export type ProviderCallSettings = {
+  providerOptions?: Record<string, Record<string, JSONValue>>;
+  maxOutputTokens?: number;
+};
+
+export type ReasoningApiKeys = {
+  geminiApiKey: string;
+  openaiApiKey?: string;
+  anthropicApiKey?: string;
+};
+
+// Every reasoning call (prompts, schemas, structured output, usage) on the
+// AI SDK, whatever the provider. A provider supplies its models and the
+// call settings it needs. Deep research's web retrieval is always Gemini
+// with Google Search grounding (see groundsWithOwnModel); the org's model reads
+// and structures what it found.
+export abstract class AiSdkReasoningProvider implements ReasoningProvider {
+  abstract readonly id: ReasoningProviderId;
+  // The provider's model when a call doesn't name one.
+  abstract readonly defaultModel: string;
+  protected readonly logger = new Logger(this.constructor.name);
+  private readonly models = new Map<string, Promise<LanguageModel>>();
+
+  constructor(protected readonly aiConf: ReasoningApiKeys) {}
+
+  // Whether its API key is configured.
+  abstract get enabled(): boolean;
+
+  protected abstract createModel(modelId: string): Promise<LanguageModel>;
+
+  // `fast`: a scoring or extraction call that doesn't need deep reasoning,
+  // so the provider can turn thinking down where it allows.
+  protected abstract callSettings(
+    modelId: string,
+    call: { fast: boolean },
+  ): ProviderCallSettings;
+
+  // Whether deep research's Google-grounded search runs on the org's own
+  // model (Gemini only) rather than the default Gemini model.
+  protected readonly groundsWithOwnModel: boolean = false;
 
   async formatCandidates(
     items: GoogleSearchItem[],
     filters: ParsedRoleFilters,
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
   ): Promise<FormatCandidatesResult> {
-    if (items.length === 0) return { matches: [], tokensUsed: 0 };
+    if (items.length === 0) return { matches: [], tokensUsed: 0, usage: null };
 
     this.logger.debug(
-      `Formatting ${items.length} search result(s) with Gemini`,
+      `Formatting ${items.length} search result(s) with ${this.id} ${modelId}`,
     );
 
     const { generateText, Output } = await this.loadAi();
-    const model = await this.getModel();
+    const model = await this.getModel(modelId);
 
     const { output, usage } = await generateText({
       model,
@@ -289,12 +494,13 @@ export class GeminiService {
       // This is scoring each candidate against fixed criteria, not
       // multi-step reasoning — disabling thinking measured ~25% faster
       // and cheaper with no observed quality loss.
-      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
+      ...this.callSettings(modelId, { fast: true }),
     });
 
     return {
       matches: output,
       tokensUsed: usage.totalTokens ?? 0,
+      usage: fromSdkUsage(usage),
     };
   }
 
@@ -304,27 +510,215 @@ export class GeminiService {
   async scoreKnownCandidates(
     candidates: CandidateWithHistory[],
     filters: ParsedRoleFilters,
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
   ): Promise<ScoreKnownCandidatesResult> {
-    if (candidates.length === 0) return { matches: [], tokensUsed: 0 };
+    if (candidates.length === 0) {
+      return { matches: [], tokensUsed: 0, usage: null };
+    }
 
     this.logger.debug(
-      `Scoring ${candidates.length} existing candidate(s) with Gemini`,
+      `Scoring ${candidates.length} existing candidate(s) with ${this.id} ${modelId}`,
     );
 
     const { generateText, Output } = await this.loadAi();
-    const model = await this.getModel();
+    const model = await this.getModel(modelId);
 
     const { output, usage } = await generateText({
       model,
       prompt: this.buildKnownCandidatePrompt(candidates, filters),
       output: Output.array({ element: knownCandidateMatchSchema }),
       timeout: GEMINI_CALL_TIMEOUT_MS,
-      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
+      ...this.callSettings(modelId, { fast: true }),
     });
 
     return {
       matches: output,
       tokensUsed: usage.totalTokens ?? 0,
+      usage: fromSdkUsage(usage),
+    };
+  }
+
+  // One call scores a page of LinkedIn snippets; the caller handles failure.
+  async scoreCandidates(
+    roleDescription: string,
+    candidates: Candidate[],
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
+  ): Promise<{
+    scores: IndexedCandidateScore[];
+    tokensUsed: number;
+    usage: GeminiUsage | null;
+  }> {
+    if (candidates.length === 0) {
+      return { scores: [], tokensUsed: 0, usage: null };
+    }
+    const { generateText, Output } = await this.loadAi();
+    const prompt = [
+      'ROLE:',
+      roleDescription,
+      '',
+      'CANDIDATES:',
+      ...candidates.map(
+        (candidate, index) =>
+          `[${index}]\n${describeCandidate({ ...candidate, linkedinUrl: undefined })}`,
+      ),
+    ].join('\n');
+
+    const { output, usage } = await generateText({
+      model: await this.getModel(modelId),
+      system: SCORING_INSTRUCTIONS,
+      prompt,
+      output: Output.object({ schema: candidateScoresSchema }),
+      ...this.callSettings(modelId, { fast: true }),
+      timeout: SCORE_CANDIDATES_TIMEOUT_MS,
+      maxRetries: 1,
+    });
+    return {
+      scores: output.scores.map((row) => {
+        const { candidate, ...score } = row;
+        return candidate ? { ...score, candidate } : score;
+      }),
+      tokensUsed: usage.totalTokens ?? 0,
+      usage: fromSdkUsage(usage),
+    };
+  }
+
+  // Pass 1 searches with Google grounding (which can't return structured
+  // output); pass 2 structures only the source-backed notes.
+  async researchCandidate(
+    roleDescription: string,
+    candidate: Partial<Candidate>,
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
+  ): Promise<CandidateResearch> {
+    const { generateText, Output } = await this.loadAi();
+    const { createGoogleGenerativeAI } = await this.loadGoogleProvider();
+    const google = createGoogleGenerativeAI({
+      apiKey: this.aiConf.geminiApiKey,
+    });
+
+    const searched = await generateText({
+      model: google(this.groundsWithOwnModel ? modelId : GEMINI_MODEL),
+      system: RESEARCH_INSTRUCTIONS,
+      prompt: `CANDIDATE:\n${describeCandidate(candidate)}\n\nROLE THEY ARE BEING CONSIDERED FOR:\n${roleDescription}\n\nResearch this person.`,
+      tools: { google_search: google.tools.googleSearch({}) },
+      timeout: RESEARCH_SEARCH_TIMEOUT_MS,
+      maxRetries: 1,
+    });
+
+    const grounding = (
+      searched.providerMetadata?.google as
+        | {
+            groundingMetadata?: {
+              webSearchQueries?: string[] | null;
+              groundingChunks?:
+                | { web?: { uri: string; title?: string | null } | null }[]
+                | null;
+              groundingSupports?:
+                | {
+                    segment?: { text?: string | null } | null;
+                    groundingChunkIndices?: number[] | null;
+                  }[]
+                | null;
+            } | null;
+          }
+        | undefined
+    )?.groundingMetadata;
+    const chunks = (grounding?.groundingChunks ?? []).map((chunk) => chunk.web);
+    const sources = await Promise.all(
+      chunks.map(async (web) =>
+        web
+          ? {
+              url: await this.resolveRedirect(web.uri),
+              title: web.title ?? undefined,
+            }
+          : undefined,
+      ),
+    );
+
+    const notes = (grounding?.groundingSupports ?? [])
+      .map((support) => {
+        const text = support.segment?.text?.trim();
+        const tags = (support.groundingChunkIndices ?? [])
+          .filter((i) => sources[i])
+          .map((i) => `[source ${i + 1}]`);
+        return text && tags.length ? `${text} ${tags.join(' ')}` : undefined;
+      })
+      .filter(Boolean);
+    const sourceList = sources
+      .map((source, i) =>
+        source
+          ? `[source ${i + 1}] ${source.title ?? ''} ${source.url}`
+          : undefined,
+      )
+      .filter(Boolean);
+
+    const { output, usage: structureUsage } = await generateText({
+      model: await this.getModel(modelId),
+      system: STRUCTURE_INSTRUCTIONS,
+      prompt: [
+        'CANDIDATE SEARCH PROFILE:',
+        describeCandidate(candidate),
+        '',
+        'ROLE:',
+        roleDescription,
+        '',
+        'SOURCE-BACKED NOTES:',
+        notes.length ? notes.join('\n') : '(none)',
+        '',
+        'FULL RESEARCH TEXT (for context; facts without a [source N] tag must not become findings):',
+        searched.text || '(empty)',
+        '',
+        'SOURCES:',
+        sourceList.length ? sourceList.join('\n') : '(none)',
+      ].join('\n'),
+      output: Output.object({ schema: researchSchema }),
+      ...this.callSettings(modelId, { fast: false }),
+      timeout: RESEARCH_STRUCTURE_TIMEOUT_MS,
+      maxRetries: 1,
+    });
+
+    const findings = output.findings.flatMap(({ fact, sourceNumber }) => {
+      const source = sources[sourceNumber - 1];
+      return source ? [{ fact, sourceUrl: source.url }] : [];
+    });
+    const usedSources = sources.filter(
+      (source): source is NonNullable<typeof source> => !!source,
+    );
+    const seed = seedCandidate({
+      name: candidate.name ?? '',
+      headline: candidate.headline,
+      company: candidate.company,
+      location: candidate.location,
+      linkedinUrl: candidate.linkedinUrl ?? '',
+      imageUrl: candidate.imageUrl,
+    });
+    const raw: RawCandidate | undefined = output.candidate
+      ? {
+          ...output.candidate,
+          additional_sources: output.candidate.additional_sources,
+          experience: output.candidate.experience,
+          education: output.candidate.education,
+        }
+      : undefined;
+
+    return {
+      summary: output.summary,
+      findings,
+      identityConfidence:
+        findings.length === 0 ? 'low' : output.identityConfidence,
+      identityReason: output.identityReason,
+      score: Math.max(0, Math.min(100, Math.round(output.score))),
+      reasoning: output.reasoning,
+      sources: usedSources,
+      searchQueries: grounding?.webSearchQueries ?? [],
+      candidate: normalizeCandidate(raw, seed),
+      verified: {
+        record: output.candidate ?? null,
+        qualifications: output.qualifications ?? [],
+      },
+      usage: addUsage(
+        fromSdkUsage(searched.usage),
+        fromSdkUsage(structureUsage),
+      ),
     };
   }
 
@@ -334,6 +728,7 @@ export class GeminiService {
   async enrichCandidate(
     items: GoogleSearchItem[],
     candidate: candidate & { sources: candidate_source[] },
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
   ): Promise<EnrichCandidateResult> {
     if (items.length === 0) {
       return { enrichment: {}, tokensUsed: 0 };
@@ -344,12 +739,13 @@ export class GeminiService {
     );
 
     const { generateText, Output } = await this.loadAi();
-    const model = await this.getModel();
+    const model = await this.getModel(modelId);
 
     const { output, usage } = await generateText({
       model,
       prompt: this.buildEnrichmentPrompt(items, candidate),
       output: Output.object({ schema: candidateEnrichmentSchema }),
+      ...this.callSettings(modelId, { fast: false }),
     });
 
     return {
@@ -362,18 +758,21 @@ export class GeminiService {
   // same category/child vocabulary role-filter-parser.ts already reads, so
   // the result can be persisted and later edited/approved with no new
   // parsing logic needed anywhere downstream.
-  async parseJobSpec(text: string): Promise<ParseJobSpecResult> {
-    this.logger.debug('Parsing job spec with Gemini');
+  async parseJobSpec(
+    text: string,
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
+  ): Promise<ParseJobSpecResult> {
+    this.logger.debug(`Parsing job spec with ${this.id} ${modelId}`);
 
     const { generateText, Output } = await this.loadAi();
-    const model = await this.getModel();
+    const model = await this.getModel(modelId);
 
     const { output, usage } = await generateText({
       model,
       prompt: this.buildJobSpecPrompt(text),
       output: Output.object({ schema: jobSpecParseResultSchema }),
       timeout: GEMINI_CALL_TIMEOUT_MS,
-      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
+      ...this.callSettings(modelId, { fast: true }),
     });
 
     const filteredItems = output.items.filter(hasRealSignal);
@@ -389,29 +788,32 @@ export class GeminiService {
   // what surface unusual candidates), for use as x-ray OR groups. The model
   // output is normalized centrally: seed first, and a seed it gave no
   // alternate for is left out so the next save asks again.
-  async expandSearchTerms({
-    seeds,
-    roleName,
-  }: {
-    seeds: ExpansionSeeds;
-    roleName: string;
-  }): Promise<ExpandSearchTermsResult> {
-    this.logger.debug('Expanding search terms with Gemini');
+  async expandSearchTerms(
+    {
+      seeds,
+      roleName,
+    }: {
+      seeds: ExpansionSeeds;
+      roleName: string;
+    },
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
+  ): Promise<ExpandSearchTermsResult> {
+    this.logger.debug(`Expanding search terms with ${this.id} ${modelId}`);
 
     const { generateText, Output } = await this.loadAi();
-    const model = await this.getModel();
+    const model = await this.getModel(modelId);
 
     const { output, usage } = await generateText({
       model,
       prompt: this.buildExpandSearchTermsPrompt(seeds, roleName),
       output: Output.object({ schema: searchTermExpansionSchema }),
       timeout: EXPAND_SEARCH_TERMS_TIMEOUT_MS,
-      providerOptions: { google: { thinkingConfig: { thinkingBudget: 0 } } },
+      ...this.callSettings(modelId, { fast: true }),
     });
 
     return {
       byCategory: normalizeExpansionGroups(seeds, output.groups),
-      model: GEMINI_MODEL,
+      model: modelId,
       tokensUsed: usage.totalTokens ?? 0,
     };
   }
@@ -423,24 +825,39 @@ export class GeminiService {
   // methods (rather than inline) so tests can override them directly —
   // Jest's VM test environment can't execute a real dynamic import()
   // without the experimental-vm-modules flag.
-  private async loadAi() {
+
+  // Grounding chunks point at vertexaisearch.cloud.google.com redirect
+  // links; follow one hop so recruiters see the real page. Falls back to
+  // the redirect link if the lookup fails.
+  private async resolveRedirect(url: string): Promise<string> {
+    if (!url.includes('grounding-api-redirect')) return url;
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(REDIRECT_RESOLVE_TIMEOUT_MS),
+      });
+      return response.headers.get('location') ?? url;
+    } catch {
+      return url;
+    }
+  }
+
+  protected async loadAi() {
     return import('ai');
   }
 
-  private async loadGoogleProvider() {
+  protected async loadGoogleProvider() {
     return import('@ai-sdk/google');
   }
 
-  private async getModel(): Promise<LanguageModel> {
-    if (!this.modelPromise) {
-      this.modelPromise = this.loadGoogleProvider().then(
-        ({ createGoogleGenerativeAI }) =>
-          createGoogleGenerativeAI({ apiKey: this.aiConf.geminiApiKey })(
-            GEMINI_MODEL,
-          ),
-      );
+  private async getModel(modelId: string): Promise<LanguageModel> {
+    let model = this.models.get(modelId);
+    if (!model) {
+      model = this.createModel(modelId);
+      this.models.set(modelId, model);
     }
-    return this.modelPromise;
+    return model;
   }
 
   // Google's Custom Search API doesn't return a photo directly — it returns
@@ -449,7 +866,13 @@ export class GeminiService {
   // image, or a thumbnail, roughly in that order of how likely it is to
   // actually be the person's photo rather than a site logo or icon.
   private extractImageUrl(item: GoogleSearchItem): string | undefined {
-    const pagemap = item.pagemap as any;
+    const pagemap = item.pagemap as
+      | {
+          metatags?: Array<Record<string, string | undefined>>;
+          cse_image?: Array<{ src?: string }>;
+          cse_thumbnail?: Array<{ src?: string }>;
+        }
+      | undefined;
     return (
       pagemap?.metatags?.[0]?.['og:image'] ??
       pagemap?.cse_image?.[0]?.src ??
@@ -501,6 +924,7 @@ export class GeminiService {
               country: countryName(filters.location.value.countryCode),
               regions: filters.location.value.regions,
               remoteWork: filters.location.value.remoteWork,
+              workTypes: filters.location.value.workTypes,
               priority: filters.location.priority,
               nonNegotiable: filters.location.nonNegotiable,
             },
@@ -679,7 +1103,7 @@ export class GeminiService {
       'You are extracting structured recruiting filter criteria from a job specification document, for a recruiter to review and edit before it is used to search for candidates.',
       'Return a list of "items", each with a fixed "category" (one of: location, job_titles, skills, languages, industry, companies, education, experience), a "priority" ("ESSENTIAL" if the spec treats it as a hard requirement, otherwise "OPTIONAL"), and "non_negotiable" (true only when the spec explicitly says a candidate must have this, e.g. "must have the right to work in the UK").',
       'Each item has either a scalar "value" or a "list_value" array, depending on category, and may carry "children" — open-ended sub-facts, each with a "title" and one of "value"/"list_value"/"boolean_value":',
-      '- "location": value = the country as an ISO 3166-1 alpha-2 code (e.g. "GB"); children may include region entries (title = the region type such as "city" or "province", value = the region name), a "remote_work" child (boolean_value = true if remote work is acceptable), and a "work_authorization" child (boolean_value = true if the spec requires existing right-to-work).',
+      '- "location": value = the country as an ISO 3166-1 alpha-2 code (e.g. "GB"); children may include region entries (title = the region type such as "city" or "province", value = the region name), a "work_types" child (list_value = how the role may be worked, any of "ONSITE", "HYBRID", "REMOTE"; include "REMOTE" only if remote work is acceptable, and omit the child if the spec does not say), and a "work_authorization" child (boolean_value = true if the spec requires existing right-to-work).',
       '- "job_titles": list_value = the job title(s). Produce at most one item for the main/primary title (no children needed), and optionally a second item for alternative/equivalent titles the spec also mentions, with a child {"title": "title_option", "value": "alternative_title"}.',
       '- "skills": list_value = the required/preferred skills, as separate items split by priority (one ESSENTIAL item for must-have skills, one OPTIONAL item for nice-to-have skills), not as a single mixed list.',
       '- "languages": list_value = spoken/written languages required or preferred.',
@@ -691,5 +1115,39 @@ export class GeminiService {
       '',
       `Job spec: ${text}`,
     ].join('\n');
+  }
+}
+
+@Injectable()
+export class GeminiService extends AiSdkReasoningProvider {
+  readonly id = 'google' as const;
+  readonly defaultModel = GEMINI_MODEL;
+  // An org on a Gemini model researches with that model end to end.
+  protected readonly groundsWithOwnModel = true;
+
+  constructor(
+    @Inject(AiConfig.KEY)
+    aiConf: Pick<ConfigType<typeof AiConfig>, 'geminiApiKey'>,
+  ) {
+    super(aiConf);
+  }
+
+  // GEMINI_API_KEY is required config.
+  get enabled(): boolean {
+    return true;
+  }
+
+  protected async createModel(modelId: string): Promise<LanguageModel> {
+    const { createGoogleGenerativeAI } = await this.loadGoogleProvider();
+    return createGoogleGenerativeAI({ apiKey: this.aiConf.geminiApiKey })(
+      modelId,
+    );
+  }
+
+  protected callSettings(
+    modelId: string,
+    { fast }: { fast: boolean },
+  ): ProviderCallSettings {
+    return fast ? { providerOptions: noThinking(modelId) } : {};
   }
 }

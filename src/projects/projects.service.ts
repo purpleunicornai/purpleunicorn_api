@@ -130,7 +130,8 @@ export class ProjectsService {
     return project;
   }
 
-  private visibleToUser(userId: string) {
+  // Where clause for the projects a user can see in their org.
+  visibleToUser(userId: string) {
     return {
       OR: [
         { user_id: userId },

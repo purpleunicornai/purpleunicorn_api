@@ -30,6 +30,14 @@ export const SourceType = {
 export type SourceType = (typeof SourceType)[keyof typeof SourceType]
 
 
+export const ExtensionCaptureStatus = {
+  CAPTURED: 'CAPTURED',
+  ASSIGNED: 'ASSIGNED'
+} as const
+
+export type ExtensionCaptureStatus = (typeof ExtensionCaptureStatus)[keyof typeof ExtensionCaptureStatus]
+
+
 export const JobSpecImportType = {
   TEXT: 'TEXT',
   FILE: 'FILE'
@@ -42,10 +50,24 @@ export const OrganizationCreditsType = {
   AI_TOKENS: 'AI_TOKENS',
   ROCKET_REACH: 'ROCKET_REACH',
   EMAILS: 'EMAILS',
-  SMS: 'SMS'
+  SMS: 'SMS',
+  CREDITS: 'CREDITS'
 } as const
 
 export type OrganizationCreditsType = (typeof OrganizationCreditsType)[keyof typeof OrganizationCreditsType]
+
+
+export const OrganizationCreditEntryKind = {
+  MONTHLY_GRANT: 'MONTHLY_GRANT',
+  ALLOWANCE_EXPIRY: 'ALLOWANCE_EXPIRY',
+  RESEARCH: 'RESEARCH',
+  CONTACT_LOOKUP: 'CONTACT_LOOKUP',
+  REFUND: 'REFUND',
+  PURCHASE: 'PURCHASE',
+  ADJUSTMENT: 'ADJUSTMENT'
+} as const
+
+export type OrganizationCreditEntryKind = (typeof OrganizationCreditEntryKind)[keyof typeof OrganizationCreditEntryKind]
 
 
 export const OrganizationLogType = {
@@ -85,6 +107,33 @@ export const ProjectVisibility = {
 } as const
 
 export type ProjectVisibility = (typeof ProjectVisibility)[keyof typeof ProjectVisibility]
+
+
+export const RocketReachLookupPurpose = {
+  DEEP_RESEARCH: 'DEEP_RESEARCH',
+  CONTACT_DETAILS: 'CONTACT_DETAILS'
+} as const
+
+export type RocketReachLookupPurpose = (typeof RocketReachLookupPurpose)[keyof typeof RocketReachLookupPurpose]
+
+
+export const RocketReachLookupOutcome = {
+  FOUND: 'FOUND',
+  NOT_FOUND: 'NOT_FOUND',
+  ERROR: 'ERROR',
+  PENDING_TIMEOUT: 'PENDING_TIMEOUT'
+} as const
+
+export type RocketReachLookupOutcome = (typeof RocketReachLookupOutcome)[keyof typeof RocketReachLookupOutcome]
+
+
+export const RocketReachLookupCharge = {
+  CHARGED: 'CHARGED',
+  REFUNDED: 'REFUNDED',
+  FREE: 'FREE'
+} as const
+
+export type RocketReachLookupCharge = (typeof RocketReachLookupCharge)[keyof typeof RocketReachLookupCharge]
 
 
 export const RoleFilterPriority = {

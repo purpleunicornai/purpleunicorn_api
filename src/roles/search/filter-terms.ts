@@ -1,4 +1,5 @@
 import { getStateByCode } from '@countrystatecity/countries';
+import { remoteAllowed } from './work-types';
 import { ParsedLocation, ParsedRoleFilters } from './role-filter-parser';
 
 // Professional designations recruiters type in shorthand that profiles
@@ -65,7 +66,7 @@ export function requiredCountryCode(
   filters: ParsedRoleFilters,
 ): string | undefined {
   const location = filters.location;
-  if (!location?.value.countryCode || location.value.remoteWork) {
+  if (!location?.value.countryCode || remoteAllowed(location.value)) {
     return undefined;
   }
   if (location.priority !== 'ESSENTIAL' && !location.nonNegotiable) {

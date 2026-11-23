@@ -273,6 +273,50 @@ describe('CandidateScoringService', () => {
       const result = service.scoreCandidate(filters, candidate);
 
       expect(result.disqualified).toBe(true);
+      // The weighted sum is kept as the pre-disqualification score.
+      expect(result.score).toBe(0);
+      expect(result.rawScore).toBe(40);
+      expect(result.missedNonNegotiables).toEqual([
+        { category: 'skills', requirement: 'TypeScript' },
+      ]);
+    });
+
+    it('reports no missed requirements and a raw score equal to the score when nothing is disqualifying', () => {
+      const filters = buildFilters({
+        skills: [
+          { value: ['TypeScript'], priority: 'ESSENTIAL', nonNegotiable: true },
+        ],
+      });
+
+      const result = service.scoreCandidate(
+        filters,
+        buildCandidate({ skills: ['TypeScript'] }),
+      );
+
+      expect(result.rawScore).toBe(result.score);
+      expect(result.missedNonNegotiables).toEqual([]);
+    });
+
+    it('names a missed non-negotiable qualification by its filter value', () => {
+      const filters = buildFilters({
+        education: [
+          {
+            value: {
+              qualifications: ['CA(SA)'],
+              institutions: [],
+              institutionType: 'include',
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable: true,
+          },
+        ],
+      });
+
+      const result = service.scoreCandidate(filters, buildCandidate({}));
+
+      expect(result.missedNonNegotiables).toEqual([
+        { category: 'education', requirement: 'CA(SA)' },
+      ]);
     });
   });
 
@@ -320,6 +364,52 @@ describe('CandidateScoringService', () => {
       expect(
         result.breakdown.filter((entry) => entry.category === 'skills'),
       ).toHaveLength(2);
+    });
+
+    it('names the requirement, priority and non-negotiable flag each row was scored on', () => {
+      const filters = buildFilters({
+        skills: [
+          {
+            value: ['TypeScript'],
+            priority: 'ESSENTIAL',
+            nonNegotiable: true,
+          },
+          {
+            value: ['Go', 'Rust'],
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+          },
+        ],
+      });
+
+      const result = service.scoreCandidate(
+        filters,
+        buildCandidate({ skills: ['TypeScript'] }),
+      );
+
+      expect(
+        result.breakdown.map(
+          ({ requirement, priority, nonNegotiable, earned }) => ({
+            requirement,
+            priority,
+            nonNegotiable,
+            earned,
+          }),
+        ),
+      ).toEqual([
+        {
+          requirement: 'TypeScript',
+          priority: 'ESSENTIAL',
+          nonNegotiable: true,
+          earned: 80,
+        },
+        {
+          requirement: 'Go, Rust',
+          priority: 'OPTIONAL',
+          nonNegotiable: false,
+          earned: 0,
+        },
+      ]);
     });
   });
 
@@ -597,6 +687,9 @@ describe('CandidateScoringService', () => {
       );
 
       expect(result.disqualified).toBe(true);
+      expect(result.missedNonNegotiables).toEqual([
+        { category: 'location', requirement: expect.stringContaining('ZA') },
+      ]);
     });
 
     it('awards full credit when the candidate is in the required country', () => {
@@ -644,7 +737,8 @@ describe('CandidateScoringService', () => {
       expect(findCategory(result.breakdown, 'location')?.earned).toBe(80);
     });
 
-    it('averages the country/remote/work-authorization sub-checks', () => {
+    // Remote being allowed widens who fits; it never marks a local down.
+    it('gives a local full credit on a role that also allows remote', () => {
       const filters = buildFilters({
         location: {
           value: {
@@ -664,7 +758,59 @@ describe('CandidateScoringService', () => {
 
       const result = service.scoreCandidate(filters, candidate);
 
-      expect(findCategory(result.breakdown, 'location')?.earned).toBe(40);
+      expect(findCategory(result.breakdown, 'location')?.earned).toBe(80);
+    });
+
+    describe('work types', () => {
+      const withWorkTypes = (workTypes: ('ONSITE' | 'HYBRID' | 'REMOTE')[]) =>
+        buildFilters({
+          location: {
+            value: {
+              countryCode: 'ZA',
+              regions: [],
+              remoteWork: workTypes.includes('REMOTE'),
+              workTypes,
+              workAuthorizationRequired: false,
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable: true,
+          },
+        });
+      const remoteAbroad = buildCandidate({
+        current_location_country_code: 'US',
+        open_to_remote_work: true,
+      });
+
+      it('accepts someone abroad who is open to remote when REMOTE is allowed', () => {
+        const result = service.scoreCandidate(
+          withWorkTypes(['ONSITE', 'REMOTE']),
+          remoteAbroad,
+        );
+
+        expect(result.disqualified).toBe(false);
+        expect(findCategory(result.breakdown, 'location')?.earned).toBe(80);
+      });
+
+      it.each([[['ONSITE']], [['HYBRID']], [['ONSITE', 'HYBRID']]] as const)(
+        'requires the location for %j, even for someone open to remote',
+        (workTypes) => {
+          const result = service.scoreCandidate(
+            withWorkTypes([...workTypes]),
+            remoteAbroad,
+          );
+
+          expect(result.disqualified).toBe(true);
+        },
+      );
+
+      it('still counts a local on a remote-only role', () => {
+        const result = service.scoreCandidate(
+          withWorkTypes(['REMOTE']),
+          buildCandidate({ current_location_country_code: 'ZA' }),
+        );
+
+        expect(result.disqualified).toBe(false);
+      });
     });
 
     it('checks for a work authorization status on file when required', () => {

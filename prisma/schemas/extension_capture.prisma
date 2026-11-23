@@ -1,0 +1,33 @@
+enum ExtensionCaptureStatus {
+  // Captured, not in a role yet: deleted once expires_at passes.
+  CAPTURED
+  // Added to at least one role: kept.
+  ASSIGNED
+}
+
+// A LinkedIn profile someone in the org opened with the Chrome extension,
+// saved for the whole org. One row per org per profile: a teammate opening
+// the same profile refreshes it rather than adding a second row.
+model extension_capture {
+  uid             String                 @id @unique @default(uuid()) @db.Uuid
+  created         DateTime               @default(now()) @db.Timestamptz(3)
+  updated         DateTime               @updatedAt @db.Timestamptz(3)
+  organization_id String
+  // Clerk user id of whoever captured it most recently.
+  captured_by     String
+  // linkedin.com/in/<slug>: the key a profile is matched on.
+  linkedin_slug   String
+  linkedin_url    String
+  // The parsed public profile, as the extension read it (CapturedProfileDto).
+  profile         Json
+  captured_at     DateTime               @db.Timestamptz(3)
+  status          ExtensionCaptureStatus @default(CAPTURED)
+  // Plain ids, no relations: roles it was added to through the extension.
+  role_ids        String[]               @default([])
+  // When an unassigned capture is deleted; null once assigned.
+  expires_at      DateTime?              @db.Timestamptz(3)
+
+  @@unique([organization_id, linkedin_slug])
+  @@index([organization_id, captured_at])
+  @@index([organization_id, expires_at])
+}

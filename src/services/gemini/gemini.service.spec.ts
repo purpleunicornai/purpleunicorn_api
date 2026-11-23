@@ -1,6 +1,6 @@
 import { GeminiService } from './gemini.service';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
-import { GoogleSearchItem } from '../google-search/google-search.service';
+import { GoogleSearchItem } from '../search-item';
 import { candidate, candidate_source } from '../../generated/prisma/client';
 import { CandidateWithHistory } from '../../roles/search/candidate-scoring.service';
 
@@ -158,7 +158,7 @@ describe('GeminiService', () => {
       const result = await service.formatCandidates([], buildFilters());
 
       expect(generateText).not.toHaveBeenCalled();
-      expect(result).toEqual({ matches: [], tokensUsed: 0 });
+      expect(result).toEqual({ matches: [], tokensUsed: 0, usage: null });
     });
 
     it('calls generateText with the configured model and a prompt describing the results and role criteria', async () => {
@@ -314,7 +314,7 @@ describe('GeminiService', () => {
       ];
       generateText.mockResolvedValue({
         output: matches,
-        usage: { totalTokens: 456 },
+        usage: { inputTokens: 400, outputTokens: 56, totalTokens: 456 },
       });
 
       const result = await service.formatCandidates(
@@ -322,7 +322,11 @@ describe('GeminiService', () => {
         buildFilters(),
       );
 
-      expect(result).toEqual({ matches, tokensUsed: 456 });
+      expect(result).toEqual({
+        matches,
+        tokensUsed: 456,
+        usage: { inputTokens: 400, outputTokens: 56, totalTokens: 456 },
+      });
     });
 
     it('asks the model for source_title, source_name, and source_url', async () => {
@@ -393,7 +397,7 @@ describe('GeminiService', () => {
       const result = await service.scoreKnownCandidates([], buildFilters());
 
       expect(generateText).not.toHaveBeenCalled();
-      expect(result).toEqual({ matches: [], tokensUsed: 0 });
+      expect(result).toEqual({ matches: [], tokensUsed: 0, usage: null });
     });
 
     it('calls generateText with the configured model and a prompt built from the stored candidate profile', async () => {
@@ -472,7 +476,7 @@ describe('GeminiService', () => {
         buildFilters(),
       );
 
-      expect(result).toEqual({ matches, tokensUsed: 123 });
+      expect(result).toEqual({ matches, tokensUsed: 123, usage: null });
     });
   });
 
@@ -912,6 +916,84 @@ describe('GeminiService', () => {
       const result = await service.parseJobSpec('Some job spec text.');
 
       expect(result.items).toEqual(items);
+    });
+  });
+
+  describe('researchCandidate', () => {
+    it('reports the Gemini usage of the grounded search and structuring calls together', async () => {
+      createGoogleGenerativeAI.mockReturnValue(
+        Object.assign((modelId: string) => ({ modelId }), {
+          tools: { googleSearch: jest.fn(() => ({})) },
+        }),
+      );
+      generateText
+        .mockResolvedValueOnce({
+          text: 'No public footprint found.',
+          providerMetadata: {},
+          usage: { inputTokens: 1200, outputTokens: 800, totalTokens: 2000 },
+        })
+        .mockResolvedValueOnce({
+          output: {
+            summary: 'Nothing new.',
+            findings: [],
+            identityConfidence: 'low',
+            identityReason: 'No findings.',
+            score: 50,
+            reasoning: 'Unchanged.',
+          },
+          usage: { inputTokens: 600, outputTokens: 150, totalTokens: 750 },
+        });
+
+      const research = await service.researchCandidate('Finance Manager', {
+        name: 'Jane Doe',
+        linkedinUrl: 'https://www.linkedin.com/in/janedoe',
+      });
+
+      expect(generateText).toHaveBeenCalledTimes(2);
+      expect(research.usage).toEqual({
+        inputTokens: 1800,
+        outputTokens: 950,
+        totalTokens: 2750,
+      });
+      // Nothing structured came back: no verified record, even though the
+      // returned candidate is seeded from the search profile.
+      expect(research.verified).toEqual({ record: null, qualifications: [] });
+      expect(research.candidate.first_name).toBe('Jane');
+    });
+
+    it("keeps research's own structured output and qualifications apart from the seeded record", async () => {
+      createGoogleGenerativeAI.mockReturnValue(
+        Object.assign((modelId: string) => ({ modelId }), {
+          tools: { googleSearch: jest.fn(() => ({})) },
+        }),
+      );
+      generateText
+        .mockResolvedValueOnce({
+          text: 'Jane is a CA(SA) at Acme [source 1].',
+          providerMetadata: {},
+        })
+        .mockResolvedValueOnce({
+          output: {
+            summary: 'Chartered accountant.',
+            findings: [{ fact: 'Jane is a CA(SA) at Acme.', sourceNumber: 1 }],
+            identityConfidence: 'high',
+            identityReason: 'Same company.',
+            score: 80,
+            reasoning: 'Qualified.',
+            qualifications: ['CA(SA)'],
+            candidate: { current_company: 'Acme', skills: ['IFRS'] },
+          },
+        });
+
+      const research = await service.researchCandidate('Finance Manager', {
+        name: 'Jane Doe',
+        linkedinUrl: 'https://www.linkedin.com/in/janedoe',
+      });
+
+      expect(research.verified).toEqual({
+        record: { current_company: 'Acme', skills: ['IFRS'] },
+        qualifications: ['CA(SA)'],
+      });
     });
   });
 });

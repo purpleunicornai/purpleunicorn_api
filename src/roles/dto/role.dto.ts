@@ -1,5 +1,7 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
+import type { ResultGeminiUsage } from '../../services/gemini/gemini-usage';
+import type { SearchScore } from '../search/research-rescore';
 import {
   IsArray,
   IsBoolean,
@@ -11,6 +13,12 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CandidateDto } from '../../common/dto/candidate.dto';
+import {
+  WORK_TYPES,
+  WorkType,
+  workTypesFromChildren,
+} from '../search/work-types';
+import { publicFilterMetadata } from '../search/search-progress';
 
 export class CreateRoleDto {
   @ApiProperty({
@@ -117,6 +125,20 @@ export class RoleFilterItemResponseDto {
   @ValidateNested({ each: true })
   @Type(() => RoleFilterChildResponseDto)
   children: RoleFilterChildResponseDto[];
+
+  @ApiProperty({
+    description:
+      'Location rows: how the role may be worked, read from the work_types child (or the legacy remote_work flag). Empty for other categories.',
+    enum: WORK_TYPES,
+    isArray: true,
+  })
+  @Expose()
+  @Transform(
+    ({ obj }: { obj: { category?: string; children?: never[] } }) =>
+      obj.category === 'location' ? workTypesFromChildren(obj.children) : [],
+    { toClassOnly: true },
+  )
+  work_types: WorkType[];
 }
 
 export class RoleFilterResponseDto {
@@ -178,6 +200,24 @@ export class RoleFilterResponseDto {
   @ValidateNested({ each: true })
   @Type(() => RoleFilterItemResponseDto)
   role_filter_items: RoleFilterItemResponseDto[];
+
+  @ApiProperty({
+    description:
+      'Free-form filter-set metadata. criterionExpansions holds the AI OR terms per title and skill seed: { version, generatedAt, model, byCategory: { job_titles?, skills? } }, each group { seed, terms } with the seed first.',
+    required: false,
+    type: Object,
+  })
+  @Expose()
+  // Passed through untouched: excludeExtraneousValues would otherwise strip
+  // the nested keys of this untyped JSON.
+  @Transform(
+    ({ obj }: { obj: { metadata?: unknown } }) =>
+      publicFilterMetadata(obj.metadata),
+    {
+      toClassOnly: true,
+    },
+  )
+  metadata: Record<string, unknown>;
 }
 
 export class RoleResultScoreBreakdownDto {
@@ -218,6 +258,66 @@ export class RoleResultScoreBreakdownDto {
   @IsOptional()
   @IsUUID()
   role_filter_id?: string;
+
+  @ApiProperty({
+    description:
+      'The filter row this entry scored: requirement (e.g. "CA(SA)"), priority and nonNegotiable, plus researchBefore (its points from search evidence alone) when deep research changed them. Null on rows saved before this was recorded.',
+    required: false,
+    nullable: true,
+    type: Object,
+  })
+  @Expose()
+  @Transform(
+    ({ obj }: { obj: { metadata?: unknown } }) => obj.metadata ?? null,
+    {
+      toClassOnly: true,
+    },
+  )
+  metadata?: ScoreBreakdownCriterion | null;
+}
+
+export type ScoreBreakdownCriterion = {
+  requirement: string;
+  priority: 'ESSENTIAL' | 'OPTIONAL';
+  nonNegotiable: boolean;
+  // This row's points from search evidence alone, when deep research
+  // changed them.
+  researchBefore?: number;
+};
+
+export type RoleResultMatchNotes = {
+  matchedBy?: 'location' | 'remote';
+  missing?: string[];
+  nonNegotiableUnconfirmed?: string[];
+  // Set by deep research.
+  findings?: { fact: string; sourceUrl: string }[];
+  identityConfidence?: 'high' | 'medium' | 'low';
+  identityReason?: string;
+  // Gemini tokens spent on this result: its share of scoring batches and
+  // its own deep research runs. Absent on results saved before this.
+  geminiUsage?: ResultGeminiUsage;
+  // The fixed algorithm on search evidence alone.
+  searchScore?: SearchScore;
+};
+
+// The scoring snapshots (searchEvidence, researchEvidence) are internal
+// inputs to a re-score, not match notes, so they stay out of responses.
+function publicMatchNotes(metadata: unknown): Record<string, unknown> {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return {};
+  }
+  // The raw RocketReach profile holds contact details; they're served from
+  // the candidate's own fields, not from match notes.
+  const {
+    searchEvidence: _search,
+    researchEvidence: _research,
+    rocketReach: _rocketReach,
+    ...notes
+  } = metadata as Record<string, unknown>;
+  void _search;
+  void _research;
+  void _rocketReach;
+  return notes;
 }
 
 export class RoleResultSummaryDto {
@@ -376,6 +476,49 @@ export class RoleResultSummaryDto {
   @IsOptional()
   @IsBoolean()
   disqualified?: boolean;
+
+  @ApiProperty({
+    description:
+      'For a disqualified result, the deterministic score it had before the missed non-negotiable zeroed it',
+    required: false,
+    nullable: true,
+  })
+  @Expose()
+  @IsOptional()
+  @IsInt()
+  pre_disqualification_score?: number | null;
+
+  @ApiProperty({
+    description:
+      'The non-negotiable requirement(s) a disqualified candidate missed, named by filter value',
+    type: [String],
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString({ each: true })
+  disqualified_reasons?: string[];
+
+  @ApiProperty({
+    description: 'The search page this candidate was found on (1-based)',
+    required: false,
+  })
+  @Expose()
+  page?: number;
+
+  @ApiProperty({
+    description:
+      'Match notes from the search: matchedBy ("location" | "remote") on a split search, missing (criteria not met), nonNegotiableUnconfirmed (a non-negotiable the profile does not show); after deep research also findings, identityConfidence and identityReason; geminiUsage ({ scoring?, research? } token counts with calls) once recorded; searchScore ({ score, rawScore, disqualified, disqualifiedReasons }), the fixed algorithm on search evidence alone, which differs from score when deep research changed it',
+    required: false,
+    type: Object,
+  })
+  @Expose()
+  @Transform(
+    ({ obj }: { obj: { metadata?: unknown } }) =>
+      publicMatchNotes(obj.metadata),
+    { toClassOnly: true },
+  )
+  metadata?: RoleResultMatchNotes;
 
   @ApiProperty({
     description:

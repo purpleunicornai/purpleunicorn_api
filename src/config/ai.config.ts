@@ -4,14 +4,6 @@ import * as Joi from 'joi';
 export default registerWithValidation(
   'ai',
   () => ({
-    // Which web-search backend role searches use: google (Custom Search
-    // JSON API, shut down 1 Jan 2027), serper (serper.dev), serpapi or
-    // vertex (Vertex AI Search over a website data store).
-    searchProvider: process.env.SEARCH_PROVIDER ?? 'google',
-    googleSearchApiKey: process.env.GOOGLE_SEARCH_API_KEY,
-    googleSearchEngineId: process.env.GOOGLE_SEARCH_ENGINE_ID,
-    serperApiKey: process.env.SERPER_API_KEY,
-    serpApiKey: process.env.SERPAPI_KEY,
     vertexProjectId: process.env.VERTEX_PROJECT_ID,
     vertexLocation: process.env.VERTEX_LOCATION || 'global',
     vertexEngineId: process.env.VERTEX_ENGINE_ID,
@@ -24,61 +16,39 @@ export default registerWithValidation(
     // website data stores only).
     vertexApiKey: process.env.VERTEX_API_KEY,
     geminiApiKey: String(process.env.GEMINI_API_KEY),
-    rocketReachApiKey: String(process.env.ROCKET_REACH_API_KEY),
+    // Optional: unset or empty turns RocketReach off (deep research skips
+    // it and never charges for it).
+    rocketReachApiKey: process.env.ROCKET_REACH_API_KEY || undefined,
+    // A candidate RocketReach found within this many days is served from
+    // that lookup instead of a new (billed) one. 0 turns the reuse off.
+    rocketReachCacheTtlDays: Number(
+      process.env.ROCKETREACH_CACHE_TTL_DAYS ?? 30,
+    ),
+    // Optional reasoning providers: an org can pick their models only when
+    // the key is set.
+    openaiApiKey: process.env.OPENAI_API_KEY || undefined,
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || undefined,
     // Optional — GitHub's Search Users API works unauthenticated, just at a
     // much lower rate limit (10 req/min vs 30 req/min with a token).
     githubToken: process.env.GITHUB_TOKEN,
   }),
   {
-    SEARCH_PROVIDER: Joi.string()
-      .valid('google', 'serper', 'serpapi', 'vertex')
-      .default('google'),
-    // Each backend's key is only required while that backend is selected.
-    GOOGLE_SEARCH_API_KEY: Joi.string().when('SEARCH_PROVIDER', {
-      is: Joi.valid('serper', 'serpapi', 'vertex'),
-      then: Joi.optional(),
-      otherwise: Joi.required(),
-    }),
-    GOOGLE_SEARCH_ENGINE_ID: Joi.string().when('SEARCH_PROVIDER', {
-      is: Joi.valid('serper', 'serpapi', 'vertex'),
-      then: Joi.optional(),
-      otherwise: Joi.required(),
-    }),
-    SERPER_API_KEY: Joi.string().when('SEARCH_PROVIDER', {
-      is: 'serper',
-      then: Joi.required(),
-      otherwise: Joi.optional(),
-    }),
-    SERPAPI_KEY: Joi.string().when('SEARCH_PROVIDER', {
-      is: 'serpapi',
-      then: Joi.required(),
-      otherwise: Joi.optional(),
-    }),
-    VERTEX_PROJECT_ID: Joi.string().when('SEARCH_PROVIDER', {
-      is: 'vertex',
-      then: Joi.required(),
-      otherwise: Joi.optional().allow(''),
-    }),
-    VERTEX_ENGINE_ID: Joi.string().when('SEARCH_PROVIDER', {
-      is: 'vertex',
-      then: Joi.required(),
-      otherwise: Joi.optional().allow(''),
-    }),
+    VERTEX_PROJECT_ID: Joi.string().required(),
+    VERTEX_ENGINE_ID: Joi.string().required(),
     VERTEX_LOCATION: Joi.string().allow('').default('global'),
     VERTEX_SERVING_CONFIG_ID: Joi.string().allow('').default('default_search'),
-    // Required with SEARCH_PROVIDER=vertex unless VERTEX_API_KEY is set.
-    VERTEX_SERVICE_ACCOUNT: Joi.string().when('SEARCH_PROVIDER', {
-      is: 'vertex',
-      then: Joi.when('VERTEX_API_KEY', {
-        is: Joi.string().min(1).required(),
-        then: Joi.optional().allow(''),
-        otherwise: Joi.required(),
-      }),
-      otherwise: Joi.optional().allow(''),
+    // Required unless VERTEX_API_KEY is set.
+    VERTEX_SERVICE_ACCOUNT: Joi.string().when('VERTEX_API_KEY', {
+      is: Joi.string().min(1).required(),
+      then: Joi.optional().allow(''),
+      otherwise: Joi.required(),
     }),
     VERTEX_API_KEY: Joi.string().allow('').optional(),
     GEMINI_API_KEY: Joi.string().required(),
-    ROCKET_REACH_API_KEY: Joi.string().required(),
+    ROCKET_REACH_API_KEY: Joi.string().allow('').optional(),
+    ROCKETREACH_CACHE_TTL_DAYS: Joi.number().integer().min(0).default(30),
+    OPENAI_API_KEY: Joi.string().allow('').optional(),
+    ANTHROPIC_API_KEY: Joi.string().allow('').optional(),
     GITHUB_TOKEN: Joi.string().optional(),
   },
 );

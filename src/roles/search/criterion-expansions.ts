@@ -86,7 +86,7 @@ export function termsForSeed(
   );
 }
 
-// Mirrors GoogleSearchService.buildXrayQueries' title selection (first main
+// Mirrors the Vertex query builder's title selection (first main
 // row, else the role name; first alternative row capped at 3, else the role
 // name) so every title that can reach a query gets a group, and no AI call is
 // spent on one that can't.
@@ -198,6 +198,52 @@ export function mergeExpansions({
     version: 1,
     generatedAt: stamp.generatedAt,
     model: stamp.model,
+    byCategory,
+  };
+}
+
+// Layers recruiter-edited groups (from the save request) over the previous
+// filter set's groups. An edited group replaces the saved one for its seed
+// and is kept even when only the seed is left (every alternative removed),
+// so mergeExpansions reuses it and it is never regenerated. Edits for seeds
+// that aren't in this filter set are ignored. Returns `previous` untouched
+// when there is nothing to apply.
+export const EDITED_EXPANSIONS_MODEL = 'recruiter-edited';
+
+export function applyExpansionOverrides({
+  seeds,
+  previous,
+  overrides,
+  now = new Date(),
+}: {
+  seeds: ExpansionSeeds;
+  previous: CriterionExpansions | null;
+  overrides: Partial<Record<ExpansionCategory, ExpansionGroup[]>> | undefined;
+  now?: Date;
+}): CriterionExpansions | null {
+  const byCategory: ExpansionsByCategory = { ...(previous?.byCategory ?? {}) };
+  let applied = false;
+  for (const category of EXPANSION_CATEGORIES) {
+    const edits = overrides?.[category] ?? [];
+    for (const seed of seeds[category]) {
+      const key = seedKey(seed);
+      const edit = edits.find((group) => seedKey(group.seed) === key);
+      if (!edit) continue;
+      const kept = (byCategory[category] ?? []).filter(
+        (group) => seedKey(group.seed) !== key,
+      );
+      byCategory[category] = [
+        ...kept,
+        { seed: seed.trim(), terms: normalizeTerms(seed, edit.terms) },
+      ];
+      applied = true;
+    }
+  }
+  if (!applied) return previous;
+  return {
+    version: 1,
+    generatedAt: previous?.generatedAt ?? now.toISOString(),
+    model: previous?.model ?? EDITED_EXPANSIONS_MODEL,
     byCategory,
   };
 }

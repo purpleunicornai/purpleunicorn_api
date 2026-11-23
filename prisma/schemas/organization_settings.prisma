@@ -1,0 +1,14 @@
+// Per-organization settings. organization_id is the Clerk org id; an org
+// without a row uses every default.
+model organization_settings {
+  organization_id          String   @id
+  created                  DateTime @default(now()) @db.Timestamptz(3)
+  updated                  DateTime @updatedAt @db.Timestamptz(3)
+  // Reasoning model for scoring, deep research, criteria expansion and job
+  // spec parsing, e.g. provider "google", model "gemini-2.5-flash". Null
+  // uses the default.
+  ai_provider              String?
+  ai_model                 String?
+  // Credits granted each month; null uses CREDITS_MONTHLY_ALLOWANCE.
+  monthly_credit_allowance Int?
+}

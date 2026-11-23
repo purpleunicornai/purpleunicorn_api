@@ -1,54 +1,56 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/database/prisma.service';
 import { RequestException } from '../../common/exception/core/ExceptionBase';
-import { RocketReachService } from '../../services/rocket-reach/rocket-reach.service';
 
+export type ContactDetails = {
+  candidateId: string;
+  email: string | null;
+  phone: string | null;
+  rocketReachProfileId: string | null;
+  contactInfoUpdatedAt: string | null;
+};
+
+// A candidate's contact details as they're on file. Deep research is what
+// fetches them from RocketReach (and is what's charged); reading them here
+// is free and never calls RocketReach.
 @Injectable()
 export class CandidateService {
-  logger = new Logger(CandidateService.name);
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly rocketReachService: RocketReachService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  // use rocket reach to get candidate contact details
-
-  async getCandidateContactDetails(candidateId: string) {
-    const candidate = await this.prisma.candidate.findFirst({
+  // Only a candidate on one of the org's own results.
+  async contactDetails(
+    organizationId: string,
+    candidateId: string,
+  ): Promise<ContactDetails> {
+    const found = await this.prisma.candidate.findFirst({
       where: {
         uid: candidateId,
+        role_results: {
+          some: { role: { project: { organization_id: organizationId } } },
+        },
       },
-      include: {
-        sources: true,
+      select: {
+        uid: true,
+        email: true,
+        phone: true,
+        rocketreach_profile_id: true,
+        contact_info_last_updated: true,
       },
     });
-    if (!candidate) {
+    if (!found) {
       throw new RequestException(
-        `Candidate with id ${candidateId} not found`,
+        'Candidate not found',
         HttpStatus.NOT_FOUND,
         'NOT_FOUND',
       );
     }
-
-    // here we call the rocket reach service to get the contact details
-    if (candidate?.rocketreach_profile_id) {
-      // create log, subtract credits, and return the contact details
-    }
-
-    const rocketReachPerson =
-      await this.rocketReachService.lookupCandidate(candidate);
-
-    if (!rocketReachPerson) {
-      throw new RequestException(
-        `Candidate with id ${candidateId} not found on RocketReach`,
-        HttpStatus.NOT_FOUND,
-        'NOT_FOUND',
-      );
-    }
-
-    this.logger.debug(
-      `Found ${rocketReachPerson.name}`,
-      JSON.stringify(rocketReachPerson, null, 2),
-    );
+    return {
+      candidateId: found.uid,
+      email: found.email,
+      phone: found.phone,
+      rocketReachProfileId: found.rocketreach_profile_id,
+      contactInfoUpdatedAt:
+        found.contact_info_last_updated?.toISOString() ?? null,
+    };
   }
 }

@@ -4,6 +4,8 @@ import { PrismaService } from '../common/database/prisma.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { RoleFilterDto } from './dto/role_filter.dto';
 import { GeminiService } from '../services/gemini/gemini.service';
+import { reasoningServiceFor } from '../services/reasoning/reasoning.testing';
+import { DEFAULT_REASONING_MODEL } from '../services/reasoning/reasoning-model';
 
 async function captureError(
   promise: Promise<unknown>,
@@ -55,6 +57,7 @@ function buildPrisma() {
     },
     role_result: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     organization_log: {
@@ -109,7 +112,7 @@ describe('RolesService', () => {
     service = new RolesService(
       prisma as unknown as PrismaService,
       projectsService,
-      geminiService,
+      reasoningServiceFor(geminiService),
     );
   });
 
@@ -421,6 +424,86 @@ describe('RolesService', () => {
     });
   });
 
+  describe('createFilter work types', () => {
+    beforeEach(() => {
+      prisma.roles.findFirst.mockResolvedValue(buildRole());
+      prisma.role_filters.create.mockResolvedValue({ uid: 'filter-2' });
+    });
+    const storedChildren = () =>
+      prisma.role_filters.create.mock.calls[0][0].data.role_filter_items
+        .create[0].children.create;
+
+    it('stores work_types as a child on the location row and syncs remote_work', async () => {
+      await service.createFilter(
+        'role-1',
+        {
+          filters: [
+            {
+              category: 'location',
+              value: 'ZA',
+              priority: 'ESSENTIAL',
+              work_types: ['REMOTE', 'HYBRID'],
+              children: [
+                { title: 'city', value: 'Cape Town' },
+                { title: 'remote_work', boolean_value: false },
+              ],
+            },
+          ],
+        },
+        'org-1',
+        'user-1',
+      );
+
+      expect(storedChildren()).toEqual([
+        {
+          title: 'city',
+          value: 'Cape Town',
+          list_value: undefined,
+          boolean: undefined,
+        },
+        {
+          title: 'work_types',
+          value: undefined,
+          list_value: ['HYBRID', 'REMOTE'],
+          boolean: undefined,
+        },
+        {
+          title: 'remote_work',
+          value: undefined,
+          list_value: undefined,
+          boolean: true,
+        },
+      ]);
+    });
+
+    it('leaves children as sent when work_types is omitted', async () => {
+      await service.createFilter(
+        'role-1',
+        {
+          filters: [
+            {
+              category: 'location',
+              value: 'ZA',
+              priority: 'ESSENTIAL',
+              children: [{ title: 'remote_work', boolean_value: true }],
+            },
+          ],
+        },
+        'org-1',
+        'user-1',
+      );
+
+      expect(storedChildren()).toEqual([
+        {
+          title: 'remote_work',
+          value: undefined,
+          list_value: undefined,
+          boolean: true,
+        },
+      ]);
+    });
+  });
+
   describe('createFilter search-term expansions', () => {
     const founderGroup = {
       seed: 'founder',
@@ -468,10 +551,13 @@ describe('RolesService', () => {
 
       // The role name is a seed too: with no alternative_title row the query
       // builder falls back to it.
-      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith({
-        seeds: { job_titles: ['founder', 'Fullstack Developer'], skills: [] },
-        roleName: 'Fullstack Developer',
-      });
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith(
+        {
+          seeds: { job_titles: ['founder', 'Fullstack Developer'], skills: [] },
+          roleName: 'Fullstack Developer',
+        },
+        { model: DEFAULT_REASONING_MODEL.model },
+      );
       expect(savedMetadata()).toEqual({
         criterionExpansions: {
           version: 1,
@@ -533,10 +619,13 @@ describe('RolesService', () => {
       );
 
       expect(geminiService.expandSearchTerms).toHaveBeenCalledTimes(1);
-      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith({
-        seeds: { job_titles: [], skills: ['Python'] },
-        roleName: 'Fullstack Developer',
-      });
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith(
+        {
+          seeds: { job_titles: [], skills: ['Python'] },
+          roleName: 'Fullstack Developer',
+        },
+        { model: DEFAULT_REASONING_MODEL.model },
+      );
       const saved = savedMetadata().criterionExpansions;
       expect(saved.byCategory).toEqual({
         job_titles: [founderGroup, roleNameGroup],
@@ -632,10 +721,13 @@ describe('RolesService', () => {
         'user-1',
       );
 
-      expect(geminiService.expandSearchTerms).toHaveBeenLastCalledWith({
-        seeds: { job_titles: [], skills: ['Python'] },
-        roleName: 'Fullstack Developer',
-      });
+      expect(geminiService.expandSearchTerms).toHaveBeenLastCalledWith(
+        {
+          seeds: { job_titles: [], skills: ['Python'] },
+          roleName: 'Fullstack Developer',
+        },
+        { model: DEFAULT_REASONING_MODEL.model },
+      );
       expect(
         prisma.role_filters.create.mock.calls[1][0].data.metadata
           .criterionExpansions.byCategory,
@@ -718,6 +810,120 @@ describe('RolesService', () => {
       expect(savedMetadata()).toEqual(previous);
     });
 
+    describe('recruiter-edited groups', () => {
+      const previous = {
+        criterionExpansions: {
+          version: 1,
+          generatedAt: '2026-11-01T10:00:00.000Z',
+          model: 'gemini-2.5-flash',
+          byCategory: {
+            job_titles: [founderGroup, roleNameGroup],
+            skills: [pythonGroup],
+          },
+        },
+      };
+
+      it('saves edited groups as given, seed first, with no AI call', async () => {
+        prisma.role_filters.findFirst.mockResolvedValue({ metadata: previous });
+
+        await service.createFilter(
+          'role-1',
+          {
+            ...founderDto(['Python']),
+            criterion_expansions: {
+              job_titles: [
+                { seed: 'Founder', terms: ['co-founder', 'owner', 'founder'] },
+              ],
+              skills: [{ seed: 'python', terms: ['FastAPI'] }],
+            },
+          },
+          'org-1',
+          'user-1',
+        );
+
+        expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+        expect(savedMetadata().criterionExpansions).toEqual({
+          ...previous.criterionExpansions,
+          byCategory: {
+            job_titles: [
+              { seed: 'founder', terms: ['founder', 'co-founder', 'owner'] },
+              roleNameGroup,
+            ],
+            skills: [{ seed: 'Python', terms: ['Python', 'FastAPI'] }],
+          },
+        });
+      });
+
+      it('keeps a group cleared down to its seed, so it stays literal and is not regenerated', async () => {
+        await service.createFilter(
+          'role-1',
+          {
+            ...founderDto(),
+            criterion_expansions: {
+              job_titles: [
+                { seed: 'founder', terms: [] },
+                { seed: 'Fullstack Developer', terms: ['Full Stack Engineer'] },
+              ],
+            },
+          },
+          'org-1',
+          'user-1',
+        );
+
+        expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+        expect(savedMetadata().criterionExpansions).toEqual({
+          version: 1,
+          generatedAt: expect.stringMatching(/^\d{4}-\d\d-\d\dT/),
+          model: 'recruiter-edited',
+          byCategory: {
+            job_titles: [
+              { seed: 'founder', terms: ['founder'] },
+              roleNameGroup,
+            ],
+          },
+        });
+      });
+
+      it('asks Gemini only for seeds that are neither edited nor saved, and ignores edits for removed seeds', async () => {
+        geminiService.expandSearchTerms.mockResolvedValue({
+          byCategory: { skills: [{ seed: 'Go', terms: ['Go', 'Golang'] }] },
+          model: 'gemini-2.5-flash',
+          tokensUsed: 9,
+        });
+
+        await service.createFilter(
+          'role-1',
+          {
+            ...founderDto(['Go']),
+            criterion_expansions: {
+              job_titles: [
+                { seed: 'founder', terms: ['co-founder'] },
+                { seed: 'Fullstack Developer', terms: [] },
+                { seed: 'CEO', terms: ['Chief Executive'] },
+              ],
+            },
+          },
+          'org-1',
+          'user-1',
+        );
+
+        expect(geminiService.expandSearchTerms).toHaveBeenCalledWith(
+          {
+            seeds: { job_titles: [], skills: ['Go'] },
+            roleName: 'Fullstack Developer',
+          },
+          { model: DEFAULT_REASONING_MODEL.model },
+        );
+        expect(savedMetadata().criterionExpansions.byCategory).toEqual({
+          job_titles: [
+            { seed: 'founder', terms: ['founder', 'co-founder'] },
+            { seed: 'Fullstack Developer', terms: ['Fullstack Developer'] },
+          ],
+          skills: [{ seed: 'Go', terms: ['Go', 'Golang'] }],
+        });
+      });
+    });
+
     it('ignores unreadable previous metadata and treats every criterion as new', async () => {
       prisma.role_filters.findFirst.mockResolvedValue({
         metadata: { criterionExpansions: { version: 2 } },
@@ -725,15 +931,18 @@ describe('RolesService', () => {
 
       await service.createFilter('role-1', founderDto(), 'org-1', 'user-1');
 
-      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith({
-        seeds: { job_titles: ['founder', 'Fullstack Developer'], skills: [] },
-        roleName: 'Fullstack Developer',
-      });
+      expect(geminiService.expandSearchTerms).toHaveBeenCalledWith(
+        {
+          seeds: { job_titles: ['founder', 'Fullstack Developer'], skills: [] },
+          roleName: 'Fullstack Developer',
+        },
+        { model: DEFAULT_REASONING_MODEL.model },
+      );
     });
   });
 
   describe('getRoleResult', () => {
-    it("fetches a role_result scoped to the caller's organization, including its candidate and their experience/education/sources", async () => {
+    it("fetches a role_result scoped to the caller's organization and the role, including its candidate and their experience/education/sources", async () => {
       const result = {
         uid: 'result-1',
         role_id: 'role-1',
@@ -741,11 +950,12 @@ describe('RolesService', () => {
       };
       prisma.role_result.findFirst.mockResolvedValue(result);
 
-      const found = await service.getRoleResult('result-1', 'org-1');
+      const found = await service.getRoleResult('result-1', 'org-1', 'role-1');
 
       expect(prisma.role_result.findFirst).toHaveBeenCalledWith({
         where: {
           uid: 'result-1',
+          role_id: 'role-1',
           role: { project: { organization_id: 'org-1' } },
         },
         include: {
@@ -762,7 +972,7 @@ describe('RolesService', () => {
       prisma.role_result.findFirst.mockResolvedValue(null);
 
       const error = await captureError(
-        service.getRoleResult('result-1', 'org-1'),
+        service.getRoleResult('result-1', 'org-1', 'role-1'),
       );
 
       expect(error).toBeInstanceOf(RequestException);
@@ -923,6 +1133,24 @@ describe('RolesService', () => {
       expect(error.message).toBe('Only the project owner can delete this role');
       expect(error.getStatus()).toBe(403);
       expect(prisma.roles.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listResults', () => {
+    it("lists the active filter set's results, best score first, with each candidate's sources", async () => {
+      prisma.role_result.findMany.mockResolvedValue([{ uid: 'result-1' }]);
+
+      await expect(service.listResults('role-1')).resolves.toEqual([
+        { uid: 'result-1' },
+      ]);
+      expect(prisma.role_result.findMany).toHaveBeenCalledWith({
+        where: { role_id: 'role-1', role_filter: { archived: false } },
+        include: { candidate: { include: { sources: true } } },
+        orderBy: [
+          { score: { sort: 'desc', nulls: 'last' } },
+          { created: 'asc' },
+        ],
+      });
     });
   });
 });

@@ -3,10 +3,10 @@ import { CandidateService } from './candidate.service';
 import { CandidateController } from './candidate.controller';
 import { LogsModule } from '../../common/logs/logs.module';
 import { DatabaseModule } from '../../common/database/database.module';
-import { ServicesModule } from '../../services/services.module';
+import { AuthModule } from '../../auth/auth.module';
 
 @Module({
-  imports: [LogsModule, DatabaseModule, ServicesModule],
+  imports: [LogsModule, DatabaseModule, AuthModule],
   providers: [CandidateService],
   controllers: [CandidateController],
 })

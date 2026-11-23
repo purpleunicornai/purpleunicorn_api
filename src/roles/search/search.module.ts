@@ -7,7 +7,7 @@ import { DatabaseModule } from '../../common/database/database.module';
 
 @Module({
   imports: [ServicesModule, DatabaseModule],
-  exports: [SearchService],
+  exports: [SearchService, CandidateScoringService],
   providers: [
     SearchService,
     CandidateScoringService,

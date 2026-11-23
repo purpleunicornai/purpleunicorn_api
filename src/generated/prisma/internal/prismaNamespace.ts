@@ -401,11 +401,14 @@ export const ModelName = {
   candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   candidate_source: 'candidate_source',
+  extension_capture: 'extension_capture',
   job_spec_import: 'job_spec_import',
   organization_credits: 'organization_credits',
   organization_log: 'organization_log',
+  organization_settings: 'organization_settings',
   organization_subscription: 'organization_subscription',
   projects: 'projects',
+  rocketreach_lookup: 'rocketreach_lookup',
   role_filter_item: 'role_filter_item',
   role_filter_child: 'role_filter_child',
   role_filters: 'role_filters',
@@ -427,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "job_spec_import" | "organization_credits" | "organization_log" | "organization_subscription" | "projects" | "role_filter_item" | "role_filter_child" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
+    modelProps: "candidate" | "candidate_education" | "candidate_experience" | "candidate_source" | "extension_capture" | "job_spec_import" | "organization_credits" | "organization_log" | "organization_settings" | "organization_subscription" | "projects" | "rocketreach_lookup" | "role_filter_item" | "role_filter_child" | "role_filters" | "role_result" | "role_result_score_breakdown" | "roles"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -727,6 +730,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    extension_capture: {
+      payload: Prisma.$extension_capturePayload<ExtArgs>
+      fields: Prisma.extension_captureFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.extension_captureFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.extension_captureFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>
+        }
+        findFirst: {
+          args: Prisma.extension_captureFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.extension_captureFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>
+        }
+        findMany: {
+          args: Prisma.extension_captureFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>[]
+        }
+        create: {
+          args: Prisma.extension_captureCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>
+        }
+        createMany: {
+          args: Prisma.extension_captureCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.extension_captureCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>[]
+        }
+        delete: {
+          args: Prisma.extension_captureDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>
+        }
+        update: {
+          args: Prisma.extension_captureUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>
+        }
+        deleteMany: {
+          args: Prisma.extension_captureDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.extension_captureUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.extension_captureUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>[]
+        }
+        upsert: {
+          args: Prisma.extension_captureUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$extension_capturePayload>
+        }
+        aggregate: {
+          args: Prisma.Extension_captureAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExtension_capture>
+        }
+        groupBy: {
+          args: Prisma.extension_captureGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Extension_captureGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.extension_captureCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Extension_captureCountAggregateOutputType> | number
+        }
+      }
+    }
     job_spec_import: {
       payload: Prisma.$job_spec_importPayload<ExtArgs>
       fields: Prisma.job_spec_importFieldRefs
@@ -949,6 +1026,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    organization_settings: {
+      payload: Prisma.$organization_settingsPayload<ExtArgs>
+      fields: Prisma.organization_settingsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.organization_settingsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.organization_settingsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>
+        }
+        findFirst: {
+          args: Prisma.organization_settingsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.organization_settingsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>
+        }
+        findMany: {
+          args: Prisma.organization_settingsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>[]
+        }
+        create: {
+          args: Prisma.organization_settingsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>
+        }
+        createMany: {
+          args: Prisma.organization_settingsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.organization_settingsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>[]
+        }
+        delete: {
+          args: Prisma.organization_settingsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>
+        }
+        update: {
+          args: Prisma.organization_settingsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>
+        }
+        deleteMany: {
+          args: Prisma.organization_settingsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.organization_settingsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.organization_settingsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>[]
+        }
+        upsert: {
+          args: Prisma.organization_settingsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$organization_settingsPayload>
+        }
+        aggregate: {
+          args: Prisma.Organization_settingsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrganization_settings>
+        }
+        groupBy: {
+          args: Prisma.organization_settingsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Organization_settingsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.organization_settingsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Organization_settingsCountAggregateOutputType> | number
+        }
+      }
+    }
     organization_subscription: {
       payload: Prisma.$organization_subscriptionPayload<ExtArgs>
       fields: Prisma.organization_subscriptionFieldRefs
@@ -1094,6 +1245,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.projectsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ProjectsCountAggregateOutputType> | number
+        }
+      }
+    }
+    rocketreach_lookup: {
+      payload: Prisma.$rocketreach_lookupPayload<ExtArgs>
+      fields: Prisma.rocketreach_lookupFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.rocketreach_lookupFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.rocketreach_lookupFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>
+        }
+        findFirst: {
+          args: Prisma.rocketreach_lookupFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.rocketreach_lookupFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>
+        }
+        findMany: {
+          args: Prisma.rocketreach_lookupFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>[]
+        }
+        create: {
+          args: Prisma.rocketreach_lookupCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>
+        }
+        createMany: {
+          args: Prisma.rocketreach_lookupCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.rocketreach_lookupCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>[]
+        }
+        delete: {
+          args: Prisma.rocketreach_lookupDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>
+        }
+        update: {
+          args: Prisma.rocketreach_lookupUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>
+        }
+        deleteMany: {
+          args: Prisma.rocketreach_lookupDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.rocketreach_lookupUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.rocketreach_lookupUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>[]
+        }
+        upsert: {
+          args: Prisma.rocketreach_lookupUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$rocketreach_lookupPayload>
+        }
+        aggregate: {
+          args: Prisma.Rocketreach_lookupAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRocketreach_lookup>
+        }
+        groupBy: {
+          args: Prisma.rocketreach_lookupGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Rocketreach_lookupGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.rocketreach_lookupCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Rocketreach_lookupCountAggregateOutputType> | number
         }
       }
     }
@@ -1666,6 +1891,24 @@ export const Candidate_sourceScalarFieldEnum = {
 export type Candidate_sourceScalarFieldEnum = (typeof Candidate_sourceScalarFieldEnum)[keyof typeof Candidate_sourceScalarFieldEnum]
 
 
+export const Extension_captureScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  organization_id: 'organization_id',
+  captured_by: 'captured_by',
+  linkedin_slug: 'linkedin_slug',
+  linkedin_url: 'linkedin_url',
+  profile: 'profile',
+  captured_at: 'captured_at',
+  status: 'status',
+  role_ids: 'role_ids',
+  expires_at: 'expires_at'
+} as const
+
+export type Extension_captureScalarFieldEnum = (typeof Extension_captureScalarFieldEnum)[keyof typeof Extension_captureScalarFieldEnum]
+
+
 export const Job_spec_importScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -1687,7 +1930,15 @@ export const Organization_creditsScalarFieldEnum = {
   updated: 'updated',
   organization_id: 'organization_id',
   type: 'type',
-  amount: 'amount'
+  amount: 'amount',
+  kind: 'kind',
+  period: 'period',
+  user_id: 'user_id',
+  role_id: 'role_id',
+  role_result_id: 'role_result_id',
+  reason: 'reason',
+  metadata: 'metadata',
+  idempotency_key: 'idempotency_key'
 } as const
 
 export type Organization_creditsScalarFieldEnum = (typeof Organization_creditsScalarFieldEnum)[keyof typeof Organization_creditsScalarFieldEnum]
@@ -1712,6 +1963,18 @@ export const Organization_logScalarFieldEnum = {
 } as const
 
 export type Organization_logScalarFieldEnum = (typeof Organization_logScalarFieldEnum)[keyof typeof Organization_logScalarFieldEnum]
+
+
+export const Organization_settingsScalarFieldEnum = {
+  organization_id: 'organization_id',
+  created: 'created',
+  updated: 'updated',
+  ai_provider: 'ai_provider',
+  ai_model: 'ai_model',
+  monthly_credit_allowance: 'monthly_credit_allowance'
+} as const
+
+export type Organization_settingsScalarFieldEnum = (typeof Organization_settingsScalarFieldEnum)[keyof typeof Organization_settingsScalarFieldEnum]
 
 
 export const Organization_subscriptionScalarFieldEnum = {
@@ -1743,6 +2006,31 @@ export const ProjectsScalarFieldEnum = {
 } as const
 
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
+
+
+export const Rocketreach_lookupScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  organization_id: 'organization_id',
+  user_id: 'user_id',
+  candidate_id: 'candidate_id',
+  role_id: 'role_id',
+  role_result_id: 'role_result_id',
+  purpose: 'purpose',
+  query_type: 'query_type',
+  query: 'query',
+  outcome: 'outcome',
+  from_cache: 'from_cache',
+  likely_billed: 'likely_billed',
+  rocketreach_profile_id: 'rocketreach_profile_id',
+  http_status: 'http_status',
+  error: 'error',
+  org_charge: 'org_charge',
+  charge_entry_id: 'charge_entry_id',
+  refund_entry_id: 'refund_entry_id'
+} as const
+
+export type Rocketreach_lookupScalarFieldEnum = (typeof Rocketreach_lookupScalarFieldEnum)[keyof typeof Rocketreach_lookupScalarFieldEnum]
 
 
 export const Role_filter_itemScalarFieldEnum = {
@@ -1800,10 +2088,13 @@ export const Role_resultScalarFieldEnum = {
   filter_id: 'filter_id',
   score: 'score',
   disqualified: 'disqualified',
+  pre_disqualification_score: 'pre_disqualification_score',
+  disqualified_reasons: 'disqualified_reasons',
   ai_score: 'ai_score',
   reasoning: 'reasoning',
   skills_matched: 'skills_matched',
   summary: 'summary',
+  page: 'page',
   relevancy_score: 'relevancy_score',
   rated_by: 'rated_by',
   shortlist: 'shortlist',
@@ -1859,6 +2150,13 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const NullableJsonNullValueInput = {
@@ -1992,6 +2290,34 @@ export type ListEnumSourceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$P
 
 
 /**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'ExtensionCaptureStatus'
+ */
+export type EnumExtensionCaptureStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExtensionCaptureStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ExtensionCaptureStatus[]'
+ */
+export type ListEnumExtensionCaptureStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExtensionCaptureStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'OrganizationCreditsType'
  */
 export type EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditsType'>
@@ -2002,6 +2328,20 @@ export type EnumOrganizationCreditsTypeFieldRefInput<$PrismaModel> = FieldRefInp
  * Reference to a field of type 'OrganizationCreditsType[]'
  */
 export type ListEnumOrganizationCreditsTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditsType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'OrganizationCreditEntryKind'
+ */
+export type EnumOrganizationCreditEntryKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditEntryKind'>
+    
+
+
+/**
+ * Reference to a field of type 'OrganizationCreditEntryKind[]'
+ */
+export type ListEnumOrganizationCreditEntryKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationCreditEntryKind[]'>
     
 
 
@@ -2034,6 +2374,48 @@ export type ListEnumProjectVisibilityFieldRefInput<$PrismaModel> = FieldRefInput
 
 
 /**
+ * Reference to a field of type 'RocketReachLookupPurpose'
+ */
+export type EnumRocketReachLookupPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RocketReachLookupPurpose'>
+    
+
+
+/**
+ * Reference to a field of type 'RocketReachLookupPurpose[]'
+ */
+export type ListEnumRocketReachLookupPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RocketReachLookupPurpose[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RocketReachLookupOutcome'
+ */
+export type EnumRocketReachLookupOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RocketReachLookupOutcome'>
+    
+
+
+/**
+ * Reference to a field of type 'RocketReachLookupOutcome[]'
+ */
+export type ListEnumRocketReachLookupOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RocketReachLookupOutcome[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RocketReachLookupCharge'
+ */
+export type EnumRocketReachLookupChargeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RocketReachLookupCharge'>
+    
+
+
+/**
+ * Reference to a field of type 'RocketReachLookupCharge[]'
+ */
+export type ListEnumRocketReachLookupChargeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RocketReachLookupCharge[]'>
+    
+
+
+/**
  * Reference to a field of type 'RoleFilterPriority'
  */
 export type EnumRoleFilterPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleFilterPriority'>
@@ -2044,20 +2426,6 @@ export type EnumRoleFilterPriorityFieldRefInput<$PrismaModel> = FieldRefInputTyp
  * Reference to a field of type 'RoleFilterPriority[]'
  */
 export type ListEnumRoleFilterPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleFilterPriority[]'>
-    
-
-
-/**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 /**
@@ -2215,11 +2583,14 @@ export type GlobalOmitConfig = {
   candidate_education?: Prisma.candidate_educationOmit
   candidate_experience?: Prisma.candidate_experienceOmit
   candidate_source?: Prisma.candidate_sourceOmit
+  extension_capture?: Prisma.extension_captureOmit
   job_spec_import?: Prisma.job_spec_importOmit
   organization_credits?: Prisma.organization_creditsOmit
   organization_log?: Prisma.organization_logOmit
+  organization_settings?: Prisma.organization_settingsOmit
   organization_subscription?: Prisma.organization_subscriptionOmit
   projects?: Prisma.projectsOmit
+  rocketreach_lookup?: Prisma.rocketreach_lookupOmit
   role_filter_item?: Prisma.role_filter_itemOmit
   role_filter_child?: Prisma.role_filter_childOmit
   role_filters?: Prisma.role_filtersOmit

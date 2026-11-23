@@ -2,6 +2,12 @@ import {
   role_filter_item,
   role_filter_child,
 } from '../../generated/prisma/client';
+import {
+  REMOTE_WORK_CHILD,
+  WORK_TYPES_CHILD,
+  WorkType,
+  workTypesFromChildren,
+} from './work-types';
 
 type RoleFilterItemRow = role_filter_item & { children: role_filter_child[] };
 
@@ -14,7 +20,12 @@ export interface ParsedFilterRow<T> {
 export interface ParsedLocation {
   countryCode: string;
   regions: { type: string; value: string }[];
+  // True when remote candidates are acceptable (REMOTE is a work type).
   remoteWork: boolean;
+  // How the role may be worked. Always set by the parser; optional so
+  // hand-built filters (tests, older callers) keep the legacy meaning.
+  // See work-types.ts.
+  workTypes?: WorkType[];
   workAuthorizationRequired: boolean;
 }
 
@@ -53,7 +64,7 @@ export interface ParsedRoleFilters {
 // Turns raw, open-ended role_filter_item + children rows into one typed,
 // stable structure — isolating the dynamic (child.title is an open-ended
 // label) parsing in one place instead of duplicating it in
-// GoogleSearchService, GeminiService, and CandidateScoringService.
+// VertexSearchService, GeminiService, and CandidateScoringService.
 export function parseRoleFilters(
   items: RoleFilterItemRow[],
 ): ParsedRoleFilters {
@@ -151,16 +162,19 @@ function parseLocation(item: RoleFilterItemRow): ParsedLocation {
   const regions = item.children
     .filter(
       (child) =>
-        child.title !== 'remote_work' &&
+        child.title !== REMOTE_WORK_CHILD &&
+        child.title !== WORK_TYPES_CHILD &&
         child.title !== 'work_authorization' &&
         !!child.value?.trim(),
     )
     .map((child) => ({ type: child.title, value: (child.value ?? '').trim() }));
+  const workTypes = workTypesFromChildren(item.children);
 
   return {
     countryCode: item.value ?? '',
     regions,
-    remoteWork: findChild(item.children, 'remote_work')?.boolean ?? false,
+    remoteWork: workTypes.includes('REMOTE'),
+    workTypes,
     workAuthorizationRequired:
       findChild(item.children, 'work_authorization')?.boolean ?? false,
   };

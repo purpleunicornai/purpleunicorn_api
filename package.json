@@ -23,10 +23,13 @@
     "postinstall": "npm run db:generate"
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.51",
+    "@ai-sdk/anthropic": "^4.0.106",
+    "@ai-sdk/google": "^4.0.122",
+    "@ai-sdk/openai": "^4.0.121",
     "@clerk/backend": "^3.11.4",
     "@clerk/clerk-sdk-node": "^4.13.23",
     "@countrystatecity/countries": "^1.0.9",
+    "@google-cloud/discoveryengine": "^3.5.0",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
@@ -38,7 +41,7 @@
     "@nestjs/websockets": "^11.1.28",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
-    "ai": "^7.0.79",
+    "ai": "^7.0.176",
     "axios": "^1.18.1",
     "bullmq": "^5.80.2",
     "cheerio": "^1.2.0",

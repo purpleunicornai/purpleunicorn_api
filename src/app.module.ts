@@ -12,6 +12,8 @@ import { ProjectsModule } from './projects/projects.module';
 import { MiddlewareModule } from './common/middleware/middleware.module';
 import { CountriesModule } from './system/config/countries/countries.module';
 import { CandidateModule } from './organization/candidate/candidate.module';
+import { CreditsModule } from './organization/credits/credits.module';
+import { OrganizationSettingsModule } from './organization/settings/organization-settings.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { CandidateModule } from './organization/candidate/candidate.module';
     ProjectsModule,
     CountriesModule,
     CandidateModule,
+    CreditsModule,
+    OrganizationSettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
