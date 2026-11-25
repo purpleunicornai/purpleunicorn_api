@@ -1,3 +1,4 @@
+import { CandidateActionsService } from './candidate-actions.service';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { RolesController } from './roles.controller';
@@ -33,6 +34,7 @@ import { OrgCapturesService } from './capture/org-captures.service';
   controllers: [RolesController, RoleSearchController, ExtensionController],
   providers: [
     RolesService,
+    CandidateActionsService,
     JobSpecImportService,
     PaidResearchService,
     RoleSearchJobsService,

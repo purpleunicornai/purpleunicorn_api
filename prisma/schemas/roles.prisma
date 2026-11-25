@@ -8,6 +8,10 @@ model roles {
   description     String?
   summary         String?
   created_by      String?
+  // Descriptive details from "Edit role details"; not filters, never searched on.
+  location        String?
+  seniority       String?
+  hiring_manager  String?
   role_filters    role_filters[]
   role_result     role_result[]
   // Relationships

@@ -54,6 +54,9 @@ function buildRole(overrides: Record<string, unknown> = {}) {
     description: null,
     summary: null,
     created_by: 'user-1',
+    location: null,
+    seniority: null,
+    hiring_manager: null,
     ...overrides,
   };
 }
@@ -170,6 +173,7 @@ function buildPrisma() {
     },
     candidate_source: {
       createMany: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     role_result: {
       findFirst: jest.fn().mockResolvedValue(null),
@@ -2685,6 +2689,70 @@ describe('SearchService', () => {
       expect(prisma.role_filters.update).not.toHaveBeenCalled();
     });
 
+    it('looks deeper with the broader query, skipping people the role already has', async () => {
+      withMetadata({
+        searchProgress: { ...progressOf(5, null).searchProgress, broadFrom: 5 },
+      });
+      vertexSearchService.searchRolePage.mockResolvedValue({
+        items: items(3),
+        page: 1,
+        nextPageToken: nextToken,
+        skippedDuplicates: 0,
+        filteredOutByLocation: 0,
+      });
+      prisma.candidate_source.findMany.mockResolvedValue([
+        { url: 'https://linkedin.com/in/candidate-0' },
+      ]);
+
+      const { events, outcome } = run();
+
+      expect(await outcome).toEqual(
+        expect.objectContaining({ kind: 'done', page: 6, hasMore: true }),
+      );
+      // The essential skill no longer narrows the query...
+      const [queryFilters, , , token] =
+        vertexSearchService.searchRolePage.mock.calls[0];
+      expect(queryFilters.skills[0].priority).toBe('OPTIONAL');
+      expect(token).toBeUndefined();
+      // ...and the person already in the results isn't scored again.
+      expect(prisma.candidate_source.findMany).toHaveBeenCalledWith({
+        where: {
+          url: { in: items(3).map((item) => item.link) },
+          candidate: { role_results: { some: { role_id: 'role-1' } } },
+        },
+        select: { url: true },
+      });
+      expect(
+        events.find((e) => e.stage === 'searching' && e.status === 'done'),
+      ).toEqual(expect.objectContaining({ found: 2, skippedDuplicates: 1 }));
+      // Results land as page 6 of the run, not page 1 of the broader query.
+      expect(geminiService.formatCandidates.mock.calls[0][0]).toEqual([
+        expect.objectContaining({ link: items(3)[1].link, page: 6 }),
+        expect.objectContaining({ link: items(3)[2].link, page: 6 }),
+      ]);
+      expect(githubSearchService.search).not.toHaveBeenCalled();
+      expect(savedMetadata().searchProgress).toEqual(
+        expect.objectContaining({ pagesLoaded: 6, broadFrom: 5 }),
+      );
+    });
+
+    it("pages the role's own query without the extra duplicate lookup", async () => {
+      withMetadata(progressOf(3, nextToken));
+      vertexSearchService.searchRolePage.mockResolvedValue({
+        items: items(2),
+        page: 4,
+        nextPageToken: undefined,
+        skippedDuplicates: 0,
+        filteredOutByLocation: 0,
+      });
+
+      await run().outcome;
+
+      const [queryFilters] = vertexSearchService.searchRolePage.mock.calls[0];
+      expect(queryFilters.skills[0].priority).toBe('ESSENTIAL');
+      expect(prisma.candidate_source.findMany).not.toHaveBeenCalled();
+    });
+
     it('stops before the next batch when asked, leaving the token where it was', async () => {
       withMetadata(progressOf(1, nextToken));
       vertexSearchService.searchRolePage.mockResolvedValue({
@@ -2807,6 +2875,95 @@ describe('SearchService', () => {
           metadata: { criterionExpansions: null, searchProgress: saved },
         },
       });
+    });
+  });
+  describe('findSimilar', () => {
+    const traits = [
+      {
+        category: 'skills',
+        list_value: ['IFRS', 'Treasury'],
+        priority: 'ESSENTIAL',
+        non_negotiable: false,
+      },
+    ];
+    const row = (requirement: string, earned: number) => ({
+      category: 'skills',
+      requirement,
+      priority: 'ESSENTIAL' as const,
+      nonNegotiable: false,
+      weight: 50,
+      earned,
+      applicable: true,
+    });
+
+    it('ranks people on file by similarity to the seed, without the seed or any AI call', async () => {
+      existingCandidateSearchService.findCandidates.mockResolvedValue([
+        { uid: 'seed', experience: [], education: [] },
+        { uid: 'a', experience: [], education: [] },
+        { uid: 'b', experience: [], education: [] },
+        { uid: 'c', experience: [], education: [] },
+      ] as any);
+      const scores: Record<string, number> = { seed: 100, a: 60, b: 90, c: 0 };
+      candidateScoringService.scoreCandidate.mockImplementation(
+        (_f, candidate: any) => ({
+          score: scores[candidate.uid],
+          rawScore: scores[candidate.uid],
+          disqualified: false,
+          missedNonNegotiables: [],
+          breakdown: [
+            row('IFRS', 50),
+            row('Treasury', candidate.uid === 'b' ? 40 : 0),
+          ],
+        }),
+      );
+
+      const similar = await service.findSimilar('role-1', 'seed', traits, 20);
+
+      expect(similar.map((m) => [m.candidate.uid, m.similarity])).toEqual([
+        ['b', 90],
+        ['a', 60],
+      ]);
+      expect(similar[1]).toMatchObject({
+        shared: ['IFRS'],
+        differs: ['Treasury'],
+        traits: 2,
+      });
+      expect(similar[0].candidate).not.toHaveProperty('experience');
+      expect(
+        existingCandidateSearchService.findCandidates,
+      ).toHaveBeenCalledWith(
+        'role-1',
+        expect.objectContaining({
+          skills: [expect.objectContaining({ value: ['IFRS', 'Treasury'] })],
+        }),
+      );
+      expect(geminiService.scoreKnownCandidates).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('scoreCandidateForRole', () => {
+    it("scores one person against the role's filters with the (mocked) AI and saves it", async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      prisma.candidate.findUniqueOrThrow = jest.fn().mockResolvedValue({
+        uid: 'cand-1',
+        skills: ['TypeScript'],
+        experience: [],
+        education: [],
+      });
+      geminiService.scoreKnownCandidates.mockResolvedValue({
+        matches: [],
+        tokensUsed: 10,
+        usage: null,
+      } as any);
+
+      await expect(
+        service.scoreCandidateForRole('role-1', 'cand-1'),
+      ).resolves.toBeNull();
+      expect(geminiService.scoreKnownCandidates).toHaveBeenCalledWith(
+        [expect.objectContaining({ uid: 'cand-1' })],
+        expect.any(Object),
+        expect.any(Object),
+      );
     });
   });
 });

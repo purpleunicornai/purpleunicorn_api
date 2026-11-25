@@ -783,6 +783,31 @@ export abstract class AiSdkReasoningProvider implements ReasoningProvider {
     };
   }
 
+  // "Generate from brief" on Edit role details: a short plain description
+  // for the role page. Nothing is saved; the recruiter edits it first.
+  async describeRole(
+    { roleName, brief }: { roleName: string; brief: string },
+    { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
+  ): Promise<{ description: string; tokensUsed: number }> {
+    const { generateText } = await this.loadAi();
+    const { text, usage } = await generateText({
+      model: await this.getModel(modelId),
+      prompt: [
+        `Write a 2-3 sentence description of the "${roleName}" role for a recruiter's role page,`,
+        'using only facts from the brief below. Plain text, no headings or bullet points,',
+        'under 500 characters.',
+        '',
+        brief,
+      ].join('\n'),
+      timeout: GEMINI_CALL_TIMEOUT_MS,
+      ...this.callSettings(modelId, { fast: true }),
+    });
+    return {
+      description: text.trim().slice(0, 500),
+      tokensUsed: usage.totalTokens ?? 0,
+    };
+  }
+
   // Elaborates each title/skill seed into the adjacent phrasings people
   // actually put on their profiles (the nuanced ones like "side hustle" are
   // what surface unusual candidates), for use as x-ray OR groups. The model

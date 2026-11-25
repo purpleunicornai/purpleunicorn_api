@@ -51,7 +51,8 @@ export class UpdateProjectDto extends PartialType(CreateProjectDto) {}
 
 export class ProjectRoleCountDto {
   @ApiProperty({
-    description: 'Number of non-archived role_results for this role',
+    description:
+      'Number of non-archived role_results for this role, not counting ones marked not suitable',
   })
   @Expose()
   @IsInt()

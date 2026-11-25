@@ -109,6 +109,7 @@ describe('ProjectsService', () => {
                   role_result: {
                     where: {
                       role_filter: { archived: false },
+                      OR: [{ not_suitable: false }, { not_suitable: null }],
                     },
                   },
                 },

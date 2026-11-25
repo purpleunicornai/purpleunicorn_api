@@ -9,6 +9,7 @@ const progress = (patch: Partial<SearchProgress> = {}) => ({
     version: 1,
     pagesLoaded: 2,
     nextPageToken: 's1.next',
+    broadFrom: null,
     estimatedTotal: 1240,
     status: 'paused',
     error: null,
@@ -43,6 +44,7 @@ describe('RoleSearchJobsService', () => {
   let searchService: {
     findActiveFilterSet: jest.Mock;
     saveSearchProgress: jest.Mock;
+    canBroaden: jest.Mock;
   };
   let service: RoleSearchJobsService;
   const jobId = roleSearchJobId('filter-1');
@@ -63,6 +65,7 @@ describe('RoleSearchJobsService', () => {
     searchService = {
       findActiveFilterSet: jest.fn().mockResolvedValue(null),
       saveSearchProgress: jest.fn().mockResolvedValue(undefined),
+      canBroaden: jest.fn().mockResolvedValue(true),
     };
     service = new RoleSearchJobsService(
       queue as never,
@@ -100,6 +103,7 @@ describe('RoleSearchJobsService', () => {
         {
           pagesLoaded: 0,
           nextPageToken: null,
+          broadFrom: null,
           estimatedTotal: null,
           status: 'running',
           error: null,
@@ -144,6 +148,48 @@ describe('RoleSearchJobsService', () => {
       expect(state).toEqual(
         expect.objectContaining({ status: 'complete', hasMore: false }),
       );
+    });
+
+    it('looks deeper from where an exhausted run ended, with the broader query', async () => {
+      withFilterSet(
+        progress({ pagesLoaded: 5, nextPageToken: null, status: 'complete' }),
+      );
+
+      const before = await service.status('role-1');
+      expect(before).toEqual(
+        expect.objectContaining({ hasMore: false, canLookDeeper: true }),
+      );
+
+      await service.start(startInput, { deeper: true });
+
+      expect(searchService.saveSearchProgress).toHaveBeenCalledWith(
+        'filter-1',
+        { broadFrom: 5, nextPageToken: null, status: 'running', error: null },
+      );
+      expect(queue.add).toHaveBeenCalledWith('run', jobData(), {
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+      });
+    });
+
+    it('does not look deeper while pages are left, after a broader pass, or with nothing to broaden', async () => {
+      withFilterSet(progress());
+      await service.start(startInput, { deeper: true });
+
+      withFilterSet(
+        progress({ pagesLoaded: 7, broadFrom: 5, nextPageToken: null }),
+      );
+      expect((await service.status('role-1')).canLookDeeper).toBe(false);
+      await service.start(startInput, { deeper: true });
+
+      searchService.canBroaden.mockResolvedValue(false);
+      withFilterSet(progress({ pagesLoaded: 5, nextPageToken: null }));
+      expect((await service.status('role-1')).canLookDeeper).toBe(false);
+      await service.start(startInput, { deeper: true });
+
+      expect(searchService.saveSearchProgress).not.toHaveBeenCalled();
+      expect(queue.add).not.toHaveBeenCalled();
     });
 
     it('refuses to start without saved filters', async () => {
@@ -202,6 +248,7 @@ describe('RoleSearchJobsService', () => {
         status: 'idle',
         pagesLoaded: 0,
         hasMore: true,
+        canLookDeeper: false,
         estimatedTotal: null,
         pagesPerRun: 5,
         error: null,

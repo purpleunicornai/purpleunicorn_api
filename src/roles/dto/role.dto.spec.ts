@@ -1,5 +1,7 @@
 import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import {
+  UpdateRoleDto,
   RoleFilterChildResponseDto,
   RoleFilterResponseDto,
   RoleResultScoreBreakdownDto,
@@ -316,5 +318,32 @@ describe('search paging fields', () => {
     expect(result.metadata).toEqual(
       expect.objectContaining({ missing: ['Afrikaans'], ...research }),
     );
+  });
+});
+
+describe('UpdateRoleDto', () => {
+  const errorsFor = async (body: object) =>
+    (await validate(plainToInstance(UpdateRoleDto, body))).map(
+      (e) => e.property,
+    );
+
+  it('accepts a trimmed name up to 80 and a description up to 500', async () => {
+    expect(
+      await errorsFor({
+        name: `  ${'a'.repeat(80)}  `,
+        description: 'd'.repeat(500),
+        location: 'Cape Town, ZA',
+        seniority: 'Senior',
+        hiring_manager: 'Kyle Winter',
+      }),
+    ).toEqual([]);
+  });
+
+  it('rejects a blank name, an 81-character name and a 501-character description', async () => {
+    expect(await errorsFor({ name: '   ' })).toEqual(['name']);
+    expect(await errorsFor({ name: 'a'.repeat(81) })).toEqual(['name']);
+    expect(await errorsFor({ description: 'd'.repeat(501) })).toEqual([
+      'description',
+    ]);
   });
 });

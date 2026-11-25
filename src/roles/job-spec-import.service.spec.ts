@@ -19,6 +19,9 @@ async function captureError(
 function buildGeminiService(): jest.Mocked<GeminiService> {
   return {
     parseJobSpec: jest.fn().mockResolvedValue({ items: [], tokensUsed: 0 }),
+    describeRole: jest
+      .fn()
+      .mockResolvedValue({ description: 'Leads the close.', tokensUsed: 5 }),
   } as unknown as jest.Mocked<GeminiService>;
 }
 
@@ -27,6 +30,7 @@ function buildPrisma() {
     job_spec_import: {
       create: jest.fn(),
     },
+    roles: { findUniqueOrThrow: jest.fn() },
   };
 }
 
@@ -327,6 +331,58 @@ describe('JobSpecImportService', () => {
       expect(geminiService.parseJobSpec).toHaveBeenCalledWith('pasted text', {
         model: DEFAULT_REASONING_MODEL.model,
       });
+    });
+  });
+
+  describe('describeRole', () => {
+    const roleWith = (brief: string | null, items: object[] = []) => ({
+      name: 'Senior Finance Manager',
+      job_spec_import: brief ? [{ original_text: brief }] : [],
+      role_filters: [{ role_filter_items: items }],
+    });
+
+    it('writes the description from the latest brief', async () => {
+      prisma.roles.findUniqueOrThrow.mockResolvedValue(
+        roleWith('CA(SA) finance lead in Cape Town'),
+      );
+
+      const result = await service.describeRole('role-1');
+
+      expect(geminiService.describeRole).toHaveBeenCalledWith(
+        {
+          roleName: 'Senior Finance Manager',
+          brief: 'CA(SA) finance lead in Cape Town',
+        },
+        { model: DEFAULT_REASONING_MODEL.model },
+      );
+      expect(result).toEqual({ description: 'Leads the close.' });
+    });
+
+    it("falls back to the role's filters when there's no brief", async () => {
+      prisma.roles.findUniqueOrThrow.mockResolvedValue(
+        roleWith(null, [
+          { category: 'job_titles', value: null, list_value: ['CFO', 'FD'] },
+          { category: 'location', value: 'ZA', list_value: [] },
+        ]),
+      );
+
+      await service.describeRole('role-1');
+
+      expect(geminiService.describeRole).toHaveBeenCalledWith(
+        expect.objectContaining({
+          brief: 'job_titles: CFO, FD\nlocation: ZA',
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('refuses with a 422 when there is nothing to write from', async () => {
+      prisma.roles.findUniqueOrThrow.mockResolvedValue(roleWith(null));
+
+      const error = await captureError(service.describeRole('role-1'));
+
+      expect(error.getStatus()).toBe(422);
+      expect(geminiService.describeRole).not.toHaveBeenCalled();
     });
   });
 });

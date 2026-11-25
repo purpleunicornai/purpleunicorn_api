@@ -1,3 +1,4 @@
+import { CandidateActionsService } from './candidate-actions.service';
 import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
 import { SearchService } from './search/search.service';
@@ -59,11 +60,14 @@ function buildRolesService(): jest.Mocked<RolesService> {
     findAllForProject: jest.fn(),
     findOne: jest.fn(),
     getRole: jest.fn(),
+    searchHistory: jest.fn(),
+    listResults: jest.fn(),
     create: jest.fn(),
     createFilter: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
     getRoleResult: jest.fn(),
+    markNotSuitable: jest.fn(),
   } as unknown as jest.Mocked<RolesService>;
 }
 
@@ -94,6 +98,7 @@ function buildClerkService(): jest.Mocked<ClerkService> {
 function buildJobSpecImportService(): jest.Mocked<JobSpecImportService> {
   return {
     importJobSpec: jest.fn(),
+    describeRole: jest.fn(),
   } as unknown as jest.Mocked<JobSpecImportService>;
 }
 
@@ -136,6 +141,7 @@ describe('RolesController', () => {
         rocketReachOff,
         noRecentLookups,
       ),
+      {} as CandidateActionsService,
     );
   });
 
@@ -450,6 +456,46 @@ describe('RolesController', () => {
     });
   });
 
+  describe('markNotSuitable', () => {
+    it('checks the caller can see the role, then marks the result in it, spending nothing', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      const marked = { uid: 'result-1', not_suitable: true };
+      rolesService.markNotSuitable.mockResolvedValue(marked as any);
+
+      const response = await controller.markNotSuitable(
+        'role-1',
+        'result-1',
+        buildAuth(),
+        { notSuitable: true },
+      );
+
+      expect(rolesService.getRole).toHaveBeenCalledWith(
+        'role-1',
+        'org-1',
+        'user-1',
+      );
+      expect(rolesService.markNotSuitable).toHaveBeenCalledWith(
+        'result-1',
+        'role-1',
+        true,
+        'org-1',
+      );
+      expect(creditsService.charge).not.toHaveBeenCalled();
+      expect(response).toBe(marked);
+    });
+
+    it('marks nothing when the caller cannot see the role', async () => {
+      rolesService.getRole.mockRejectedValue(new Error('Role not found'));
+
+      await expect(
+        controller.markNotSuitable('role-1', 'result-1', buildAuth(), {
+          notSuitable: true,
+        }),
+      ).rejects.toThrow('Role not found');
+      expect(rolesService.markNotSuitable).not.toHaveBeenCalled();
+    });
+  });
+
   describe('researchCandidate', () => {
     const jane = {
       uid: 'candidate-1',
@@ -722,6 +768,66 @@ describe('RolesController', () => {
       );
 
       expect(logsService.log).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('searchHistory', () => {
+    it("lists the org's runs the caller can see", async () => {
+      rolesService.searchHistory.mockResolvedValue([]);
+
+      await controller.searchHistory(buildAuth());
+
+      expect(rolesService.searchHistory).toHaveBeenCalledWith(
+        'org-1',
+        'user-1',
+      );
+    });
+  });
+
+  describe('listResults', () => {
+    it("checks access, then lists one past run's results when asked", async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      rolesService.listResults.mockResolvedValue([]);
+
+      await controller.listResults('role-1', buildAuth(), 'f-old');
+
+      expect(rolesService.getRole).toHaveBeenCalledWith(
+        'role-1',
+        'org-1',
+        'user-1',
+      );
+      expect(rolesService.listResults).toHaveBeenCalledWith('role-1', 'f-old');
+    });
+  });
+
+  describe('generateDescription', () => {
+    it('checks access to the role, then returns the drafted description', async () => {
+      rolesService.getRole.mockResolvedValue({ uid: 'role-1' } as any);
+      jobSpecImportService.describeRole.mockResolvedValue({
+        description: 'Leads the close.',
+      });
+
+      const response = await controller.generateDescription(
+        'role-1',
+        buildAuth(),
+      );
+
+      expect(rolesService.getRole).toHaveBeenCalledWith(
+        'role-1',
+        'org-1',
+        'user-1',
+      );
+      expect(response).toEqual({ description: 'Leads the close.' });
+    });
+
+    it("doesn't call the AI when the caller can't access the role", async () => {
+      rolesService.getRole.mockRejectedValue(
+        new RequestException('Role not found', 404, 'ROLE_NOT_FOUND'),
+      );
+
+      await captureError(controller.generateDescription('role-1', buildAuth()));
+
+      expect(jobSpecImportService.describeRole).not.toHaveBeenCalled();
     });
   });
 

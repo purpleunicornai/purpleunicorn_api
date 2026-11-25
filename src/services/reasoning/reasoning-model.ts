@@ -44,6 +44,7 @@ export type ReasoningProvider = {
   | 'researchCandidate'
   | 'enrichCandidate'
   | 'parseJobSpec'
+  | 'describeRole'
   | 'expandSearchTerms'
 >;
 

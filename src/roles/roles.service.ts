@@ -2,14 +2,25 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/database/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
-import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
+import {
+  CreateRoleDto,
+  RoleFilterResponseDto,
+  UpdateRoleDto,
+} from './dto/role.dto';
+import { plainToInstance } from 'class-transformer';
+import { toSearchRuns, type SearchRun } from './search/search-history';
 import {
   ChildFilterItemDto,
   FilterItemDto,
   RoleFilterDto,
 } from './dto/role_filter.dto';
 import { WorkTypeChild, withWorkTypeChildren } from './search/work-types';
-import { Prisma, role_filters, roles } from '../generated/prisma/client';
+import {
+  Prisma,
+  role_filters,
+  role_result,
+  roles,
+} from '../generated/prisma/client';
 import { RoleFilterPriority } from '../generated/prisma/enums';
 import { ReasoningService } from '../services/reasoning/reasoning.service';
 import {
@@ -250,9 +261,17 @@ export class RolesService {
     const role = await this.findRoleOrThrow(id);
     await this.requireProjectOwner(role.project_id, userId, orgId, 'update');
 
+    // Only descriptive fields: filters and results stay as they are.
     const data: Record<string, unknown> = {};
     if (dto.name !== undefined) data.name = dto.name;
-    if (dto.description !== undefined) data.description = dto.description;
+    for (const key of [
+      'description',
+      'location',
+      'seniority',
+      'hiring_manager',
+    ] as const) {
+      if (dto[key] !== undefined) data[key] = dto[key] || null;
+    }
 
     return this.prisma.roles.update({ where: { uid: id }, data });
   }
@@ -265,10 +284,72 @@ export class RolesService {
     return role;
   }
 
-  // Callers check access to the role first.
-  async listResults(roleId: string) {
+  // Search history: one role's runs, or every run in projects the caller
+  // can see across the org. Not-suitable results don't count.
+  async searchHistory(
+    orgId: string,
+    userId: string,
+    roleId?: string,
+  ): Promise<(SearchRun & { filters: RoleFilterResponseDto })[]> {
+    const sets = await this.prisma.role_filters.findMany({
+      where: {
+        search_run_date: { not: null },
+        ...(roleId ? { role_id: roleId } : {}),
+        role: {
+          project: {
+            organization_id: orgId,
+            ...this.projectsService.visibleToUser(userId),
+          },
+        },
+      },
+      orderBy: { search_run_date: 'desc' },
+      take: 200,
+      select: {
+        uid: true,
+        role_id: true,
+        archived: true,
+        search_run_date: true,
+        search_run_by: true,
+        search_run_by_id: true,
+        metadata: true,
+        role: {
+          select: {
+            name: true,
+            project_id: true,
+            project: { select: { name: true } },
+          },
+        },
+        created: true,
+        updated: true,
+        role_filter_items: { include: { children: true } },
+      },
+    });
+    const results = await this.prisma.role_result.findMany({
+      where: {
+        filter_id: { in: sets.map((s) => s.uid) },
+        OR: [{ not_suitable: false }, { not_suitable: null }],
+      },
+      select: { filter_id: true, candidate_uid: true, score: true },
+    });
+    // Each run carries its filter snapshot, shaped like the role's own
+    // filters, so the app can show it, compare it and restore it.
+    const byId = new Map(sets.map((s) => [s.uid, s]));
+    return toSearchRuns(sets, results).map((run) => ({
+      ...run,
+      filters: plainToInstance(RoleFilterResponseDto, byId.get(run.id), {
+        excludeExtraneousValues: true,
+      }),
+    }));
+  }
+
+  // Callers check access to the role first. `runId` (a filter set from
+  // search history) lists that run's results instead of the current one's.
+  async listResults(roleId: string, runId?: string) {
     return this.prisma.role_result.findMany({
-      where: { role_id: roleId, role_filter: { archived: false } },
+      where: {
+        role_id: roleId,
+        role_filter: runId ? { uid: runId } : { archived: false },
+      },
       include: { candidate: { include: { sources: true } } },
       orderBy: [{ score: { sort: 'desc', nulls: 'last' } }, { created: 'asc' }],
     });
@@ -389,5 +470,54 @@ export class RolesService {
       },
     });
     return response;
+  }
+
+  // The result card's "Not suitable" (and its undo). Scoped to the role and
+  // the caller's org like the reads; the date says when it was last marked.
+  // Marking also takes them off the shortlist (logged like an unshortlist);
+  // restoring doesn't put them back on it.
+  async markNotSuitable(
+    resultId: string,
+    roleId: string,
+    notSuitable: boolean,
+    orgId: string,
+  ): Promise<role_result> {
+    const existing = await this.prisma.role_result.findFirst({
+      where: {
+        uid: resultId,
+        role_id: roleId,
+        role: { project: { organization_id: orgId } },
+      },
+      select: { uid: true, shortlist: true },
+    });
+    if (!existing) {
+      throw new RequestException(
+        'Role result not found',
+        HttpStatus.NOT_FOUND,
+        'ROLE_RESULT_NOT_FOUND',
+      );
+    }
+
+    const updated = await this.prisma.role_result.update({
+      where: { uid: resultId },
+      data: notSuitable
+        ? {
+            not_suitable: true,
+            not_suitable_date: new Date(),
+            shortlist: false,
+          }
+        : { not_suitable: false, not_suitable_date: null },
+    });
+    if (notSuitable && existing.shortlist) {
+      await this.prisma.organization_log.create({
+        data: {
+          type: 'CANDIDATE_UNSHORTLISTED',
+          message: `Candidate unshortlisted (marked not suitable) for role result ${resultId}`,
+          role_result_id: resultId,
+          organization_id: orgId,
+        },
+      });
+    }
+    return updated;
   }
 }

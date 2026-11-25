@@ -10,11 +10,13 @@ const PROJECT_WITH_ROLES_INCLUDE = {
     include: {
       _count: {
         select: {
+          // Results marked not suitable don't count as scored.
           role_result: {
             where: {
               role_filter: {
                 archived: false,
               },
+              OR: [{ not_suitable: false }, { not_suitable: null }],
             },
           },
         },

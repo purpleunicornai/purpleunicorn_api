@@ -2138,7 +2138,10 @@ export const RolesScalarFieldEnum = {
   name: 'name',
   description: 'description',
   summary: 'summary',
-  created_by: 'created_by'
+  created_by: 'created_by',
+  location: 'location',
+  seniority: 'seniority',
+  hiring_manager: 'hiring_manager'
 } as const
 
 export type RolesScalarFieldEnum = (typeof RolesScalarFieldEnum)[keyof typeof RolesScalarFieldEnum]

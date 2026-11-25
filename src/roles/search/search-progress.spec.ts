@@ -11,6 +11,7 @@ const progress: SearchProgress = {
   version: 1,
   pagesLoaded: 3,
   nextPageToken: 's1.abc',
+  broadFrom: null,
   estimatedTotal: 1240,
   status: 'paused',
   error: null,
@@ -47,6 +48,7 @@ describe('search progress', () => {
       version: 1,
       pagesLoaded: 0,
       nextPageToken: null,
+      broadFrom: null,
       estimatedTotal: null,
       status: 'running',
       error: null,
@@ -93,6 +95,13 @@ describe('search progress', () => {
     expect(hasMore({ nextPageToken: null })).toBe(false);
     // Nothing loaded yet still has pages to load.
     expect(hasMore({ pagesLoaded: 0, nextPageToken: null })).toBe(true);
+    // Look deeper's broader query has pages until its own first page says not.
+    expect(hasMore({ pagesLoaded: 5, broadFrom: 5, nextPageToken: null })).toBe(
+      true,
+    );
+    expect(hasMore({ pagesLoaded: 6, broadFrom: 5, nextPageToken: null })).toBe(
+      false,
+    );
     expect(publicFilterMetadata({ searchProgress: 'junk' })).toEqual({});
   });
 });

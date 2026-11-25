@@ -40,13 +40,24 @@ export class RoleSearchController {
     return this.jobs.status(roleId);
   }
 
+  // The role's search history, newest first.
+  @Get('history')
+  async history(
+    @Param('roleId') roleId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    return this.rolesService.searchHistory(orgId, auth.userId, roleId);
+  }
+
   @Post('start')
   start(
     @Param('roleId') roleId: string,
     @Body() body: StartRoleSearchDto,
     @CurrentAuth() auth: ClerkAuthContext,
   ): Promise<RoleSearchState> {
-    return this.run(roleId, auth, body.restart === true);
+    return this.run(roleId, auth, { restart: body.restart === true });
   }
 
   @Post('resume')
@@ -54,7 +65,17 @@ export class RoleSearchController {
     @Param('roleId') roleId: string,
     @CurrentAuth() auth: ClerkAuthContext,
   ): Promise<RoleSearchState> {
-    return this.run(roleId, auth, false);
+    return this.run(roleId, auth, {});
+  }
+
+  // Look deeper: once every page is loaded, search again with a broader
+  // query (titles, location, non-negotiables), skipping people already found.
+  @Post('deeper')
+  deeper(
+    @Param('roleId') roleId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ): Promise<RoleSearchState> {
+    return this.run(roleId, auth, { deeper: true });
   }
 
   @Post('pause')
@@ -78,7 +99,7 @@ export class RoleSearchController {
   private async run(
     roleId: string,
     auth: ClerkAuthContext,
-    restart: boolean,
+    mode: { restart?: boolean; deeper?: boolean },
   ): Promise<RoleSearchState> {
     const orgId = requireOrgId(auth);
     const [role, userName] = await Promise.all([
@@ -87,7 +108,7 @@ export class RoleSearchController {
     ]);
     return this.jobs.start(
       { orgId, roleId, userId: auth.userId, userName, roleName: role.name },
-      { restart },
+      mode,
     );
   }
 }

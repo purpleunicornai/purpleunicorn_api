@@ -148,6 +148,53 @@ export class JobSpecImportService {
     });
   }
 
+  // "Generate from brief": the latest imported brief or job spec, or failing
+  // that the role's current filters, written up as a description to review.
+  async describeRole(roleId: string): Promise<{ description: string }> {
+    const role = await this.prisma.roles.findUniqueOrThrow({
+      where: { uid: roleId },
+      select: {
+        name: true,
+        job_spec_import: {
+          where: { original_text: { not: null } },
+          orderBy: { created: 'desc' },
+          take: 1,
+          select: { original_text: true },
+        },
+        role_filters: {
+          where: { archived: false },
+          select: {
+            role_filter_items: {
+              select: { category: true, value: true, list_value: true },
+            },
+          },
+        },
+      },
+    });
+    const filterLines = role.role_filters
+      .flatMap((f) => f.role_filter_items)
+      .map(
+        (i) =>
+          `${i.category}: ${[i.value, ...i.list_value].filter(Boolean).join(', ')}`,
+      );
+    const brief =
+      role.job_spec_import[0]?.original_text?.trim() || filterLines.join('\n');
+    if (!brief) {
+      throw new RequestException(
+        'Add a brief or filters first, then generate a description from them',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'ROLE_BRIEF_MISSING',
+      );
+    }
+
+    const ai = await this.reasoningService.forRole(roleId);
+    const { description } = await ai.provider.describeRole(
+      { roleName: role.name, brief },
+      { model: ai.model },
+    );
+    return { description };
+  }
+
   // Pasted text always wins over an uploaded file when both are somehow
   // present — simpler than rejecting the request outright, and pasted text
   // is the more direct, lossless signal of the two.

@@ -1,4 +1,4 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import type { ResultGeminiUsage } from '../../services/gemini/gemini-usage';
 import type { SearchScore } from '../search/research-rescore';
@@ -7,9 +7,11 @@ import {
   IsBoolean,
   IsDateString,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { CandidateDto } from '../../common/dto/candidate.dto';
@@ -38,9 +40,64 @@ export class CreateRoleDto {
   description?: string;
 }
 
-export class UpdateRoleDto extends PartialType(CreateRoleDto) {}
+const trim = ({ value }: { value: unknown }) =>
+  typeof value === 'string' ? value.trim() : value;
+
+// "Edit role details". Name and description never touch filters or results;
+// location, seniority and hiring manager are descriptive only. An empty
+// optional field clears it.
+export class UpdateRoleDto {
+  @ApiProperty({ description: 'Role name', required: false, maxLength: 80 })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  name?: string;
+
+  @ApiProperty({ required: false, maxLength: 500 })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @ApiProperty({ required: false, maxLength: 120 })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(120)
+  location?: string;
+
+  @ApiProperty({ required: false, maxLength: 120 })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(120)
+  seniority?: string;
+
+  @ApiProperty({ required: false, maxLength: 120 })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(120)
+  hiring_manager?: string;
+}
+
+export class RoleDescriptionDto {
+  @ApiProperty({ description: 'AI-written description, not saved yet' })
+  @Expose()
+  @IsString()
+  description: string;
+}
 
 export class RunSearchDto {}
+
+export class NotSuitableDto {
+  @ApiProperty({ description: 'True to mark the result not suitable' })
+  @IsBoolean()
+  notSuitable: boolean;
+}
 
 export class RoleProjectSummaryDto {
   @ApiProperty({ description: 'Project name' })
@@ -602,6 +659,24 @@ export class RoleDto {
   @IsOptional()
   @IsString()
   created_by?: string;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  seniority?: string;
+
+  @ApiProperty({ required: false })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  hiring_manager?: string;
 
   @ApiProperty({
     description:

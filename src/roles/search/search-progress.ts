@@ -21,6 +21,10 @@ export type SearchProgress = {
   // The opaque s1. token for the next page; null before page 1 and once
   // every page is loaded.
   nextPageToken: string | null;
+  // Set by Look deeper: pagesLoaded when the broader query (see
+  // broadenFilters) took over from the role's own, exhausted one. Null while
+  // the run is still on the role's own query.
+  broadFrom: number | null;
   estimatedTotal: number | null;
   status: SearchRunStatus;
   error: string | null;
@@ -34,14 +38,17 @@ export type SearchProgressPatch = Partial<
 // What the app sees: the resume token stays on the server.
 export type PublicSearchProgress = Omit<
   SearchProgress,
-  'version' | 'nextPageToken'
+  'version' | 'nextPageToken' | 'broadFrom'
 > & { hasMore: boolean };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// The current query has no pages left. A broader pass that hasn't loaded a
+// page yet isn't: it starts from its own first page.
 export const isExhausted = (progress: SearchProgress) =>
-  progress.pagesLoaded > 0 && progress.nextPageToken === null;
+  progress.pagesLoaded > (progress.broadFrom ?? 0) &&
+  progress.nextPageToken === null;
 
 export function parseSearchProgress(metadata: unknown): SearchProgress | null {
   const raw = isRecord(metadata) ? metadata[SEARCH_PROGRESS_KEY] : undefined;
@@ -53,6 +60,7 @@ export function parseSearchProgress(metadata: unknown): SearchProgress | null {
     version: 1,
     pagesLoaded,
     nextPageToken,
+    broadFrom: typeof raw.broadFrom === 'number' ? raw.broadFrom : null,
     estimatedTotal: typeof estimatedTotal === 'number' ? estimatedTotal : null,
     // Progress saved before runs had a status ended after a page.
     status: 'stopped',
@@ -76,6 +84,7 @@ export function mergeSearchProgress(
     version: 1,
     pagesLoaded: 0,
     nextPageToken: null,
+    broadFrom: null,
     estimatedTotal: null,
     status: 'running',
     error: null,

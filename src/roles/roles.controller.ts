@@ -1,3 +1,5 @@
+import { CandidateActionsService } from './candidate-actions.service';
+import { AddToRolesDto, SimilarSearchDto } from './dto/candidate-actions.dto';
 import {
   Body,
   Controller,
@@ -22,11 +24,13 @@ import { JobSpecImportService } from './job-spec-import.service';
 import { RoleFilterDto } from './dto/role_filter.dto';
 import {
   CreateRoleDto,
+  NotSuitableDto,
   RoleDto,
   RoleFilterResponseDto,
   RoleResultSummaryDto,
   RunSearchDto,
   UpdateRoleDto,
+  RoleDescriptionDto,
 } from './dto/role.dto';
 import {
   ImportJobSpecDto,
@@ -61,6 +65,7 @@ export class RolesController {
     private readonly clerkService: ClerkService,
     private readonly jobSpecImportService: JobSpecImportService,
     private readonly paidResearch: PaidResearchService,
+    private readonly candidateActions: CandidateActionsService,
   ) {}
 
   @Get()
@@ -237,16 +242,24 @@ export class RolesController {
     );
   }
 
-  // Every result for the role's active filter set, best match first.
+  // Every search run in the org the caller can see (All searches).
+  @Get('search/history')
+  searchHistory(@CurrentAuth() auth: ClerkAuthContext) {
+    return this.rolesService.searchHistory(requireOrgId(auth), auth.userId);
+  }
+
+  // Every result for the role's active filter set, best match first, or for
+  // one past run with `?run=<id>` from search history.
   @Get('/:roleId/results')
   @Serialize(RoleResultSummaryDto)
   async listResults(
     @Param('roleId') roleId: string,
     @CurrentAuth() auth: ClerkAuthContext,
+    @Query('run') run?: string,
   ) {
     const orgId = requireOrgId(auth);
     await this.rolesService.getRole(roleId, orgId, auth.userId);
-    return this.rolesService.listResults(roleId);
+    return this.rolesService.listResults(roleId, run || undefined);
   }
 
   // A plain read: never researches. Deep research spends Gemini credits, so
@@ -363,6 +376,88 @@ export class RolesController {
       orgId,
     );
     return result;
+  }
+
+  // Marks a result not suitable from its card, or undoes it.
+  @Post('/:roleId/result/:resultId/not-suitable')
+  @Serialize(RoleResultSummaryDto)
+  async markNotSuitable(
+    @Param('roleId') roleId: string,
+    @Param('resultId') resultId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+    @Body() body: NotSuitableDto,
+  ) {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    return this.rolesService.markNotSuitable(
+      resultId,
+      roleId,
+      body.notSuitable,
+      orgId,
+    );
+  }
+
+  // The profile's Roles card: each role this person is in, score and status.
+  @Get('/:roleId/result/:resultId/roles')
+  async candidateRoles(
+    @Param('roleId') roleId: string,
+    @Param('resultId') resultId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    return this.candidateActions.rolesFor(roleId, resultId, orgId, auth.userId);
+  }
+
+  // "Find more like this": the person's profile as editable trait rows.
+  @Get('/:roleId/result/:resultId/traits')
+  async candidateTraits(
+    @Param('roleId') roleId: string,
+    @Param('resultId') resultId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    await this.rolesService.getRole(roleId, requireOrgId(auth), auth.userId);
+    return this.candidateActions.traits(roleId, resultId);
+  }
+
+  @Post('/:roleId/candidates/add-to-roles')
+  async addToRoles(
+    @Param('roleId') roleId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+    @Body() body: AddToRolesDto,
+  ) {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    return this.candidateActions.addToRoles(roleId, body, orgId, auth.userId);
+  }
+
+  // Lookalike search over people already on file; spends no searches.
+  @Post('/:roleId/similar')
+  async findSimilar(
+    @Param('roleId') roleId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+    @Body() body: SimilarSearchDto,
+  ) {
+    await this.rolesService.getRole(roleId, requireOrgId(auth), auth.userId);
+    return this.searchService.findSimilar(
+      roleId,
+      body.seedCandidateUid,
+      body.traits,
+      body.limit,
+    );
+  }
+
+  // "Generate from brief" on Edit role details. Returns a draft; saving it is
+  // a normal PATCH.
+  @Post('/:roleId/description/generate')
+  @Serialize(RoleDescriptionDto)
+  async generateDescription(
+    @Param('roleId') roleId: string,
+    @CurrentAuth() auth: ClerkAuthContext,
+  ) {
+    const orgId = requireOrgId(auth);
+    await this.rolesService.getRole(roleId, orgId, auth.userId);
+    return this.jobSpecImportService.describeRole(roleId);
   }
 
   @Post('/:roleId/job-spec-import')

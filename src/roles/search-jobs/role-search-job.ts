@@ -103,6 +103,8 @@ export interface RoleSearchState {
   status: RoleSearchStatus;
   pagesLoaded: number;
   hasMore: boolean;
+  // The role's own query is exhausted and Look deeper can broaden it.
+  canLookDeeper: boolean;
   estimatedTotal: number | null;
   pagesPerRun: number;
   error: string | null;

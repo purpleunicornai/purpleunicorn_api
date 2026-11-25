@@ -53,18 +53,25 @@ export class RoleSearchJobsService {
     const filterSet = await this.searchService.findActiveFilterSet(roleId);
     if (!filterSet) return this.describe(null, null, null);
     const job = await this.liveJob(filterSet.uid);
+    const progress = parseSearchProgress(filterSet.metadata);
     return this.describe(
-      parseSearchProgress(filterSet.metadata),
+      progress,
       job?.job ?? null,
       job?.state ?? null,
+      !job && (await this.canLookDeeper(filterSet.uid, progress)),
     );
   }
 
   // Idempotent: a live job is left running (and un-paused, if a pause or
   // stop was pending), and BullMQ dedupes concurrent adds by job id.
+  // `deeper` (Look deeper) carries an exhausted run on with the broader
+  // query; it's a no-op when there is none. Searches never spend credits.
   async start(
     input: StartRoleSearchInput,
-    { restart }: { restart: boolean },
+    {
+      restart = false,
+      deeper = false,
+    }: { restart?: boolean; deeper?: boolean },
   ): Promise<RoleSearchState> {
     const filterSet = await this.searchService.findActiveFilterSet(
       input.roleId,
@@ -92,7 +99,17 @@ export class RoleSearchJobsService {
     }
 
     const progress = parseSearchProgress(filterSet.metadata);
-    if (!restart && progress && isExhausted(progress)) {
+    if (deeper && !restart) {
+      if (!progress || !(await this.canLookDeeper(filterSet.uid, progress))) {
+        return this.status(input.roleId);
+      }
+      await this.searchService.saveSearchProgress(filterSet.uid, {
+        broadFrom: progress.pagesLoaded,
+        nextPageToken: null,
+        status: 'running',
+        error: null,
+      });
+    } else if (!restart && progress && isExhausted(progress)) {
       return this.status(input.roleId);
     }
 
@@ -102,6 +119,7 @@ export class RoleSearchJobsService {
       await this.searchService.saveSearchProgress(filterSet.uid, {
         pagesLoaded: 0,
         nextPageToken: null,
+        broadFrom: null,
         estimatedTotal: null,
         status: 'running',
         error: null,
@@ -144,6 +162,18 @@ export class RoleSearchJobsService {
     return this.status(roleId);
   }
 
+  // Look deeper is offered once the role's own query has run out of pages,
+  // and only if its filters leave something to broaden.
+  private async canLookDeeper(
+    filterId: string,
+    progress: SearchProgress | null,
+  ): Promise<boolean> {
+    if (!progress || progress.broadFrom !== null || !isExhausted(progress)) {
+      return false;
+    }
+    return this.searchService.canBroaden(filterId);
+  }
+
   private async liveJob(
     filterId: string,
   ): Promise<{ job: RoleSearchJob; state: string } | null> {
@@ -157,11 +187,13 @@ export class RoleSearchJobsService {
     progress: SearchProgress | null,
     job: RoleSearchJob | null,
     state: string | null,
+    canLookDeeper = false,
   ): RoleSearchState {
     return {
       status: this.statusOf(progress, job, state),
       pagesLoaded: progress?.pagesLoaded ?? 0,
       hasMore: progress ? !isExhausted(progress) : true,
+      canLookDeeper,
       estimatedTotal: progress?.estimatedTotal ?? null,
       pagesPerRun: pagesPerRun(),
       error: job ? null : (progress?.error ?? null),

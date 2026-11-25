@@ -1,5 +1,7 @@
 import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
 import { parseRoleFilters, ParsedRoleFilters } from './role-filter-parser';
+import { parseTraits } from './lookalike';
+import { FilterItemDto } from '../dto/role_filter.dto';
 import { scoreBreakdownRows, scoreColumns } from './score-persistence';
 import {
   CriterionExpansions,
@@ -72,6 +74,7 @@ import { describeRole } from './describe-role';
 import { applyScores, ScoredCandidate } from './candidate-score';
 import { normalizeImageUrl } from './candidate-profile';
 import { parseSearchPageToken } from './search-page-token';
+import { broadenFilters } from './broaden-filters';
 import {
   isExhausted,
   mergeSearchProgress,
@@ -823,6 +826,10 @@ export class SearchService {
     }
 
     const page = (previous?.pagesLoaded ?? 0) + 1;
+    // After Look deeper, Vertex gets the broader query; scoring still uses
+    // the role's full filters.
+    const broad = previous?.broadFrom != null;
+    const queryFilters = broad ? (broadenFilters(filters) ?? filters) : filters;
     await emit({ stage: 'preparing', status: 'started', page });
     const ai = await this.reasoningService.forRole(roleId);
     const saved: role_result[] =
@@ -839,7 +846,7 @@ export class SearchService {
 
     await emit({ stage: 'searching', status: 'started', page });
     const vertexPage = await this.vertexSearchService.searchRolePage(
-      filters,
+      queryFilters,
       roleName,
       expansions,
       previous?.nextPageToken
@@ -848,10 +855,19 @@ export class SearchService {
     );
     const githubItems =
       page === 1 ? await this.githubSearchService.search(filters) : [];
+    // The broader query starts from the top again, so it meets people the
+    // role already has: skip them rather than pay to score them again.
+    const known = broad
+      ? await this.knownProfileLinks(roleId, vertexPage.items)
+      : new Set<string>();
+    // Stamped with the run's page: a broader pass counts its own from 1.
+    const vertexItems = vertexPage.items
+      .filter((item) => !known.has(item.link))
+      .map((item) => ({ ...item, page }));
     const sourceByLink = new Map<string, string>();
-    for (const item of vertexPage.items) sourceByLink.set(item.link, 'Vertex');
+    for (const item of vertexItems) sourceByLink.set(item.link, 'Vertex');
     for (const item of githubItems) sourceByLink.set(item.link, 'GitHub');
-    const items = [...vertexPage.items, ...githubItems];
+    const items = [...vertexItems, ...githubItems];
     const estimatedTotal =
       vertexPage.estimatedTotal ?? previous?.estimatedTotal ?? null;
     await emit({
@@ -860,7 +876,7 @@ export class SearchService {
       page,
       found: items.length,
       estimatedTotal,
-      skippedDuplicates: vertexPage.skippedDuplicates,
+      skippedDuplicates: vertexPage.skippedDuplicates + known.size,
     });
 
     await emit({
@@ -912,6 +928,106 @@ export class SearchService {
       saved: saved.length,
       tokensUsed: saved.reduce((sum, r) => sum + (r.tokens_used ?? 0), 0),
     };
+  }
+
+  // Whether Look deeper has a broader query to run for this filter set.
+  // "Add to another role" with scoring on: scores one candidate already on
+  // file against this role's active filters, the same way the existing-
+  // candidate pass does, and saves it as the role's result. Null when the
+  // AI returned no match for them.
+  async scoreCandidateForRole(
+    roleId: string,
+    candidateUid: string,
+  ): Promise<role_result | null> {
+    const filterSet = await this.getRoleFilters(roleId);
+    const filters = parseRoleFilters(filterSet.role_filter_items);
+    const candidate = await this.prisma.candidate.findUniqueOrThrow({
+      where: { uid: candidateUid },
+      include: { experience: true, education: true },
+    });
+    const ai = await this.reasoningService.forRole(roleId);
+    const { matches, tokensUsed, usage } =
+      await ai.provider.scoreKnownCandidates([candidate], filters, {
+        model: ai.model,
+      });
+    const match = matches.find((m) => m.candidate_uid === candidateUid);
+    if (!match) return null;
+    return this.upsertRoleResult(
+      roleId,
+      filterSet.uid,
+      candidateUid,
+      match,
+      tokensUsed,
+      this.candidateScoringService.scoreCandidate(filters, candidate),
+      'Database',
+      usage,
+      { filters, facts: scoringFactsOf(candidate) },
+      ai.model,
+    );
+  }
+
+  // "Find more like this": people already on file who share the seed's
+  // traits and aren't in this role yet, ranked by the deterministic score
+  // against those traits (the similarity, 0-100). No provider or AI calls,
+  // so it spends no searches.
+  async findSimilar(
+    roleId: string,
+    seedUid: string,
+    traits: FilterItemDto[],
+    limit: number,
+  ) {
+    const filters = parseTraits(traits);
+    const pool = await this.existingCandidateSearchService.findCandidates(
+      roleId,
+      filters,
+    );
+    return pool
+      .filter((candidate) => candidate.uid !== seedUid)
+      .map((candidate) => {
+        const { score, breakdown } =
+          this.candidateScoringService.scoreCandidate(filters, candidate);
+        const rows = breakdown.filter((row) => row.applicable);
+        // The card only needs the profile, not the full work history.
+        const profile: Partial<typeof candidate> = { ...candidate };
+        delete profile.experience;
+        delete profile.education;
+        return {
+          candidate: profile,
+          similarity: score,
+          shared: rows.filter((r) => r.earned > 0).map((r) => r.requirement),
+          differs: rows
+            .filter((r) => r.earned === 0 && r.priority === 'ESSENTIAL')
+            .map((r) => r.requirement),
+          traits: rows.length,
+        };
+      })
+      .filter((match) => match.similarity > 0)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+  }
+
+  async canBroaden(filterId: string): Promise<boolean> {
+    const items = await this.prisma.role_filter_item.findMany({
+      where: { role_filter_id: filterId },
+      include: { children: true },
+    });
+    return broadenFilters(parseRoleFilters(items)) !== null;
+  }
+
+  // Of these search hits, the profile links the role already has a result for.
+  private async knownProfileLinks(
+    roleId: string,
+    items: GoogleSearchItem[],
+  ): Promise<Set<string>> {
+    if (items.length === 0) return new Set();
+    const sources = await this.prisma.candidate_source.findMany({
+      where: {
+        url: { in: items.map((item) => item.link) },
+        candidate: { role_results: { some: { role_id: roleId } } },
+      },
+      select: { url: true },
+    });
+    return new Set(sources.flatMap((source) => source.url ?? []));
   }
 
   // The role's current filter set, if it has one, for reading its progress.
