@@ -4,7 +4,12 @@ import AiConfig from '../../config/ai.config';
 import type { ConfigType } from '@nestjs/config';
 import { candidate, candidate_source } from '../../generated/prisma/client';
 
-const LOOKUP_URL = 'https://api.rocketreach.co/api/v2/person/lookup';
+const API_URL = 'https://api.rocketreach.co/api/v2';
+// A lookup RocketReach hasn't finished yet is polled this many times, this
+// far apart, before giving up (a lookup that never completes isn't charged).
+const STATUS_POLLS = 4;
+const STATUS_POLL_INTERVAL_MS = 1_500;
+const PENDING_STATUSES = new Set(['waiting', 'searching', 'progress']);
 
 export interface RocketReachEmail {
   email: string;
@@ -41,7 +46,8 @@ export interface RocketReachEducationEntry {
 
 export interface RocketReachPerson {
   id: number;
-  status: 'complete' | 'progress' | 'searching' | 'not queued' | string;
+  // complete, waiting, searching, progress, failed or not queued.
+  status: string;
   name?: string;
   linkedin_url?: string;
   current_title?: string;
@@ -53,6 +59,8 @@ export interface RocketReachPerson {
   city?: string;
   region?: string;
   country?: string;
+  // ISO 3166-1 alpha-2, e.g. "GB".
+  country_code?: string;
   recommended_email?: string;
   emails?: RocketReachEmail[];
   phones?: RocketReachPhone[];
@@ -63,8 +71,74 @@ export interface RocketReachPerson {
 
 type CandidateWithSources = candidate & { sources: candidate_source[] };
 
+// Which identifier a lookup sent, and the request parameters themselves.
+export type RocketReachQuery = {
+  type: 'id' | 'linkedin_url' | 'email' | 'name_employer';
+  params: Record<string, string>;
+};
+
+export type RocketReachLookup =
+  | { outcome: 'found'; query: RocketReachQuery; person: RocketReachPerson }
+  | {
+      outcome: 'not_found' | 'pending_timeout';
+      query: RocketReachQuery;
+      profileId?: number;
+    }
+  | {
+      outcome: 'error';
+      query: RocketReachQuery;
+      httpStatus?: number;
+      // An error name or code, never a message that could echo a response.
+      error: string;
+    }
+  // Never sent: no API key, or nothing on file to look the person up by.
+  | { outcome: 'skipped'; reason: 'disabled' | 'no_identifier' };
+
+export const personOf = (
+  lookup: RocketReachLookup | undefined,
+): RocketReachPerson | undefined =>
+  lookup?.outcome === 'found' ? lookup.person : undefined;
+
+// The email and phone worth keeping from a profile: RocketReach's
+// recommended ones first.
+export function bestContactOf(person: RocketReachPerson): {
+  email?: string;
+  phone?: string;
+} {
+  return {
+    email:
+      person.recommended_email ??
+      person.emails?.find((entry) => entry.email)?.email,
+    phone:
+      person.phones?.find((entry) => entry.recommended)?.number ??
+      person.phones?.[0]?.number,
+  };
+}
+
+const queryTypeOf = (
+  params: Record<string, string>,
+): RocketReachQuery['type'] =>
+  params.id
+    ? 'id'
+    : params.linkedin_url
+      ? 'linkedin_url'
+      : params.email
+        ? 'email'
+        : 'name_employer';
+
+// A person-lookup source for deep research. RocketReachService is the only
+// one; specs stub this shape.
+export interface PersonLookup {
+  // False when no API key is configured: callers skip the lookup and never
+  // quote or charge for it.
+  readonly enabled: boolean;
+  // Whether there's enough on file to look this candidate up at all.
+  canLookUp(candidate: CandidateWithSources): boolean;
+  lookup(candidate: CandidateWithSources): Promise<RocketReachLookup>;
+}
+
 @Injectable()
-export class RocketReachService {
+export class RocketReachService implements PersonLookup {
   private readonly logger = new Logger(RocketReachService.name);
   public client: AxiosInstance;
 
@@ -78,30 +152,69 @@ export class RocketReachService {
     this.client = axios.create({ timeout: 20_000 });
   }
 
+  get enabled(): boolean {
+    return !!this.aiConf.rocketReachApiKey;
+  }
+
+  canLookUp(candidate: CandidateWithSources): boolean {
+    return !!this.buildLookupParams(candidate);
+  }
+
+  // Overridden in specs so polling doesn't wait in real time.
+  protected wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   // Looks a candidate up on RocketReach using the most precise identifier
   // already known about them, so a repeat lookup or a candidate with a
   // verified LinkedIn profile doesn't fall back to a fuzzy name match.
-  // Never throws — a missing identifier, "not queued" (no match), or any
-  // request failure (auth, rate limit, network) all resolve to undefined.
-  async lookupCandidate(
-    candidate: CandidateWithSources,
-  ): Promise<RocketReachPerson | undefined> {
+  // Never throws: every way it can end is an outcome. A lookup still
+  // processing is polled a few times before it's reported as timed out.
+  async lookup(candidate: CandidateWithSources): Promise<RocketReachLookup> {
+    if (!this.enabled) return { outcome: 'skipped', reason: 'disabled' };
     const params = this.buildLookupParams(candidate);
-    if (!params) return undefined;
+    if (!params) return { outcome: 'skipped', reason: 'no_identifier' };
+    const query = { type: queryTypeOf(params), params };
 
+    const headers = { 'Api-Key': this.aiConf.rocketReachApiKey };
     try {
-      console.log('RocketReach lookup params:', params);
-      const response = await this.client.get<RocketReachPerson>(LOOKUP_URL, {
-        params,
-        headers: { 'Api-Key': this.aiConf.rocketReachApiKey },
-      });
-      if (response.data.status === 'not queued') return undefined;
-      return response.data;
-    } catch (error) {
-      this.logger.debug(
-        `RocketReach lookup failed: ${error instanceof Error ? error.message : String(error)}`,
+      let { data: person } = await this.client.get<RocketReachPerson>(
+        `${API_URL}/person/lookup`,
+        { params, headers },
       );
-      return undefined;
+      for (
+        let poll = 0;
+        poll < STATUS_POLLS && PENDING_STATUSES.has(person.status);
+        poll++
+      ) {
+        await this.wait(STATUS_POLL_INTERVAL_MS);
+        const { data } = await this.client.get<RocketReachPerson[]>(
+          `${API_URL}/person/checkStatus`,
+          { params: { ids: String(person.id) }, headers },
+        );
+        person = data.find((entry) => entry.id === person.id) ?? person;
+      }
+      if (person.status === 'complete') {
+        return { outcome: 'found', query, person };
+      }
+      return {
+        outcome: PENDING_STATUSES.has(person.status)
+          ? 'pending_timeout'
+          : 'not_found',
+        query,
+        profileId: person.id,
+      };
+    } catch (error) {
+      const httpStatus = axios.isAxiosError(error)
+        ? error.response?.status
+        : undefined;
+      // RocketReach answers a lookup with no match as 404.
+      if (httpStatus === 404) return { outcome: 'not_found', query };
+      const code =
+        (axios.isAxiosError(error) && error.code) ||
+        (error instanceof Error ? error.name : 'unknown');
+      this.logger.warn(`RocketReach lookup failed (${httpStatus ?? code})`);
+      return { outcome: 'error', query, httpStatus, error: code };
     }
   }
 

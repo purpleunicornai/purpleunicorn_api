@@ -170,6 +170,69 @@ describe('ExistingCandidateSearchService', () => {
       );
     });
 
+    it('requires the country (code or name, any case) or relocation when location is essential', async () => {
+      await service.findCandidates(
+        'role-1',
+        buildFilters({
+          skills: [
+            { value: ['Figma'], priority: 'ESSENTIAL', nonNegotiable: false },
+          ],
+          location: {
+            value: {
+              countryCode: 'ZA',
+              regions: [],
+              remoteWork: false,
+              workAuthorizationRequired: false,
+            },
+            priority: 'ESSENTIAL',
+            nonNegotiable: false,
+          },
+        }),
+      );
+
+      const where = prisma.candidate.findMany.mock.calls[0][0].where;
+      expect(where.AND).toEqual([
+        {
+          OR: [
+            {
+              current_location_country_code: {
+                equals: 'ZA',
+                mode: 'insensitive',
+              },
+            },
+            {
+              current_location_country_code: {
+                equals: 'South Africa',
+                mode: 'insensitive',
+              },
+            },
+            { open_to_relocation: true },
+          ],
+        },
+      ]);
+    });
+
+    it('leaves an optional location as a ranking signal only', async () => {
+      await service.findCandidates(
+        'role-1',
+        buildFilters({
+          location: {
+            value: {
+              countryCode: 'ZA',
+              regions: [],
+              remoteWork: false,
+              workAuthorizationRequired: false,
+            },
+            priority: 'OPTIONAL',
+            nonNegotiable: false,
+          },
+        }),
+      );
+
+      const where = prisma.candidate.findMany.mock.calls[0][0].where;
+      expect(where.AND).toBeUndefined();
+    });
+
     it('excludes a company condition for an exclude-type companies row', async () => {
       await service.findCandidates(
         'role-1',

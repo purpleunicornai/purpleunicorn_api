@@ -41,6 +41,13 @@ export type Organization_creditsMinAggregateOutputType = {
   organization_id: string | null
   type: $Enums.OrganizationCreditsType | null
   amount: number | null
+  kind: $Enums.OrganizationCreditEntryKind | null
+  period: string | null
+  user_id: string | null
+  role_id: string | null
+  role_result_id: string | null
+  reason: string | null
+  idempotency_key: string | null
 }
 
 export type Organization_creditsMaxAggregateOutputType = {
@@ -50,6 +57,13 @@ export type Organization_creditsMaxAggregateOutputType = {
   organization_id: string | null
   type: $Enums.OrganizationCreditsType | null
   amount: number | null
+  kind: $Enums.OrganizationCreditEntryKind | null
+  period: string | null
+  user_id: string | null
+  role_id: string | null
+  role_result_id: string | null
+  reason: string | null
+  idempotency_key: string | null
 }
 
 export type Organization_creditsCountAggregateOutputType = {
@@ -59,6 +73,14 @@ export type Organization_creditsCountAggregateOutputType = {
   organization_id: number
   type: number
   amount: number
+  kind: number
+  period: number
+  user_id: number
+  role_id: number
+  role_result_id: number
+  reason: number
+  metadata: number
+  idempotency_key: number
   _all: number
 }
 
@@ -78,6 +100,13 @@ export type Organization_creditsMinAggregateInputType = {
   organization_id?: true
   type?: true
   amount?: true
+  kind?: true
+  period?: true
+  user_id?: true
+  role_id?: true
+  role_result_id?: true
+  reason?: true
+  idempotency_key?: true
 }
 
 export type Organization_creditsMaxAggregateInputType = {
@@ -87,6 +116,13 @@ export type Organization_creditsMaxAggregateInputType = {
   organization_id?: true
   type?: true
   amount?: true
+  kind?: true
+  period?: true
+  user_id?: true
+  role_id?: true
+  role_result_id?: true
+  reason?: true
+  idempotency_key?: true
 }
 
 export type Organization_creditsCountAggregateInputType = {
@@ -96,6 +132,14 @@ export type Organization_creditsCountAggregateInputType = {
   organization_id?: true
   type?: true
   amount?: true
+  kind?: true
+  period?: true
+  user_id?: true
+  role_id?: true
+  role_result_id?: true
+  reason?: true
+  metadata?: true
+  idempotency_key?: true
   _all?: true
 }
 
@@ -192,6 +236,14 @@ export type Organization_creditsGroupByOutputType = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
+  kind: $Enums.OrganizationCreditEntryKind
+  period: string | null
+  user_id: string | null
+  role_id: string | null
+  role_result_id: string | null
+  reason: string | null
+  metadata: runtime.JsonValue | null
+  idempotency_key: string | null
   _count: Organization_creditsCountAggregateOutputType | null
   _avg: Organization_creditsAvgAggregateOutputType | null
   _sum: Organization_creditsSumAggregateOutputType | null
@@ -224,6 +276,14 @@ export type organization_creditsWhereInput = {
   organization_id?: Prisma.StringFilter<"organization_credits"> | string
   type?: Prisma.EnumOrganizationCreditsTypeFilter<"organization_credits"> | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFilter<"organization_credits"> | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFilter<"organization_credits"> | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.StringNullableFilter<"organization_credits"> | string | null
+  user_id?: Prisma.StringNullableFilter<"organization_credits"> | string | null
+  role_id?: Prisma.UuidNullableFilter<"organization_credits"> | string | null
+  role_result_id?: Prisma.UuidNullableFilter<"organization_credits"> | string | null
+  reason?: Prisma.StringNullableFilter<"organization_credits"> | string | null
+  metadata?: Prisma.JsonNullableFilter<"organization_credits">
+  idempotency_key?: Prisma.StringNullableFilter<"organization_credits"> | string | null
   logs?: Prisma.Organization_logListRelationFilter
 }
 
@@ -234,11 +294,20 @@ export type organization_creditsOrderByWithRelationInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  period?: Prisma.SortOrderInput | Prisma.SortOrder
+  user_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  role_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  role_result_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  reason?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  idempotency_key?: Prisma.SortOrderInput | Prisma.SortOrder
   logs?: Prisma.organization_logOrderByRelationAggregateInput
 }
 
 export type organization_creditsWhereUniqueInput = Prisma.AtLeast<{
   uid?: string
+  idempotency_key?: string
   AND?: Prisma.organization_creditsWhereInput | Prisma.organization_creditsWhereInput[]
   OR?: Prisma.organization_creditsWhereInput[]
   NOT?: Prisma.organization_creditsWhereInput | Prisma.organization_creditsWhereInput[]
@@ -247,8 +316,15 @@ export type organization_creditsWhereUniqueInput = Prisma.AtLeast<{
   organization_id?: Prisma.StringFilter<"organization_credits"> | string
   type?: Prisma.EnumOrganizationCreditsTypeFilter<"organization_credits"> | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFilter<"organization_credits"> | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFilter<"organization_credits"> | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.StringNullableFilter<"organization_credits"> | string | null
+  user_id?: Prisma.StringNullableFilter<"organization_credits"> | string | null
+  role_id?: Prisma.UuidNullableFilter<"organization_credits"> | string | null
+  role_result_id?: Prisma.UuidNullableFilter<"organization_credits"> | string | null
+  reason?: Prisma.StringNullableFilter<"organization_credits"> | string | null
+  metadata?: Prisma.JsonNullableFilter<"organization_credits">
   logs?: Prisma.Organization_logListRelationFilter
-}, "uid" | "uid">
+}, "uid" | "uid" | "idempotency_key">
 
 export type organization_creditsOrderByWithAggregationInput = {
   uid?: Prisma.SortOrder
@@ -257,6 +333,14 @@ export type organization_creditsOrderByWithAggregationInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  period?: Prisma.SortOrderInput | Prisma.SortOrder
+  user_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  role_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  role_result_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  reason?: Prisma.SortOrderInput | Prisma.SortOrder
+  metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  idempotency_key?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.organization_creditsCountOrderByAggregateInput
   _avg?: Prisma.organization_creditsAvgOrderByAggregateInput
   _max?: Prisma.organization_creditsMaxOrderByAggregateInput
@@ -274,6 +358,14 @@ export type organization_creditsScalarWhereWithAggregatesInput = {
   organization_id?: Prisma.StringWithAggregatesFilter<"organization_credits"> | string
   type?: Prisma.EnumOrganizationCreditsTypeWithAggregatesFilter<"organization_credits"> | $Enums.OrganizationCreditsType
   amount?: Prisma.IntWithAggregatesFilter<"organization_credits"> | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindWithAggregatesFilter<"organization_credits"> | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.StringNullableWithAggregatesFilter<"organization_credits"> | string | null
+  user_id?: Prisma.StringNullableWithAggregatesFilter<"organization_credits"> | string | null
+  role_id?: Prisma.UuidNullableWithAggregatesFilter<"organization_credits"> | string | null
+  role_result_id?: Prisma.UuidNullableWithAggregatesFilter<"organization_credits"> | string | null
+  reason?: Prisma.StringNullableWithAggregatesFilter<"organization_credits"> | string | null
+  metadata?: Prisma.JsonNullableWithAggregatesFilter<"organization_credits">
+  idempotency_key?: Prisma.StringNullableWithAggregatesFilter<"organization_credits"> | string | null
 }
 
 export type organization_creditsCreateInput = {
@@ -283,6 +375,14 @@ export type organization_creditsCreateInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
+  kind?: $Enums.OrganizationCreditEntryKind
+  period?: string | null
+  user_id?: string | null
+  role_id?: string | null
+  role_result_id?: string | null
+  reason?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: string | null
   logs?: Prisma.organization_logCreateNestedManyWithoutCreditsInput
 }
 
@@ -293,6 +393,14 @@ export type organization_creditsUncheckedCreateInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
+  kind?: $Enums.OrganizationCreditEntryKind
+  period?: string | null
+  user_id?: string | null
+  role_id?: string | null
+  role_result_id?: string | null
+  reason?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: string | null
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutCreditsInput
 }
 
@@ -303,6 +411,14 @@ export type organization_creditsUpdateInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFieldUpdateOperationsInput | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logs?: Prisma.organization_logUpdateManyWithoutCreditsNestedInput
 }
 
@@ -313,6 +429,14 @@ export type organization_creditsUncheckedUpdateInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFieldUpdateOperationsInput | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutCreditsNestedInput
 }
 
@@ -323,6 +447,14 @@ export type organization_creditsCreateManyInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
+  kind?: $Enums.OrganizationCreditEntryKind
+  period?: string | null
+  user_id?: string | null
+  role_id?: string | null
+  role_result_id?: string | null
+  reason?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: string | null
 }
 
 export type organization_creditsUpdateManyMutationInput = {
@@ -332,6 +464,14 @@ export type organization_creditsUpdateManyMutationInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFieldUpdateOperationsInput | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_creditsUncheckedUpdateManyInput = {
@@ -341,6 +481,14 @@ export type organization_creditsUncheckedUpdateManyInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFieldUpdateOperationsInput | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_creditsCountOrderByAggregateInput = {
@@ -350,6 +498,14 @@ export type organization_creditsCountOrderByAggregateInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  period?: Prisma.SortOrder
+  user_id?: Prisma.SortOrder
+  role_id?: Prisma.SortOrder
+  role_result_id?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  metadata?: Prisma.SortOrder
+  idempotency_key?: Prisma.SortOrder
 }
 
 export type organization_creditsAvgOrderByAggregateInput = {
@@ -363,6 +519,13 @@ export type organization_creditsMaxOrderByAggregateInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  period?: Prisma.SortOrder
+  user_id?: Prisma.SortOrder
+  role_id?: Prisma.SortOrder
+  role_result_id?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  idempotency_key?: Prisma.SortOrder
 }
 
 export type organization_creditsMinOrderByAggregateInput = {
@@ -372,6 +535,13 @@ export type organization_creditsMinOrderByAggregateInput = {
   organization_id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   amount?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  period?: Prisma.SortOrder
+  user_id?: Prisma.SortOrder
+  role_id?: Prisma.SortOrder
+  role_result_id?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  idempotency_key?: Prisma.SortOrder
 }
 
 export type organization_creditsSumOrderByAggregateInput = {
@@ -393,6 +563,10 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type EnumOrganizationCreditEntryKindFieldUpdateOperationsInput = {
+  set?: $Enums.OrganizationCreditEntryKind
 }
 
 export type organization_creditsCreateNestedOneWithoutLogsInput = {
@@ -418,6 +592,14 @@ export type organization_creditsCreateWithoutLogsInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
+  kind?: $Enums.OrganizationCreditEntryKind
+  period?: string | null
+  user_id?: string | null
+  role_id?: string | null
+  role_result_id?: string | null
+  reason?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: string | null
 }
 
 export type organization_creditsUncheckedCreateWithoutLogsInput = {
@@ -427,6 +609,14 @@ export type organization_creditsUncheckedCreateWithoutLogsInput = {
   organization_id: string
   type: $Enums.OrganizationCreditsType
   amount: number
+  kind?: $Enums.OrganizationCreditEntryKind
+  period?: string | null
+  user_id?: string | null
+  role_id?: string | null
+  role_result_id?: string | null
+  reason?: string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: string | null
 }
 
 export type organization_creditsCreateOrConnectWithoutLogsInput = {
@@ -452,6 +642,14 @@ export type organization_creditsUpdateWithoutLogsInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFieldUpdateOperationsInput | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type organization_creditsUncheckedUpdateWithoutLogsInput = {
@@ -461,6 +659,14 @@ export type organization_creditsUncheckedUpdateWithoutLogsInput = {
   organization_id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumOrganizationCreditsTypeFieldUpdateOperationsInput | $Enums.OrganizationCreditsType
   amount?: Prisma.IntFieldUpdateOperationsInput | number
+  kind?: Prisma.EnumOrganizationCreditEntryKindFieldUpdateOperationsInput | $Enums.OrganizationCreditEntryKind
+  period?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role_result_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  idempotency_key?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -501,6 +707,14 @@ export type organization_creditsSelect<ExtArgs extends runtime.Types.Extensions.
   organization_id?: boolean
   type?: boolean
   amount?: boolean
+  kind?: boolean
+  period?: boolean
+  user_id?: boolean
+  role_id?: boolean
+  role_result_id?: boolean
+  reason?: boolean
+  metadata?: boolean
+  idempotency_key?: boolean
   logs?: boolean | Prisma.organization_credits$logsArgs<ExtArgs>
   _count?: boolean | Prisma.Organization_creditsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["organization_credits"]>
@@ -512,6 +726,14 @@ export type organization_creditsSelectCreateManyAndReturn<ExtArgs extends runtim
   organization_id?: boolean
   type?: boolean
   amount?: boolean
+  kind?: boolean
+  period?: boolean
+  user_id?: boolean
+  role_id?: boolean
+  role_result_id?: boolean
+  reason?: boolean
+  metadata?: boolean
+  idempotency_key?: boolean
 }, ExtArgs["result"]["organization_credits"]>
 
 export type organization_creditsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -521,6 +743,14 @@ export type organization_creditsSelectUpdateManyAndReturn<ExtArgs extends runtim
   organization_id?: boolean
   type?: boolean
   amount?: boolean
+  kind?: boolean
+  period?: boolean
+  user_id?: boolean
+  role_id?: boolean
+  role_result_id?: boolean
+  reason?: boolean
+  metadata?: boolean
+  idempotency_key?: boolean
 }, ExtArgs["result"]["organization_credits"]>
 
 export type organization_creditsSelectScalar = {
@@ -530,9 +760,17 @@ export type organization_creditsSelectScalar = {
   organization_id?: boolean
   type?: boolean
   amount?: boolean
+  kind?: boolean
+  period?: boolean
+  user_id?: boolean
+  role_id?: boolean
+  role_result_id?: boolean
+  reason?: boolean
+  metadata?: boolean
+  idempotency_key?: boolean
 }
 
-export type organization_creditsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "organization_id" | "type" | "amount", ExtArgs["result"]["organization_credits"]>
+export type organization_creditsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "organization_id" | "type" | "amount" | "kind" | "period" | "user_id" | "role_id" | "role_result_id" | "reason" | "metadata" | "idempotency_key", ExtArgs["result"]["organization_credits"]>
 export type organization_creditsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   logs?: boolean | Prisma.organization_credits$logsArgs<ExtArgs>
   _count?: boolean | Prisma.Organization_creditsCountOutputTypeDefaultArgs<ExtArgs>
@@ -552,6 +790,14 @@ export type $organization_creditsPayload<ExtArgs extends runtime.Types.Extension
     organization_id: string
     type: $Enums.OrganizationCreditsType
     amount: number
+    kind: $Enums.OrganizationCreditEntryKind
+    period: string | null
+    user_id: string | null
+    role_id: string | null
+    role_result_id: string | null
+    reason: string | null
+    metadata: runtime.JsonValue | null
+    idempotency_key: string | null
   }, ExtArgs["result"]["organization_credits"]>
   composites: {}
 }
@@ -982,6 +1228,14 @@ export interface organization_creditsFieldRefs {
   readonly organization_id: Prisma.FieldRef<"organization_credits", 'String'>
   readonly type: Prisma.FieldRef<"organization_credits", 'OrganizationCreditsType'>
   readonly amount: Prisma.FieldRef<"organization_credits", 'Int'>
+  readonly kind: Prisma.FieldRef<"organization_credits", 'OrganizationCreditEntryKind'>
+  readonly period: Prisma.FieldRef<"organization_credits", 'String'>
+  readonly user_id: Prisma.FieldRef<"organization_credits", 'String'>
+  readonly role_id: Prisma.FieldRef<"organization_credits", 'String'>
+  readonly role_result_id: Prisma.FieldRef<"organization_credits", 'String'>
+  readonly reason: Prisma.FieldRef<"organization_credits", 'String'>
+  readonly metadata: Prisma.FieldRef<"organization_credits", 'Json'>
+  readonly idempotency_key: Prisma.FieldRef<"organization_credits", 'String'>
 }
     
 

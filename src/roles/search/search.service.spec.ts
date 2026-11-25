@@ -1,14 +1,24 @@
 import { MessageEvent } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { SearchService } from './search.service';
-import { GoogleSearchService } from '../../services/google-search/google-search.service';
+import { SearchPageStageEvent, SearchService } from './search.service';
+import { VertexSearchService } from '../../services/vertex/vertex-search.service';
 import { GeminiService } from '../../services/gemini/gemini.service';
-import { PageFetchService } from '../../services/page-fetch/page-fetch.service';
-import { CandidateScoringService } from './candidate-scoring.service';
+import {
+  CandidateScoringService,
+  scoringFactsOf,
+} from './candidate-scoring.service';
+import { parseRoleFilters } from './role-filter-parser';
 import { ExistingCandidateSearchService } from './existing-candidate-search.service';
 import { GithubSearchService } from '../../services/github/github-search.service';
 import { PrismaService } from '../../common/database/prisma.service';
 import { RequestException } from '../../common/exception/core/ExceptionBase';
+import type { GeminiUsage } from '../../services/gemini/gemini-usage';
+import {
+  encodeSearchPageToken,
+  parseSearchPageToken,
+} from './search-page-token';
+import { reasoningServiceFor } from '../../services/reasoning/reasoning.testing';
+import { DEFAULT_REASONING_MODEL } from '../../services/reasoning/reasoning-model';
 
 async function captureError(
   promise: Promise<unknown>,
@@ -44,6 +54,9 @@ function buildRole(overrides: Record<string, unknown> = {}) {
     description: null,
     summary: null,
     created_by: 'user-1',
+    location: null,
+    seniority: null,
+    hiring_manager: null,
     ...overrides,
   };
 }
@@ -79,11 +92,16 @@ function buildStoredFilterSet(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildGoogleSearchService(): jest.Mocked<GoogleSearchService> {
+function buildVertexSearchService(): jest.Mocked<VertexSearchService> {
   return {
     search: jest.fn().mockResolvedValue([]),
-    searchCandidate: jest.fn().mockResolvedValue([]),
-  } as unknown as jest.Mocked<GoogleSearchService>;
+    searchRolePage: jest.fn().mockResolvedValue({
+      items: [],
+      page: 1,
+      skippedDuplicates: 0,
+      filteredOutByLocation: 0,
+    }),
+  } as unknown as jest.Mocked<VertexSearchService>;
 }
 
 function buildGeminiService(): jest.Mocked<GeminiService> {
@@ -97,18 +115,27 @@ function buildGeminiService(): jest.Mocked<GeminiService> {
     enrichCandidate: jest
       .fn()
       .mockResolvedValue({ enrichment: {}, tokensUsed: 0 }),
+    scoreCandidates: jest.fn().mockResolvedValue({ scores: [], tokensUsed: 0 }),
+    researchCandidate: jest.fn(),
+    expandSearchTerms: jest.fn(),
   } as unknown as jest.Mocked<GeminiService>;
 }
 
-function buildPageFetchService(): jest.Mocked<PageFetchService> {
-  return {
-    fetchPageText: jest.fn().mockResolvedValue(undefined),
-  } as unknown as jest.Mocked<PageFetchService>;
-}
-
 function buildCandidateScoringService(): jest.Mocked<CandidateScoringService> {
+  const real = new CandidateScoringService();
   return {
-    scoreCandidate: jest.fn().mockReturnValue({ score: 0, breakdown: [] }),
+    scoreCandidate: jest.fn().mockReturnValue({
+      score: 0,
+      rawScore: 0,
+      disqualified: false,
+      missedNonNegotiables: [],
+      breakdown: [],
+    }),
+    // The real fixed algorithm, so research re-scores are exercised for real.
+    scoreFacts: jest.fn(
+      (...args: Parameters<CandidateScoringService['scoreFacts']>) =>
+        real.scoreFacts(...args),
+    ),
   } as unknown as jest.Mocked<CandidateScoringService>;
 }
 
@@ -128,6 +155,7 @@ function buildPrisma() {
   return {
     role_filters: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
     },
@@ -145,6 +173,7 @@ function buildPrisma() {
     },
     candidate_source: {
       createMany: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     role_result: {
       findFirst: jest.fn().mockResolvedValue(null),
@@ -152,6 +181,7 @@ function buildPrisma() {
       update: jest.fn(),
     },
     role_result_score_breakdown: {
+      findMany: jest.fn().mockResolvedValue([]),
       deleteMany: jest.fn(),
       createMany: jest.fn(),
     },
@@ -202,9 +232,8 @@ function buildCandidateRecord(overrides: Record<string, unknown> = {}) {
 }
 
 describe('SearchService', () => {
-  let googleSearchService: jest.Mocked<GoogleSearchService>;
+  let vertexSearchService: jest.Mocked<VertexSearchService>;
   let geminiService: jest.Mocked<GeminiService>;
-  let pageFetchService: jest.Mocked<PageFetchService>;
   let candidateScoringService: jest.Mocked<CandidateScoringService>;
   let existingCandidateSearchService: jest.Mocked<ExistingCandidateSearchService>;
   let githubSearchService: jest.Mocked<GithubSearchService>;
@@ -212,17 +241,15 @@ describe('SearchService', () => {
   let service: SearchService;
 
   beforeEach(() => {
-    googleSearchService = buildGoogleSearchService();
+    vertexSearchService = buildVertexSearchService();
     geminiService = buildGeminiService();
-    pageFetchService = buildPageFetchService();
     candidateScoringService = buildCandidateScoringService();
     existingCandidateSearchService = buildExistingCandidateSearchService();
     githubSearchService = buildGithubSearchService();
     prisma = buildPrisma();
     service = new SearchService(
-      googleSearchService,
-      geminiService,
-      pageFetchService,
+      vertexSearchService,
+      reasoningServiceFor(geminiService),
       candidateScoringService,
       existingCandidateSearchService,
       githubSearchService,
@@ -376,6 +403,42 @@ describe('SearchService', () => {
       expect(result).toBe(updated);
     });
 
+    it("never replaces a stored photo with LinkedIn's placeholder", async () => {
+      const existing = {
+        uid: 'candidate-1',
+        first_name: 'Jane',
+        last_name: 'Doe',
+        skills: ['TypeScript'],
+        image_url: 'https://media.licdn.com/jane.jpg',
+      };
+      prisma.candidate.findFirst.mockResolvedValue(existing);
+
+      const result = await (service as any).upsertCandidate(
+        buildCandidateFields({
+          image_url:
+            'https://static.licdn.com/aero-v1/sc/h/1c5u578iilxfi4m4dvc4q810q',
+        }),
+      );
+
+      expect(prisma.candidate.update).not.toHaveBeenCalled();
+      expect(result).toBe(existing);
+    });
+
+    it("doesn't save LinkedIn's placeholder on a new candidate", async () => {
+      prisma.candidate.create.mockResolvedValue({ uid: 'candidate-2' });
+
+      await (service as any).upsertCandidate(
+        buildCandidateFields({
+          image_url:
+            'https://static.licdn.com/aero-v1/sc/h/1c5u578iilxfi4m4dvc4q810q',
+        }),
+      );
+
+      expect(
+        prisma.candidate.create.mock.calls[0][0].data.image_url,
+      ).toBeUndefined();
+    });
+
     it('returns the existing candidate without updating when nothing has changed', async () => {
       const existing = {
         uid: 'candidate-1',
@@ -503,16 +566,24 @@ describe('SearchService', () => {
     };
     const scoreResult = {
       score: 72,
+      rawScore: 72,
       disqualified: false,
+      missedNonNegotiables: [],
       breakdown: [
         {
           category: 'skills',
+          requirement: 'TypeScript',
+          priority: 'ESSENTIAL' as const,
+          nonNegotiable: false,
           weight: 60,
           earned: 60,
           applicable: true,
         },
         {
           category: 'location',
+          requirement: 'based in ZA',
+          priority: 'ESSENTIAL' as const,
+          nonNegotiable: false,
           weight: 20,
           earned: 10,
           applicable: true,
@@ -531,7 +602,7 @@ describe('SearchService', () => {
         match,
         123,
         scoreResult,
-        'Google',
+        'Vertex',
       );
 
       expect(prisma.role_result.findFirst).toHaveBeenCalledWith({
@@ -548,8 +619,10 @@ describe('SearchService', () => {
           ai_score: 85,
           score: 72,
           disqualified: false,
+          pre_disqualification_score: null,
+          disqualified_reasons: [],
           tokens_used: 123,
-          sources: ['Google'],
+          sources: ['Vertex'],
           ai_platform: 'Gemini',
           ai_model: 'gemini-2.5-flash',
         },
@@ -570,6 +643,11 @@ describe('SearchService', () => {
             weight: 60,
             applicable: true,
             score: 60,
+            metadata: {
+              requirement: 'TypeScript',
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
           },
           {
             role_result_id: 'result-1',
@@ -578,6 +656,11 @@ describe('SearchService', () => {
             weight: 20,
             applicable: true,
             score: 10,
+            metadata: {
+              requirement: 'based in ZA',
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
           },
         ],
       });
@@ -612,6 +695,8 @@ describe('SearchService', () => {
           ai_score: 85,
           score: 72,
           disqualified: false,
+          pre_disqualification_score: null,
+          disqualified_reasons: [],
           tokens_used: 123,
           sources: ['GitHub'],
           ai_platform: 'Gemini',
@@ -635,6 +720,11 @@ describe('SearchService', () => {
             weight: 60,
             applicable: true,
             score: 60,
+            metadata: {
+              requirement: 'TypeScript',
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
           },
           {
             role_result_id: 'result-1',
@@ -643,10 +733,92 @@ describe('SearchService', () => {
             weight: 20,
             applicable: true,
             score: 10,
+            metadata: {
+              requirement: 'based in ZA',
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
           },
         ],
       });
       expect(result).toBe(updated);
+    });
+
+    it("records this result's share of the scoring call's Gemini usage", async () => {
+      prisma.role_result.create.mockResolvedValue({ uid: 'result-1' });
+      const share = { inputTokens: 500, outputTokens: 80, totalTokens: 580 };
+
+      await (service as any).upsertRoleResult(
+        'role-1',
+        'filter-1',
+        'candidate-1',
+        match,
+        580,
+        scoreResult,
+        'Vertex',
+        share,
+      );
+
+      const { data } = prisma.role_result.create.mock.calls[0][0];
+      expect(data.metadata).toEqual({
+        geminiUsage: { scoring: { ...share, calls: 1 } },
+      });
+    });
+
+    it('adds a re-score to the recorded usage and keeps deep research findings and usage', async () => {
+      const research = {
+        inputTokens: 1000,
+        outputTokens: 200,
+        totalTokens: 1200,
+        calls: 1,
+      };
+      const findings = [
+        { fact: 'Speaks on IFRS 17', sourceUrl: 'https://x.dev' },
+      ];
+      prisma.role_result.findFirst.mockResolvedValue({
+        uid: 'result-1',
+        metadata: {
+          missing: ['Old note'],
+          findings,
+          identityConfidence: 'high',
+          geminiUsage: {
+            scoring: {
+              inputTokens: 500,
+              outputTokens: 80,
+              totalTokens: 580,
+              calls: 1,
+            },
+            research,
+          },
+        },
+      });
+      prisma.role_result.update.mockResolvedValue({ uid: 'result-1' });
+
+      await (service as any).upsertRoleResult(
+        'role-1',
+        'filter-1',
+        'candidate-1',
+        match,
+        600,
+        scoreResult,
+        'Vertex',
+        { inputTokens: 520, outputTokens: 80, totalTokens: 600 },
+      );
+
+      const { data } = prisma.role_result.update.mock.calls[0][0];
+      expect(data.metadata).toEqual({
+        findings,
+        identityConfidence: 'high',
+        geminiUsage: {
+          scoring: {
+            inputTokens: 1020,
+            outputTokens: 160,
+            totalTokens: 1180,
+            calls: 2,
+          },
+          research,
+        },
+      });
     });
 
     it('rounds a fractional breakdown weight so a full match never scores higher than its own weight (e.g. 80/3 essential rows)', async () => {
@@ -655,10 +827,15 @@ describe('SearchService', () => {
       const fractionalWeight = 80 / 3; // 26.666...
       const fullMatchScoreResult = {
         score: 27,
+        rawScore: 27,
         disqualified: false,
+        missedNonNegotiables: [],
         breakdown: [
           {
             category: 'job_titles',
+            requirement: 'Finance Manager',
+            priority: 'ESSENTIAL' as const,
+            nonNegotiable: false,
             weight: fractionalWeight,
             earned: fractionalWeight, // fraction === 1, a full match
             applicable: true,
@@ -673,7 +850,7 @@ describe('SearchService', () => {
         match,
         123,
         fullMatchScoreResult,
-        'Google',
+        'Vertex',
       );
 
       const breakdownData =
@@ -702,7 +879,7 @@ describe('SearchService', () => {
       const items = [
         { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
       ];
-      googleSearchService.search.mockResolvedValue(items);
+      vertexSearchService.search.mockResolvedValue(items);
 
       const match = {
         candidate: buildCandidateFields(),
@@ -714,16 +891,22 @@ describe('SearchService', () => {
       geminiService.formatCandidates.mockResolvedValue({
         matches: [match],
         tokensUsed: 100,
+        usage: null,
       });
 
       const candidate = { uid: 'candidate-1', skills: ['TypeScript'] };
       prisma.candidate.create.mockResolvedValue(candidate);
       const scoreResult = {
         score: 72,
+        rawScore: 72,
         disqualified: false,
+        missedNonNegotiables: [],
         breakdown: [
           {
             category: 'skills',
+            requirement: 'TypeScript',
+            priority: 'ESSENTIAL' as const,
+            nonNegotiable: false,
             weight: 80,
             earned: 57.6,
             applicable: true,
@@ -736,7 +919,7 @@ describe('SearchService', () => {
 
       const results = await service.search(
         'role-1',
-        role as any,
+        role,
         'user-1',
         'Jane Admin',
       );
@@ -745,7 +928,7 @@ describe('SearchService', () => {
         where: { role_id: 'role-1', archived: false },
         include: { role_filter_items: { include: { children: true } } },
       });
-      expect(googleSearchService.search).toHaveBeenCalledWith(
+      expect(vertexSearchService.search).toHaveBeenCalledWith(
         expect.objectContaining({
           skills: [
             {
@@ -756,14 +939,17 @@ describe('SearchService', () => {
           ],
         }),
         'Fullstack Developer',
+        null,
       );
       expect(geminiService.formatCandidates).toHaveBeenCalledWith(
         items,
         expect.anything(),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
       expect(candidateScoringService.scoreCandidate).toHaveBeenCalledWith(
         expect.anything(),
         candidate,
+        { qualifications: undefined },
       );
       expect(prisma.role_result.create).toHaveBeenCalledWith({
         data: {
@@ -776,10 +962,24 @@ describe('SearchService', () => {
           ai_score: 85,
           score: 72,
           disqualified: false,
+          pre_disqualification_score: null,
+          disqualified_reasons: [],
           tokens_used: 100,
-          sources: ['Google'],
+          sources: ['Vertex'],
           ai_platform: 'Gemini',
           ai_model: 'gemini-2.5-flash',
+          // The search snapshot a later deep research re-scores from.
+          metadata: {
+            searchEvidence: expect.objectContaining({
+              skills: ['TypeScript'],
+            }),
+            searchScore: {
+              score: 72,
+              rawScore: 72,
+              disqualified: false,
+              disqualifiedReasons: [],
+            },
+          },
         },
       });
       expect(
@@ -793,6 +993,11 @@ describe('SearchService', () => {
             weight: 80,
             applicable: true,
             score: 58,
+            metadata: {
+              requirement: 'TypeScript',
+              priority: 'ESSENTIAL',
+              nonNegotiable: false,
+            },
           },
         ],
       });
@@ -810,7 +1015,7 @@ describe('SearchService', () => {
     it('forces score to 0 and marks disqualified when the candidate fails a non-negotiable filter', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([
+      vertexSearchService.search.mockResolvedValue([
         { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
       ]);
       const match = {
@@ -823,32 +1028,130 @@ describe('SearchService', () => {
       geminiService.formatCandidates.mockResolvedValue({
         matches: [match],
         tokensUsed: 50,
+        usage: null,
       });
       prisma.candidate.create.mockResolvedValue({ uid: 'candidate-1' });
       candidateScoringService.scoreCandidate.mockReturnValue({
-        score: 65,
+        score: 0,
+        rawScore: 65,
         disqualified: true,
+        missedNonNegotiables: [
+          { category: 'education', requirement: 'CA(SA)' },
+        ],
         breakdown: [],
       });
       prisma.role_result.create.mockResolvedValue({ uid: 'result-1' });
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(prisma.role_result.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ score: 0, disqualified: true }),
+        data: expect.objectContaining({
+          score: 0,
+          disqualified: true,
+          pre_disqualification_score: 65,
+          disqualified_reasons: ['CA(SA)'],
+        }),
       });
+    });
+
+    it('does not save a new candidate known to be outside an essential country', async () => {
+      const role = buildRole();
+      prisma.role_filters.findFirst.mockResolvedValue(
+        buildStoredFilterSet({
+          role_filter_items: [
+            buildFilterItem(),
+            buildFilterItem({
+              uid: 'item-loc',
+              category: 'location',
+              value: 'ZA',
+              list_value: [],
+            }),
+          ],
+        }),
+      );
+      vertexSearchService.search.mockResolvedValue([
+        { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
+      ]);
+      geminiService.formatCandidates.mockResolvedValue({
+        matches: [
+          {
+            candidate: buildCandidateFields({
+              current_location_country_code: 'US',
+              open_to_relocation: false,
+            }),
+            summary: 'US based',
+            reasoning: 'Wrong country.',
+            skills_matched: [],
+            score: 70,
+          },
+        ],
+        tokensUsed: 50,
+        usage: null,
+      });
+
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
+
+      expect(prisma.candidate.create).not.toHaveBeenCalled();
+      expect(prisma.role_result.create).not.toHaveBeenCalled();
+    });
+
+    it('skips a batch Gemini fails on and still saves the other batches', async () => {
+      const role = buildRole();
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      vertexSearchService.search.mockResolvedValue(
+        Array.from({ length: 25 }, (_, i) => ({
+          title: `Candidate ${i}`,
+          link: `https://linkedin.com/in/c${i}`,
+        })),
+      );
+      geminiService.formatCandidates
+        .mockRejectedValueOnce(new Error('Gemini timeout'))
+        .mockResolvedValueOnce({
+          matches: [
+            {
+              candidate: buildCandidateFields(),
+              summary: 'Good',
+              reasoning: 'Fits.',
+              skills_matched: [],
+              score: 80,
+            },
+          ],
+          tokensUsed: 10,
+          usage: null,
+        });
+      prisma.candidate.create.mockResolvedValue({ uid: 'candidate-1' });
+      candidateScoringService.scoreCandidate.mockReturnValue({
+        score: 70,
+        rawScore: 70,
+        disqualified: false,
+        missedNonNegotiables: [],
+        breakdown: [],
+      });
+      prisma.role_result.create.mockResolvedValue({ uid: 'result-1' });
+
+      const results = await service.search(
+        'role-1',
+        role,
+        'user-1',
+        'Jane Admin',
+      );
+
+      expect(geminiService.formatCandidates).toHaveBeenCalledTimes(2);
+      expect(results).toEqual([{ uid: 'result-1' }]);
+      expect(prisma.role_filters.updateMany).toHaveBeenCalled();
     });
 
     it('stamps search_run_date on the filter set even when no candidates are found', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 0,
+        usage: null,
       });
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(prisma.role_filters.updateMany).toHaveBeenCalledWith({
         where: { role_id: 'role-1', archived: false },
@@ -864,12 +1167,12 @@ describe('SearchService', () => {
       prisma.role_filters.findFirst.mockResolvedValue(null);
 
       const error = await captureError(
-        service.search('role-1', buildRole() as any, 'user-1', 'Jane Admin'),
+        service.search('role-1', buildRole(), 'user-1', 'Jane Admin'),
       );
 
       expect(error).toBeInstanceOf(RequestException);
       expect(error.getStatus()).toBe(404);
-      expect(googleSearchService.search).not.toHaveBeenCalled();
+      expect(vertexSearchService.search).not.toHaveBeenCalled();
     });
 
     it('splits a large result set into batches and calls Gemini once per batch, saving each batch as it completes', async () => {
@@ -879,38 +1182,42 @@ describe('SearchService', () => {
         title: `Candidate ${i}`,
         link: `https://linkedin.com/in/candidate-${i}`,
       }));
-      googleSearchService.search.mockResolvedValue(items);
+      vertexSearchService.search.mockResolvedValue(items);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 0,
+        usage: null,
       });
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(geminiService.formatCandidates).toHaveBeenCalledTimes(3);
       expect(geminiService.formatCandidates).toHaveBeenNthCalledWith(
         1,
         items.slice(0, 20),
         expect.anything(),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
       expect(geminiService.formatCandidates).toHaveBeenNthCalledWith(
         2,
         items.slice(20, 40),
         expect.anything(),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
       expect(geminiService.formatCandidates).toHaveBeenNthCalledWith(
         3,
         items.slice(40, 45),
         expect.anything(),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
     });
 
     it('does not call Gemini at all when there are no search results, but still stamps search_run_date once', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(geminiService.formatCandidates).not.toHaveBeenCalled();
       expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
@@ -931,18 +1238,19 @@ describe('SearchService', () => {
         title: `Candidate ${i}`,
         link: `https://linkedin.com/in/candidate-${i}`,
       }));
-      googleSearchService.search.mockResolvedValue(items);
+      vertexSearchService.search.mockResolvedValue(items);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 0,
+        usage: null,
       });
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
     });
 
-    it('merges GitHub results in with the Google results before formatting candidates', async () => {
+    it('merges GitHub results in with the Vertex results before formatting candidates', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
       const googleItem = {
@@ -953,14 +1261,15 @@ describe('SearchService', () => {
         title: 'janedoe - GitHub',
         link: 'https://github.com/janedoe',
       };
-      googleSearchService.search.mockResolvedValue([googleItem]);
+      vertexSearchService.search.mockResolvedValue([googleItem]);
       githubSearchService.search.mockResolvedValue([githubItem]);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 0,
+        usage: null,
       });
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(githubSearchService.search).toHaveBeenCalledWith(
         expect.anything(),
@@ -968,13 +1277,14 @@ describe('SearchService', () => {
       expect(geminiService.formatCandidates).toHaveBeenCalledWith(
         [googleItem, githubItem],
         expect.anything(),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
     });
 
     it('records which engine found each candidate on the saved role_result', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([
+      vertexSearchService.search.mockResolvedValue([
         { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
       ]);
       githubSearchService.search.mockResolvedValue([
@@ -1002,6 +1312,7 @@ describe('SearchService', () => {
           },
         ],
         tokensUsed: 100,
+        usage: null,
       });
       prisma.candidate.create
         .mockResolvedValueOnce({ uid: 'candidate-google' })
@@ -1010,17 +1321,17 @@ describe('SearchService', () => {
         .mockResolvedValueOnce({ uid: 'result-google' })
         .mockResolvedValueOnce({ uid: 'result-github' });
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       const calls = prisma.role_result.create.mock.calls;
-      expect(calls[0][0].data.sources).toEqual(['Google']);
+      expect(calls[0][0].data.sources).toEqual(['Vertex']);
       expect(calls[1][0].data.sources).toEqual(['GitHub']);
     });
 
     it('scores and saves existing database candidates alongside freshly-found ones', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
 
       const knownCandidate = { uid: 'known-1', skills: ['TypeScript'] };
       existingCandidateSearchService.findCandidates.mockResolvedValue([
@@ -1028,9 +1339,19 @@ describe('SearchService', () => {
       ] as any);
       candidateScoringService.scoreCandidate.mockReturnValue({
         score: 72,
+        rawScore: 72,
         disqualified: false,
+        missedNonNegotiables: [],
         breakdown: [
-          { category: 'skills', weight: 80, earned: 57.6, applicable: true },
+          {
+            category: 'skills',
+            requirement: 'TypeScript',
+            priority: 'ESSENTIAL' as const,
+            nonNegotiable: false,
+            weight: 80,
+            earned: 57.6,
+            applicable: true,
+          },
         ],
       });
       geminiService.scoreKnownCandidates.mockResolvedValue({
@@ -1044,12 +1365,13 @@ describe('SearchService', () => {
           },
         ],
         tokensUsed: 60,
+        usage: null,
       });
       prisma.role_result.create.mockResolvedValue({ uid: 'result-known-1' });
 
       const results = await service.search(
         'role-1',
-        role as any,
+        role,
         'user-1',
         'Jane Admin',
       );
@@ -1060,6 +1382,7 @@ describe('SearchService', () => {
       expect(geminiService.scoreKnownCandidates).toHaveBeenCalledWith(
         [knownCandidate],
         expect.anything(),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
       expect(prisma.role_result.create).toHaveBeenCalledWith({
         data: {
@@ -1072,10 +1395,15 @@ describe('SearchService', () => {
           ai_score: 80,
           score: 72,
           disqualified: false,
+          pre_disqualification_score: null,
+          disqualified_reasons: [],
           tokens_used: 60,
           sources: ['Database'],
           ai_platform: 'Gemini',
           ai_model: 'gemini-2.5-flash',
+          metadata: expect.objectContaining({
+            searchScore: expect.objectContaining({ score: 72 }),
+          }),
         },
       });
       expect(results).toEqual([{ uid: 'result-known-1' }]);
@@ -1084,10 +1412,10 @@ describe('SearchService', () => {
     it('does not call Gemini for existing candidates when the DB pool is empty', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
       existingCandidateSearchService.findCandidates.mockResolvedValue([]);
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(geminiService.scoreKnownCandidates).not.toHaveBeenCalled();
     });
@@ -1095,7 +1423,7 @@ describe('SearchService', () => {
     it('excludes disqualified or zero-scoring existing candidates before calling Gemini', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
 
       const zeroScoreCandidate = { uid: 'known-zero' };
       const disqualifiedCandidate = { uid: 'known-disqualified' };
@@ -1106,11 +1434,25 @@ describe('SearchService', () => {
       candidateScoringService.scoreCandidate.mockImplementation(
         (_filters, candidate: any) =>
           candidate.uid === 'known-disqualified'
-            ? { score: 90, disqualified: true, breakdown: [] }
-            : { score: 0, disqualified: false, breakdown: [] },
+            ? {
+                score: 0,
+                rawScore: 90,
+                disqualified: true,
+                missedNonNegotiables: [
+                  { category: 'skills', requirement: 'TypeScript' },
+                ],
+                breakdown: [],
+              }
+            : {
+                score: 0,
+                rawScore: 0,
+                disqualified: false,
+                missedNonNegotiables: [],
+                breakdown: [],
+              },
       );
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       expect(geminiService.scoreKnownCandidates).not.toHaveBeenCalled();
     });
@@ -1118,7 +1460,7 @@ describe('SearchService', () => {
     it('ranks the existing-candidate pool by deterministic score and caps it at the batch size before calling Gemini', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
 
       const pool = Array.from({ length: 25 }, (_, i) => ({
         uid: `known-${i}`,
@@ -1130,12 +1472,14 @@ describe('SearchService', () => {
       candidateScoringService.scoreCandidate.mockImplementation(
         (_filters, candidate: any) => ({
           score: candidate.rank,
+          rawScore: candidate.rank,
           disqualified: false,
+          missedNonNegotiables: [],
           breakdown: [],
         }),
       );
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       const [sentCandidates] = geminiService.scoreKnownCandidates.mock.calls[0];
       expect(sentCandidates).toHaveLength(20);
@@ -1146,23 +1490,26 @@ describe('SearchService', () => {
     it('skips a known candidate whose uid Gemini did not return a match for', async () => {
       const role = buildRole();
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
       existingCandidateSearchService.findCandidates.mockResolvedValue([
         { uid: 'known-1' },
       ] as any);
       candidateScoringService.scoreCandidate.mockReturnValue({
         score: 50,
+        rawScore: 50,
         disqualified: false,
+        missedNonNegotiables: [],
         breakdown: [],
       });
       geminiService.scoreKnownCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 10,
+        usage: null,
       });
 
       const results = await service.search(
         'role-1',
-        role as any,
+        role,
         'user-1',
         'Jane Admin',
       );
@@ -1177,9 +1524,9 @@ describe('SearchService', () => {
       prisma.role_filters.findFirst.mockResolvedValue(
         buildStoredFilterSet({ uid: 'filter-stale' }),
       );
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
 
-      await service.search('role-1', role as any, 'user-1', 'Jane Admin');
+      await service.search('role-1', role, 'user-1', 'Jane Admin');
 
       // Never targets the stale uid captured at the start of the search.
       expect(prisma.role_filters.updateMany).not.toHaveBeenCalledWith(
@@ -1199,7 +1546,7 @@ describe('SearchService', () => {
   });
 
   describe('streamSearch', () => {
-    it('merges GitHub results in with the Google results before formatting candidates', async () => {
+    it('merges GitHub results in with the Vertex results before formatting candidates', async () => {
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
       const googleItem = {
         title: 'Jane Doe',
@@ -1209,11 +1556,12 @@ describe('SearchService', () => {
         title: 'janedoe - GitHub',
         link: 'https://github.com/janedoe',
       };
-      googleSearchService.search.mockResolvedValue([googleItem]);
+      vertexSearchService.search.mockResolvedValue([googleItem]);
       githubSearchService.search.mockResolvedValue([githubItem]);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 0,
+        usage: null,
       });
 
       await collectEvents(
@@ -1223,6 +1571,7 @@ describe('SearchService', () => {
       expect(geminiService.formatCandidates).toHaveBeenCalledWith(
         [googleItem, githubItem],
         expect.anything(),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
     });
 
@@ -1232,10 +1581,11 @@ describe('SearchService', () => {
         title: `Candidate ${i}`,
         link: `https://linkedin.com/in/candidate-${i}`,
       }));
-      googleSearchService.search.mockResolvedValue(items);
+      vertexSearchService.search.mockResolvedValue(items);
       geminiService.formatCandidates.mockResolvedValue({
         matches: [],
         tokensUsed: 0,
+        usage: null,
       });
 
       const events = await collectEvents(
@@ -1281,7 +1631,7 @@ describe('SearchService', () => {
 
     it("includes each batch's own saved candidates in its progress event, not just the counts", async () => {
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([
+      vertexSearchService.search.mockResolvedValue([
         { title: 'Jane Doe', link: 'https://linkedin.com/in/jane' },
       ]);
       geminiService.formatCandidates.mockResolvedValue({
@@ -1295,6 +1645,7 @@ describe('SearchService', () => {
           },
         ],
         tokensUsed: 100,
+        usage: null,
       });
       prisma.candidate.create.mockResolvedValue({ uid: 'candidate-1' });
       prisma.role_result.create.mockResolvedValue({ uid: 'result-1' });
@@ -1332,7 +1683,7 @@ describe('SearchService', () => {
 
     it('does not call Gemini and still stamps search_run_date once when there are no search results', async () => {
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
 
       const events = await collectEvents(
         service.streamSearch('role-1', 'user-1', 'Jane Admin'),
@@ -1345,13 +1696,15 @@ describe('SearchService', () => {
 
     it('emits a searching-existing-candidates stage and includes those matches in the final result', async () => {
       prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
-      googleSearchService.search.mockResolvedValue([]);
+      vertexSearchService.search.mockResolvedValue([]);
       existingCandidateSearchService.findCandidates.mockResolvedValue([
         { uid: 'known-1' },
       ] as any);
       candidateScoringService.scoreCandidate.mockReturnValue({
         score: 60,
+        rawScore: 60,
         disqualified: false,
+        missedNonNegotiables: [],
         breakdown: [],
       });
       geminiService.scoreKnownCandidates.mockResolvedValue({
@@ -1365,6 +1718,7 @@ describe('SearchService', () => {
           },
         ],
         tokensUsed: 20,
+        usage: null,
       });
       prisma.role_result.create.mockResolvedValue({ uid: 'result-known-1' });
 
@@ -1388,14 +1742,106 @@ describe('SearchService', () => {
     });
   });
 
+  describe('saved criterion expansions', () => {
+    const expansions = {
+      version: 1,
+      generatedAt: '2026-11-06T09:00:00.000Z',
+      model: 'gemini-2.5-flash',
+      byCategory: {
+        job_titles: [
+          {
+            seed: 'founder',
+            terms: [
+              'founder',
+              'co-founder',
+              'entrepreneur',
+              'startup',
+              'side hustle',
+            ],
+          },
+        ],
+      },
+    };
+    const savedFilterSet = () =>
+      buildStoredFilterSet({ metadata: { criterionExpansions: expansions } });
+
+    it('search() runs Vertex with the expansions saved on the filter set, without a new AI expansion', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(savedFilterSet());
+
+      await service.search('role-1', buildRole(), 'user-1', 'Jane Admin');
+
+      expect(vertexSearchService.search).toHaveBeenCalledWith(
+        expect.anything(),
+        'Fullstack Developer',
+        expansions,
+      );
+      expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+    });
+
+    it('streamSearch() runs Vertex with the same saved expansions, without a new AI expansion', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(savedFilterSet());
+
+      await collectEvents(
+        service.streamSearch('role-1', 'user-1', 'Jane Admin', 'Founder'),
+      );
+
+      expect(vertexSearchService.search).toHaveBeenCalledWith(
+        expect.anything(),
+        'Founder',
+        expansions,
+      );
+      expect(geminiService.expandSearchTerms).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the literal search when the saved metadata is not a valid expansion block', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(
+        buildStoredFilterSet({
+          metadata: { criterionExpansions: { ...expansions, version: 2 } },
+        }),
+      );
+
+      await collectEvents(
+        service.streamSearch('role-1', 'user-1', 'Jane Admin', 'Founder'),
+      );
+
+      expect(vertexSearchService.search).toHaveBeenCalledWith(
+        expect.anything(),
+        'Founder',
+        null,
+      );
+    });
+  });
+
   describe('deepSearchCandidate', () => {
+    const emptyResearch = (
+      candidate: Record<string, unknown> = {},
+      usage: GeminiUsage | null = null,
+    ) => ({
+      summary: '',
+      findings: [],
+      identityConfidence: 'low' as const,
+      identityReason: 'none',
+      score: 0,
+      reasoning: '',
+      sources: [],
+      searchQueries: [],
+      candidate,
+      verified: { record: null, qualifications: [] },
+      usage,
+    });
+
+    beforeEach(() => {
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      geminiService.researchCandidate.mockResolvedValue(emptyResearch());
+    });
+
     it('returns the candidate unchanged when already enriched', async () => {
       const existing = buildCandidateRecord({ enriched_at: new Date() });
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(existing);
 
       const result = await service.deepSearchCandidate('candidate-1', 'role-1');
 
-      expect(googleSearchService.searchCandidate).not.toHaveBeenCalled();
+      expect(geminiService.researchCandidate).not.toHaveBeenCalled();
       expect(prisma.candidate.update).not.toHaveBeenCalled();
       expect(result).toBe(existing);
     });
@@ -1403,13 +1849,9 @@ describe('SearchService', () => {
     it('re-runs the search even when already enriched if force is true', async () => {
       const existing = buildCandidateRecord({ enriched_at: new Date() });
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(existing);
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: { email: 'jane@example.com' },
-        tokensUsed: 10,
-      });
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({ email: 'jane@example.com' }),
+      );
       const updated = buildCandidateRecord({ email: 'jane@example.com' });
       prisma.candidate.update.mockResolvedValue(updated);
 
@@ -1419,9 +1861,7 @@ describe('SearchService', () => {
         true,
       );
 
-      expect(googleSearchService.searchCandidate).toHaveBeenCalledWith(
-        existing,
-      );
+      expect(geminiService.researchCandidate).toHaveBeenCalled();
       expect(result).toBe(updated);
     });
 
@@ -1439,7 +1879,7 @@ describe('SearchService', () => {
         true,
       );
 
-      expect(googleSearchService.searchCandidate).not.toHaveBeenCalled();
+      expect(geminiService.researchCandidate).not.toHaveBeenCalled();
       expect(result).toBe(existing);
     });
 
@@ -1452,85 +1892,348 @@ describe('SearchService', () => {
 
       const result = await service.deepSearchCandidate('candidate-1', 'role-1');
 
-      expect(googleSearchService.searchCandidate).not.toHaveBeenCalled();
+      expect(geminiService.researchCandidate).not.toHaveBeenCalled();
       expect(prisma.candidate.update).not.toHaveBeenCalled();
       expect(result).toBe(existing);
     });
 
-    it('marks enriched_at without calling Gemini when the deep search finds nothing', async () => {
+    it('calls grounded research with the candidate name and LinkedIn url', async () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
-        buildCandidateRecord(),
-      );
-      googleSearchService.searchCandidate.mockResolvedValue([]);
-      const updated = buildCandidateRecord({ enriched_at: new Date() });
-      prisma.candidate.update.mockResolvedValue(updated);
-
-      const result = await service.deepSearchCandidate('candidate-1', 'role-1');
-
-      expect(prisma.candidate.update).toHaveBeenCalledWith({
-        where: { uid: 'candidate-1' },
-        data: { enriched_at: expect.any(Date) },
-        include: { experience: true, education: true, sources: true },
-      });
-      expect(geminiService.enrichCandidate).not.toHaveBeenCalled();
-      expect(result).toBe(updated);
-    });
-
-    it('fetches page content for each search result and attaches it before calling Gemini', async () => {
-      prisma.candidate.findUniqueOrThrow.mockResolvedValue(
-        buildCandidateRecord(),
-      );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-        { title: 'Jane Doe', link: 'https://www.linkedin.com/in/janedoe' },
-      ]);
-      pageFetchService.fetchPageText.mockImplementation((url: string) =>
-        Promise.resolve(
-          url === 'https://github.com/janedoe' ? 'GitHub bio text' : undefined,
-        ),
+        buildCandidateRecord({
+          current_title: 'Engineer',
+          current_company: 'Acme',
+        }),
       );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
 
-      expect(pageFetchService.fetchPageText).toHaveBeenCalledWith(
-        'https://github.com/janedoe',
+      expect(geminiService.researchCandidate).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          name: 'Jane Doe',
+          headline: 'Engineer',
+          company: 'Acme',
+          linkedinUrl: 'https://www.linkedin.com/in/janedoe',
+        }),
+        { model: DEFAULT_REASONING_MODEL.model },
       );
-      expect(pageFetchService.fetchPageText).toHaveBeenCalledWith(
-        'https://www.linkedin.com/in/janedoe',
+    });
+
+    it("adds each research run's Gemini usage to the result, keeping its scoring usage and match notes", async () => {
+      const scoring = {
+        inputTokens: 300,
+        outputTokens: 40,
+        totalTokens: 340,
+        calls: 1,
+      };
+      prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+        buildCandidateRecord({
+          role_results: [
+            {
+              uid: 'result-1',
+              sources: [],
+              metadata: {
+                matchedBy: 'location',
+                geminiUsage: {
+                  scoring,
+                  research: {
+                    inputTokens: 1000,
+                    outputTokens: 200,
+                    totalTokens: 1200,
+                    calls: 1,
+                  },
+                },
+              },
+            },
+          ],
+        }),
       );
-      expect(geminiService.enrichCandidate).toHaveBeenCalledWith(
-        [
+      prisma.candidate.update.mockResolvedValue({});
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch(
+          {},
+          { inputTokens: 900, outputTokens: 100, totalTokens: 1000 },
+        ),
+      );
+
+      await service.deepSearchCandidate('candidate-1', 'role-1', true);
+
+      expect(prisma.role_result.update).toHaveBeenCalledWith({
+        where: { uid: 'result-1' },
+        data: expect.objectContaining({
+          metadata: expect.objectContaining({
+            matchedBy: 'location',
+            geminiUsage: {
+              scoring,
+              research: {
+                inputTokens: 1900,
+                outputTokens: 300,
+                totalTokens: 2200,
+                calls: 2,
+              },
+            },
+          }),
+        }),
+      });
+    });
+
+    it('records no research usage when Gemini did not report it', async () => {
+      prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+        buildCandidateRecord({
+          role_results: [{ uid: 'result-1', sources: [], metadata: null }],
+        }),
+      );
+      prisma.candidate.update.mockResolvedValue({});
+
+      await service.deepSearchCandidate('candidate-1', 'role-1', true);
+
+      const { data } = prisma.role_result.update.mock.calls[0][0];
+      expect(data.metadata).not.toHaveProperty('geminiUsage');
+    });
+
+    it('uses a RocketReach profile found alongside: empty contact fields, title/employer/country facts, and the raw profile', async () => {
+      prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+        buildCandidateRecord({
+          email: 'known@example.com',
+          phone: null,
+          rocketreach_profile_id: null,
+          role_results: [{ uid: 'result-1', sources: [], metadata: null }],
+        }),
+      );
+      prisma.candidate.update.mockResolvedValue({});
+      const person = {
+        id: 77,
+        status: 'complete',
+        current_title: 'Staff Engineer',
+        current_employer: 'Initech',
+        country_code: 'gb',
+        recommended_email: 'jane@initech.com',
+        phones: [{ number: '+44 20 0000 0000', recommended: true }],
+      };
+
+      await service.deepSearchCandidate('candidate-1', 'role-1', true, {
+        rocketReach: Promise.resolve(person),
+      });
+
+      const candidateData = prisma.candidate.update.mock.calls[0][0].data;
+      expect(candidateData).toMatchObject({
+        rocketreach_profile_id: '77',
+        phone: '+44 20 0000 0000',
+        contact_info_last_updated: expect.any(Date),
+      });
+      // A stored email is never replaced.
+      expect(candidateData).not.toHaveProperty('email');
+      expect(
+        prisma.role_result.update.mock.calls[0][0].data.metadata,
+      ).toMatchObject({
+        rocketReach: { profile: person, fetchedAt: expect.any(String) },
+        researchEvidence: {
+          titles: ['Staff Engineer'],
+          companies: ['Initech'],
+          countryCode: 'GB',
+        },
+      });
+    });
+
+    describe('re-scoring after research', () => {
+      // The stored filter set has one ESSENTIAL skills row: React, Node.js.
+      const verifiedNode = () => ({
+        ...emptyResearch(),
+        findings: [
           {
-            title: 'Jane Doe',
-            link: 'https://github.com/janedoe',
-            page_content: 'GitHub bio text',
-          },
-          {
-            title: 'Jane Doe',
-            link: 'https://www.linkedin.com/in/janedoe',
-            page_content: undefined,
+            fact: 'Builds Node.js services at Acme.',
+            sourceUrl: 'https://acme.dev',
           },
         ],
-        expect.anything(),
-      );
+        identityConfidence: 'high' as const,
+        verified: { record: { skills: ['Node.js'] }, qualifications: [] },
+      });
+      const lastUpdate = () =>
+        prisma.role_result.update.mock.calls.at(-1)[0].data;
+
+      beforeEach(() => {
+        prisma.candidate.update.mockResolvedValue({});
+      });
+
+      it("re-runs the fixed algorithm with research's verified facts, keeping the search score and marking changed rows", async () => {
+        prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+          buildCandidateRecord({
+            skills: ['React'],
+            role_results: [
+              { uid: 'result-1', sources: [], metadata: null, score: 40 },
+            ],
+          }),
+        );
+        geminiService.researchCandidate.mockResolvedValue(verifiedNode());
+
+        await service.deepSearchCandidate('candidate-1', 'role-1', true);
+
+        expect(lastUpdate()).toMatchObject({
+          score: 80,
+          disqualified: false,
+          pre_disqualification_score: null,
+          disqualified_reasons: [],
+          ai_score: 0,
+          metadata: {
+            searchScore: {
+              score: 40,
+              rawScore: 40,
+              disqualified: false,
+              disqualifiedReasons: [],
+            },
+            searchEvidence: expect.objectContaining({ skills: ['React'] }),
+            researchEvidence: expect.objectContaining({ skills: ['Node.js'] }),
+          },
+        });
+        expect(
+          prisma.role_result_score_breakdown.createMany,
+        ).toHaveBeenCalledWith({
+          data: [
+            expect.objectContaining({
+              category: 'skills',
+              score: 80,
+              metadata: expect.objectContaining({ researchBefore: 40 }),
+            }),
+          ],
+        });
+      });
+
+      it('re-scores from the stored search snapshot on a re-run, so research never stacks', async () => {
+        prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+          buildCandidateRecord({
+            skills: ['React'],
+            role_results: [
+              { uid: 'result-1', sources: [], metadata: null, score: 40 },
+            ],
+          }),
+        );
+        geminiService.researchCandidate.mockResolvedValue(verifiedNode());
+        await service.deepSearchCandidate('candidate-1', 'role-1', true);
+        const first = lastUpdate();
+
+        // The first run wrote Node.js onto the candidate record itself.
+        prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+          buildCandidateRecord({
+            skills: ['React', 'Node.js'],
+            role_results: [
+              {
+                uid: 'result-1',
+                sources: [],
+                metadata: first.metadata,
+                score: first.score,
+              },
+            ],
+          }),
+        );
+        await service.deepSearchCandidate('candidate-1', 'role-1', true);
+        const second = lastUpdate();
+        expect(second.score).toBe(80);
+        expect(second.metadata.searchScore).toEqual(first.metadata.searchScore);
+        expect(second.metadata.searchEvidence).toEqual(
+          first.metadata.searchEvidence,
+        );
+
+        // A run that finds nothing usable drops back to the search score.
+        prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+          buildCandidateRecord({
+            skills: ['React', 'Node.js'],
+            role_results: [
+              {
+                uid: 'result-1',
+                sources: [],
+                metadata: second.metadata,
+                score: second.score,
+              },
+            ],
+          }),
+        );
+        geminiService.researchCandidate.mockResolvedValue(emptyResearch());
+        await service.deepSearchCandidate('candidate-1', 'role-1', true);
+        const third = lastUpdate();
+        expect(third.score).toBe(40);
+        expect(third.metadata).not.toHaveProperty('researchEvidence');
+      });
+
+      it('leaves the score as it was when research found nothing', async () => {
+        prisma.candidate.findUniqueOrThrow.mockResolvedValue(
+          buildCandidateRecord({
+            skills: ['React'],
+            role_results: [
+              { uid: 'result-1', sources: [], metadata: null, score: 40 },
+            ],
+          }),
+        );
+
+        await service.deepSearchCandidate('candidate-1', 'role-1', true);
+
+        expect(lastUpdate()).toMatchObject({
+          score: 40,
+          metadata: { searchScore: expect.objectContaining({ score: 40 }) },
+        });
+        const [{ data: rows }] =
+          prisma.role_result_score_breakdown.createMany.mock.calls.at(-1);
+        expect(rows[0].metadata).not.toHaveProperty('researchBefore');
+      });
+
+      it('re-applies the latest research when a later search re-scores the result', async () => {
+        const filters = parseRoleFilters([buildFilterItem()] as any);
+        const facts = scoringFactsOf(
+          buildCandidateRecord({ skills: ['React'] }) as any,
+        );
+        const searchResult = new CandidateScoringService().scoreFacts(
+          filters,
+          facts,
+        );
+        prisma.role_result.findFirst.mockResolvedValue({
+          uid: 'result-1',
+          metadata: {
+            findings: verifiedNode().findings,
+            researchEvidence: { skills: ['Node.js'] },
+          },
+        });
+        prisma.role_result.update.mockResolvedValue({ uid: 'result-1' });
+
+        await (service as any).upsertRoleResult(
+          'role-1',
+          'filter-1',
+          'candidate-1',
+          {
+            candidate: buildCandidateFields(),
+            summary: 'Re-scored',
+            reasoning: '',
+            skills_matched: [],
+            score: 60,
+          },
+          10,
+          searchResult,
+          'Vertex',
+          null,
+          { filters, facts },
+        );
+
+        expect(lastUpdate()).toMatchObject({
+          score: 80,
+          metadata: {
+            searchScore: expect.objectContaining({ score: 40 }),
+            researchEvidence: { skills: ['Node.js'] },
+            findings: verifiedNode().findings,
+          },
+        });
+      });
     });
 
     it('creates a synthesized current-role experience entry when enrichment finds the current role but no detailed history', async () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({
           current_company: 'Acme',
           current_title: 'Senior Engineer',
           current_role_start_date: '2021-03-01',
-        },
-        tokensUsed: 10,
-      });
+        }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1552,11 +2255,8 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({
           current_company: 'Acme',
           current_title: 'Senior Engineer',
           current_role_start_date: '2021-03-01',
@@ -1565,11 +2265,11 @@ describe('SearchService', () => {
               company_name: 'Acme',
               role: 'Senior Engineer',
               start_date: '2021-03-01',
+              skills: [],
             },
           ],
-        },
-        tokensUsed: 10,
-      });
+        }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1595,13 +2295,9 @@ describe('SearchService', () => {
           current_role_start_date: new Date('2021-03-01T00:00:00.000Z'),
         }),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: { email: 'jane@example.com' },
-        tokensUsed: 10,
-      });
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({ email: 'jane@example.com' }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1621,13 +2317,9 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord({ email: null, current_company: 'OldCo' }),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: { email: 'jane@example.com', current_company: 'NewCo' },
-        tokensUsed: 10,
-      });
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({ email: 'jane@example.com', current_company: 'NewCo' }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1652,13 +2344,9 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord({ skills: ['TypeScript'] }),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: { skills: ['TypeScript', 'NestJS'] },
-        tokensUsed: 10,
-      });
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({ skills: ['TypeScript', 'NestJS'] }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1679,21 +2367,19 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {
-          additional_sources: [
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({
+          sources: [
             {
               title: 'Jane Doe - GitHub',
-              name: 'GitHub',
+              source: 'GitHub',
               url: 'https://github.com/janedoe',
+              main: false,
+              type: 'SEARCH',
             },
           ],
-        },
-        tokensUsed: 10,
-      });
+        }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1716,13 +2402,6 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {},
-        tokensUsed: 10,
-      });
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1734,22 +2413,19 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({
           experience: [
             {
               company_name: 'TechCorp',
               role: 'Engineer',
               start_date: '2021-01-01',
+              skills: [],
             },
-            { company_name: 'NoDateCo', role: 'Intern' },
+            { company_name: 'NoDateCo', role: 'Intern', skills: [] },
           ],
-        },
-        tokensUsed: 10,
-      });
+        }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1770,13 +2446,6 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {},
-        tokensUsed: 10,
-      });
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1788,11 +2457,8 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {
+      geminiService.researchCandidate.mockResolvedValue(
+        emptyResearch({
           education: [
             {
               institution_name: 'University of Oxford',
@@ -1804,9 +2470,8 @@ describe('SearchService', () => {
               institution_type: 'UNIVERSITY',
             },
           ],
-        },
-        tokensUsed: 10,
-      });
+        }),
+      );
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
@@ -1827,18 +2492,478 @@ describe('SearchService', () => {
       prisma.candidate.findUniqueOrThrow.mockResolvedValue(
         buildCandidateRecord(),
       );
-      googleSearchService.searchCandidate.mockResolvedValue([
-        { title: 'Jane Doe', link: 'https://github.com/janedoe' },
-      ]);
-      geminiService.enrichCandidate.mockResolvedValue({
-        enrichment: {},
-        tokensUsed: 10,
-      });
       prisma.candidate.update.mockResolvedValue({});
 
       await service.deepSearchCandidate('candidate-1', 'role-1');
 
       expect(prisma.candidate_education.createMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('runSearchPage', () => {
+    const items = (count: number, from = 0) =>
+      Array.from({ length: count }, (_, i) => ({
+        title: `Candidate ${from + i}`,
+        link: `https://linkedin.com/in/candidate-${from + i}`,
+        page: 1,
+      }));
+    const nextToken = encodeSearchPageToken({
+      kind: 'single',
+      page: 2,
+      token: 'vertex-2',
+      seen: ['abcdefgh'],
+    })!;
+    const progressOf = (pagesLoaded: number, token: string | null) => ({
+      searchProgress: {
+        version: 1,
+        pagesLoaded,
+        nextPageToken: token,
+        estimatedTotal: 1240,
+        status: 'running',
+        error: null,
+        updatedAt: '2026-11-17T10:00:00.000Z',
+      },
+    });
+    const withMetadata = (metadata: Record<string, unknown>) => {
+      prisma.role_filters.findFirst.mockResolvedValue(
+        buildStoredFilterSet({ metadata }),
+      );
+      prisma.role_filters.findUnique.mockResolvedValue({ metadata });
+    };
+    const run = (
+      hooks: Parameters<SearchService['runSearchPage']>[5] = {},
+      roleName?: string,
+    ) => {
+      const events: SearchPageStageEvent[] = [];
+      const outcome = service.runSearchPage(
+        'role-1',
+        'filter-1',
+        'user-1',
+        'Jane Admin',
+        roleName,
+        {
+          ...hooks,
+          onStage: (event) => {
+            events.push(event);
+          },
+        },
+      );
+      return { events, outcome };
+    };
+    const stages = (events: SearchPageStageEvent[]) =>
+      events.map((e) => `${e.stage}:${e.status}`);
+    const savedMetadata = () =>
+      prisma.role_filters.update.mock.calls[0][0].data.metadata;
+
+    it('runs page 1 with existing candidates and GitHub, scores in batches of 10 and saves the resume token', async () => {
+      withMetadata({ criterionExpansions: null });
+      vertexSearchService.searchRolePage.mockResolvedValue({
+        items: items(20),
+        page: 1,
+        nextPageToken: nextToken,
+        estimatedTotal: 1240,
+        skippedDuplicates: 3,
+        filteredOutByLocation: 2,
+      });
+      githubSearchService.search.mockResolvedValue(items(5, 20));
+
+      const { events, outcome } = run({}, 'Fullstack Developer');
+
+      expect(await outcome).toEqual({
+        kind: 'done',
+        page: 1,
+        hasMore: true,
+        estimatedTotal: 1240,
+        saved: 0,
+        tokensUsed: 0,
+      });
+      expect(vertexSearchService.searchRolePage).toHaveBeenCalledWith(
+        expect.anything(),
+        'Fullstack Developer',
+        null,
+        undefined,
+      );
+      expect(existingCandidateSearchService.findCandidates).toHaveBeenCalled();
+      expect(geminiService.formatCandidates).toHaveBeenCalledTimes(3);
+      expect(stages(events)).toEqual([
+        'preparing:started',
+        'preparing:done',
+        'searching:started',
+        'searching:done',
+        'scoring:started',
+        'scoring:progress',
+        'scoring:progress',
+        'scoring:progress',
+        'ranking:started',
+        'ranking:done',
+      ]);
+      expect(events[3]).toEqual({
+        stage: 'searching',
+        status: 'done',
+        page: 1,
+        found: 25,
+        estimatedTotal: 1240,
+        skippedDuplicates: 3,
+      });
+      expect(savedMetadata()).toEqual({
+        criterionExpansions: null,
+        searchProgress: expect.objectContaining({
+          version: 1,
+          pagesLoaded: 1,
+          nextPageToken: nextToken,
+          estimatedTotal: 1240,
+        }),
+      });
+      expect(prisma.role_filters.updateMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('continues from the stored token without re-running existing candidates or GitHub', async () => {
+      withMetadata(progressOf(3, nextToken));
+      vertexSearchService.searchRolePage.mockResolvedValue({
+        items: items(4),
+        page: 4,
+        nextPageToken: undefined,
+        skippedDuplicates: 0,
+        filteredOutByLocation: 0,
+      });
+
+      const { outcome } = run();
+
+      expect(await outcome).toEqual(
+        expect.objectContaining({ kind: 'done', page: 4, hasMore: false }),
+      );
+      expect(vertexSearchService.searchRolePage).toHaveBeenCalledWith(
+        expect.anything(),
+        undefined,
+        null,
+        parseSearchPageToken(nextToken),
+      );
+      expect(
+        existingCandidateSearchService.findCandidates,
+      ).not.toHaveBeenCalled();
+      expect(githubSearchService.search).not.toHaveBeenCalled();
+      expect(savedMetadata().searchProgress).toEqual(
+        expect.objectContaining({
+          pagesLoaded: 4,
+          nextPageToken: null,
+          // Vertex gave no estimate this time, so the last one is kept.
+          estimatedTotal: 1240,
+          // The job, not the page, decides how the run ends.
+          status: 'running',
+        }),
+      );
+    });
+
+    it('starts at page 1 when progress was reset to nothing loaded', async () => {
+      withMetadata(progressOf(0, null));
+
+      const { outcome } = run();
+
+      expect(await outcome).toEqual(
+        expect.objectContaining({ kind: 'done', page: 1 }),
+      );
+      expect(vertexSearchService.searchRolePage).toHaveBeenCalledWith(
+        expect.anything(),
+        undefined,
+        null,
+        undefined,
+      );
+      expect(existingCandidateSearchService.findCandidates).toHaveBeenCalled();
+    });
+
+    it('does no search work once every page is loaded', async () => {
+      withMetadata(progressOf(5, null));
+
+      const { events, outcome } = run();
+
+      expect(await outcome).toEqual({
+        kind: 'done',
+        page: 5,
+        hasMore: false,
+        estimatedTotal: 1240,
+        saved: 0,
+        tokensUsed: 0,
+      });
+      expect(events).toEqual([]);
+      expect(vertexSearchService.searchRolePage).not.toHaveBeenCalled();
+      expect(prisma.role_filters.update).not.toHaveBeenCalled();
+    });
+
+    it('looks deeper with the broader query, skipping people the role already has', async () => {
+      withMetadata({
+        searchProgress: { ...progressOf(5, null).searchProgress, broadFrom: 5 },
+      });
+      vertexSearchService.searchRolePage.mockResolvedValue({
+        items: items(3),
+        page: 1,
+        nextPageToken: nextToken,
+        skippedDuplicates: 0,
+        filteredOutByLocation: 0,
+      });
+      prisma.candidate_source.findMany.mockResolvedValue([
+        { url: 'https://linkedin.com/in/candidate-0' },
+      ]);
+
+      const { events, outcome } = run();
+
+      expect(await outcome).toEqual(
+        expect.objectContaining({ kind: 'done', page: 6, hasMore: true }),
+      );
+      // The essential skill no longer narrows the query...
+      const [queryFilters, , , token] =
+        vertexSearchService.searchRolePage.mock.calls[0];
+      expect(queryFilters.skills[0].priority).toBe('OPTIONAL');
+      expect(token).toBeUndefined();
+      // ...and the person already in the results isn't scored again.
+      expect(prisma.candidate_source.findMany).toHaveBeenCalledWith({
+        where: {
+          url: { in: items(3).map((item) => item.link) },
+          candidate: { role_results: { some: { role_id: 'role-1' } } },
+        },
+        select: { url: true },
+      });
+      expect(
+        events.find((e) => e.stage === 'searching' && e.status === 'done'),
+      ).toEqual(expect.objectContaining({ found: 2, skippedDuplicates: 1 }));
+      // Results land as page 6 of the run, not page 1 of the broader query.
+      expect(geminiService.formatCandidates.mock.calls[0][0]).toEqual([
+        expect.objectContaining({ link: items(3)[1].link, page: 6 }),
+        expect.objectContaining({ link: items(3)[2].link, page: 6 }),
+      ]);
+      expect(githubSearchService.search).not.toHaveBeenCalled();
+      expect(savedMetadata().searchProgress).toEqual(
+        expect.objectContaining({ pagesLoaded: 6, broadFrom: 5 }),
+      );
+    });
+
+    it("pages the role's own query without the extra duplicate lookup", async () => {
+      withMetadata(progressOf(3, nextToken));
+      vertexSearchService.searchRolePage.mockResolvedValue({
+        items: items(2),
+        page: 4,
+        nextPageToken: undefined,
+        skippedDuplicates: 0,
+        filteredOutByLocation: 0,
+      });
+
+      await run().outcome;
+
+      const [queryFilters] = vertexSearchService.searchRolePage.mock.calls[0];
+      expect(queryFilters.skills[0].priority).toBe('ESSENTIAL');
+      expect(prisma.candidate_source.findMany).not.toHaveBeenCalled();
+    });
+
+    it('stops before the next batch when asked, leaving the token where it was', async () => {
+      withMetadata(progressOf(1, nextToken));
+      vertexSearchService.searchRolePage.mockResolvedValue({
+        items: items(20),
+        page: 2,
+        nextPageToken: 'later',
+        skippedDuplicates: 0,
+        filteredOutByLocation: 0,
+      });
+      let stop = false;
+      geminiService.formatCandidates.mockImplementation(() => {
+        stop = true;
+        return Promise.resolve({ matches: [], tokensUsed: 0, usage: null });
+      });
+
+      const { outcome } = run({ shouldStop: () => Promise.resolve(stop) });
+
+      expect(await outcome).toEqual({ kind: 'stopped' });
+      expect(geminiService.formatCandidates).toHaveBeenCalledTimes(1);
+      expect(prisma.role_filters.update).not.toHaveBeenCalled();
+      expect(prisma.role_filters.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for a job whose filter set has been replaced', async () => {
+      withMetadata({});
+
+      const outcome = await service.runSearchPage(
+        'role-1',
+        'filter-old',
+        'user-1',
+        'Jane Admin',
+        undefined,
+      );
+
+      expect(outcome).toEqual({ kind: 'superseded' });
+      expect(vertexSearchService.searchRolePage).not.toHaveBeenCalled();
+    });
+
+    it('reports saved existing candidates by id as they land, and counts them and their tokens when done', async () => {
+      withMetadata({});
+      existingCandidateSearchService.findCandidates.mockResolvedValue([
+        { uid: 'known-1' },
+      ] as any);
+      candidateScoringService.scoreCandidate.mockReturnValue({
+        score: 60,
+        rawScore: 60,
+        disqualified: false,
+        missedNonNegotiables: [],
+        breakdown: [],
+      });
+      geminiService.scoreKnownCandidates.mockResolvedValue({
+        matches: [
+          {
+            candidate_uid: 'known-1',
+            summary: 'On file already.',
+            reasoning: 'Matches on skills.',
+            skills_matched: ['TypeScript'],
+            score: 70,
+          },
+        ],
+        tokensUsed: 20,
+        usage: null,
+      });
+      prisma.role_result.create.mockResolvedValue({
+        uid: 'result-known-1',
+        tokens_used: 20,
+      });
+
+      const { events, outcome } = run();
+
+      expect(await outcome).toEqual(
+        expect.objectContaining({ saved: 1, tokensUsed: 20 }),
+      );
+      expect(events[1]).toEqual({
+        stage: 'preparing',
+        status: 'done',
+        page: 1,
+        savedIds: ['result-known-1'],
+      });
+    });
+
+    it('throws when the role has no filter set', async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(null);
+
+      await expect(run().outcome).rejects.toThrow('Role filter not found');
+    });
+  });
+
+  describe('saveSearchProgress', () => {
+    it('patches the stored progress and keeps the rest of the metadata', async () => {
+      prisma.role_filters.findUnique.mockResolvedValue({
+        metadata: {
+          criterionExpansions: null,
+          searchProgress: {
+            version: 1,
+            pagesLoaded: 2,
+            nextPageToken: 's1.next',
+            estimatedTotal: 300,
+            status: 'running',
+            error: null,
+            updatedAt: '2026-11-17T10:00:00.000Z',
+          },
+        },
+      });
+
+      const saved = await service.saveSearchProgress('filter-1', {
+        status: 'paused',
+      });
+
+      expect(saved).toEqual(
+        expect.objectContaining({
+          pagesLoaded: 2,
+          nextPageToken: 's1.next',
+          status: 'paused',
+        }),
+      );
+      expect(prisma.role_filters.update).toHaveBeenCalledWith({
+        where: { uid: 'filter-1' },
+        data: {
+          metadata: { criterionExpansions: null, searchProgress: saved },
+        },
+      });
+    });
+  });
+  describe('findSimilar', () => {
+    const traits = [
+      {
+        category: 'skills',
+        list_value: ['IFRS', 'Treasury'],
+        priority: 'ESSENTIAL',
+        non_negotiable: false,
+      },
+    ];
+    const row = (requirement: string, earned: number) => ({
+      category: 'skills',
+      requirement,
+      priority: 'ESSENTIAL' as const,
+      nonNegotiable: false,
+      weight: 50,
+      earned,
+      applicable: true,
+    });
+
+    it('ranks people on file by similarity to the seed, without the seed or any AI call', async () => {
+      existingCandidateSearchService.findCandidates.mockResolvedValue([
+        { uid: 'seed', experience: [], education: [] },
+        { uid: 'a', experience: [], education: [] },
+        { uid: 'b', experience: [], education: [] },
+        { uid: 'c', experience: [], education: [] },
+      ] as any);
+      const scores: Record<string, number> = { seed: 100, a: 60, b: 90, c: 0 };
+      candidateScoringService.scoreCandidate.mockImplementation(
+        (_f, candidate: any) => ({
+          score: scores[candidate.uid],
+          rawScore: scores[candidate.uid],
+          disqualified: false,
+          missedNonNegotiables: [],
+          breakdown: [
+            row('IFRS', 50),
+            row('Treasury', candidate.uid === 'b' ? 40 : 0),
+          ],
+        }),
+      );
+
+      const similar = await service.findSimilar('role-1', 'seed', traits, 20);
+
+      expect(similar.map((m) => [m.candidate.uid, m.similarity])).toEqual([
+        ['b', 90],
+        ['a', 60],
+      ]);
+      expect(similar[1]).toMatchObject({
+        shared: ['IFRS'],
+        differs: ['Treasury'],
+        traits: 2,
+      });
+      expect(similar[0].candidate).not.toHaveProperty('experience');
+      expect(
+        existingCandidateSearchService.findCandidates,
+      ).toHaveBeenCalledWith(
+        'role-1',
+        expect.objectContaining({
+          skills: [expect.objectContaining({ value: ['IFRS', 'Treasury'] })],
+        }),
+      );
+      expect(geminiService.scoreKnownCandidates).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('scoreCandidateForRole', () => {
+    it("scores one person against the role's filters with the (mocked) AI and saves it", async () => {
+      prisma.role_filters.findFirst.mockResolvedValue(buildStoredFilterSet());
+      prisma.candidate.findUniqueOrThrow = jest.fn().mockResolvedValue({
+        uid: 'cand-1',
+        skills: ['TypeScript'],
+        experience: [],
+        education: [],
+      });
+      geminiService.scoreKnownCandidates.mockResolvedValue({
+        matches: [],
+        tokensUsed: 10,
+        usage: null,
+      } as any);
+
+      await expect(
+        service.scoreCandidateForRole('role-1', 'cand-1'),
+      ).resolves.toBeNull();
+      expect(geminiService.scoreKnownCandidates).toHaveBeenCalledWith(
+        [expect.objectContaining({ uid: 'cand-1' })],
+        expect.any(Object),
+        expect.any(Object),
+      );
     });
   });
 });

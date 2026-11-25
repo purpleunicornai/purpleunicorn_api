@@ -55,11 +55,14 @@ export const ModelName = {
   candidate_education: 'candidate_education',
   candidate_experience: 'candidate_experience',
   candidate_source: 'candidate_source',
+  extension_capture: 'extension_capture',
   job_spec_import: 'job_spec_import',
   organization_credits: 'organization_credits',
   organization_log: 'organization_log',
+  organization_settings: 'organization_settings',
   organization_subscription: 'organization_subscription',
   projects: 'projects',
+  rocketreach_lookup: 'rocketreach_lookup',
   role_filter_item: 'role_filter_item',
   role_filter_child: 'role_filter_child',
   role_filters: 'role_filters',
@@ -170,6 +173,24 @@ export const Candidate_sourceScalarFieldEnum = {
 export type Candidate_sourceScalarFieldEnum = (typeof Candidate_sourceScalarFieldEnum)[keyof typeof Candidate_sourceScalarFieldEnum]
 
 
+export const Extension_captureScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  updated: 'updated',
+  organization_id: 'organization_id',
+  captured_by: 'captured_by',
+  linkedin_slug: 'linkedin_slug',
+  linkedin_url: 'linkedin_url',
+  profile: 'profile',
+  captured_at: 'captured_at',
+  status: 'status',
+  role_ids: 'role_ids',
+  expires_at: 'expires_at'
+} as const
+
+export type Extension_captureScalarFieldEnum = (typeof Extension_captureScalarFieldEnum)[keyof typeof Extension_captureScalarFieldEnum]
+
+
 export const Job_spec_importScalarFieldEnum = {
   uid: 'uid',
   created: 'created',
@@ -191,7 +212,15 @@ export const Organization_creditsScalarFieldEnum = {
   updated: 'updated',
   organization_id: 'organization_id',
   type: 'type',
-  amount: 'amount'
+  amount: 'amount',
+  kind: 'kind',
+  period: 'period',
+  user_id: 'user_id',
+  role_id: 'role_id',
+  role_result_id: 'role_result_id',
+  reason: 'reason',
+  metadata: 'metadata',
+  idempotency_key: 'idempotency_key'
 } as const
 
 export type Organization_creditsScalarFieldEnum = (typeof Organization_creditsScalarFieldEnum)[keyof typeof Organization_creditsScalarFieldEnum]
@@ -216,6 +245,18 @@ export const Organization_logScalarFieldEnum = {
 } as const
 
 export type Organization_logScalarFieldEnum = (typeof Organization_logScalarFieldEnum)[keyof typeof Organization_logScalarFieldEnum]
+
+
+export const Organization_settingsScalarFieldEnum = {
+  organization_id: 'organization_id',
+  created: 'created',
+  updated: 'updated',
+  ai_provider: 'ai_provider',
+  ai_model: 'ai_model',
+  monthly_credit_allowance: 'monthly_credit_allowance'
+} as const
+
+export type Organization_settingsScalarFieldEnum = (typeof Organization_settingsScalarFieldEnum)[keyof typeof Organization_settingsScalarFieldEnum]
 
 
 export const Organization_subscriptionScalarFieldEnum = {
@@ -247,6 +288,31 @@ export const ProjectsScalarFieldEnum = {
 } as const
 
 export type ProjectsScalarFieldEnum = (typeof ProjectsScalarFieldEnum)[keyof typeof ProjectsScalarFieldEnum]
+
+
+export const Rocketreach_lookupScalarFieldEnum = {
+  uid: 'uid',
+  created: 'created',
+  organization_id: 'organization_id',
+  user_id: 'user_id',
+  candidate_id: 'candidate_id',
+  role_id: 'role_id',
+  role_result_id: 'role_result_id',
+  purpose: 'purpose',
+  query_type: 'query_type',
+  query: 'query',
+  outcome: 'outcome',
+  from_cache: 'from_cache',
+  likely_billed: 'likely_billed',
+  rocketreach_profile_id: 'rocketreach_profile_id',
+  http_status: 'http_status',
+  error: 'error',
+  org_charge: 'org_charge',
+  charge_entry_id: 'charge_entry_id',
+  refund_entry_id: 'refund_entry_id'
+} as const
+
+export type Rocketreach_lookupScalarFieldEnum = (typeof Rocketreach_lookupScalarFieldEnum)[keyof typeof Rocketreach_lookupScalarFieldEnum]
 
 
 export const Role_filter_itemScalarFieldEnum = {
@@ -304,10 +370,13 @@ export const Role_resultScalarFieldEnum = {
   filter_id: 'filter_id',
   score: 'score',
   disqualified: 'disqualified',
+  pre_disqualification_score: 'pre_disqualification_score',
+  disqualified_reasons: 'disqualified_reasons',
   ai_score: 'ai_score',
   reasoning: 'reasoning',
   skills_matched: 'skills_matched',
   summary: 'summary',
+  page: 'page',
   relevancy_score: 'relevancy_score',
   rated_by: 'rated_by',
   shortlist: 'shortlist',
@@ -351,7 +420,10 @@ export const RolesScalarFieldEnum = {
   name: 'name',
   description: 'description',
   summary: 'summary',
-  created_by: 'created_by'
+  created_by: 'created_by',
+  location: 'location',
+  seniority: 'seniority',
+  hiring_manager: 'hiring_manager'
 } as const
 
 export type RolesScalarFieldEnum = (typeof RolesScalarFieldEnum)[keyof typeof RolesScalarFieldEnum]
@@ -363,6 +435,13 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const NullableJsonNullValueInput = {

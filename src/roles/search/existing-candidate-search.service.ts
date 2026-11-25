@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/database/prisma.service';
 import { ParsedRoleFilters } from './role-filter-parser';
 import { Prisma } from '../../generated/prisma/client';
 import { CandidateWithHistory } from './candidate-scoring.service';
+import { countryName, requiredCountryCode } from './filter-terms';
 
 // A hard ceiling on the raw query, independent of how large the candidate
 // table grows — this is a broad recall net (matches ANY one criterion, not
@@ -25,10 +26,40 @@ export class ExistingCandidateSearchService {
       where: {
         OR: or,
         role_results: { none: { role_id: roleId } },
+        ...this.buildRequiredCountryCondition(filters),
       },
       include: { experience: true, education: true },
       take: MAX_POOL_SIZE,
     });
+  }
+
+  // The OR net above lets in anyone sharing a single skill or title, which
+  // is how an Australian mobile engineer landed on a South African design
+  // role. A required country is applied as an AND on top of it, accepting
+  // the stored code or name in any case, or anyone open to relocation.
+  private buildRequiredCountryCondition(
+    filters: ParsedRoleFilters,
+  ): Prisma.candidateWhereInput {
+    const code = requiredCountryCode(filters);
+    if (!code) return {};
+    const names = [code, countryName(code)].filter(
+      (value): value is string => !!value,
+    );
+    return {
+      AND: [
+        {
+          OR: [
+            ...names.map((name) => ({
+              current_location_country_code: {
+                equals: name,
+                mode: 'insensitive' as const,
+              },
+            })),
+            { open_to_relocation: true },
+          ],
+        },
+      ],
+    };
   }
 
   // Each pushed condition is deliberately case-insensitive where Postgres

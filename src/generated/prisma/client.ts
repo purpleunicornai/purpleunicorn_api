@@ -60,6 +60,11 @@ export type candidate_experience = Prisma.candidate_experienceModel
  */
 export type candidate_source = Prisma.candidate_sourceModel
 /**
+ * Model extension_capture
+ * 
+ */
+export type extension_capture = Prisma.extension_captureModel
+/**
  * Model job_spec_import
  * 
  */
@@ -75,6 +80,11 @@ export type organization_credits = Prisma.organization_creditsModel
  */
 export type organization_log = Prisma.organization_logModel
 /**
+ * Model organization_settings
+ * 
+ */
+export type organization_settings = Prisma.organization_settingsModel
+/**
  * Model organization_subscription
  * 
  */
@@ -84,6 +94,11 @@ export type organization_subscription = Prisma.organization_subscriptionModel
  * 
  */
 export type projects = Prisma.projectsModel
+/**
+ * Model rocketreach_lookup
+ * 
+ */
+export type rocketreach_lookup = Prisma.rocketreach_lookupModel
 /**
  * Model role_filter_item
  * 

@@ -2,6 +2,8 @@ import { JobSpecImportService } from './job-spec-import.service';
 import { PrismaService } from '../common/database/prisma.service';
 import { GeminiService } from '../services/gemini/gemini.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
+import { reasoningServiceFor } from '../services/reasoning/reasoning.testing';
+import { DEFAULT_REASONING_MODEL } from '../services/reasoning/reasoning-model';
 
 async function captureError(
   promise: Promise<unknown>,
@@ -17,6 +19,9 @@ async function captureError(
 function buildGeminiService(): jest.Mocked<GeminiService> {
   return {
     parseJobSpec: jest.fn().mockResolvedValue({ items: [], tokensUsed: 0 }),
+    describeRole: jest
+      .fn()
+      .mockResolvedValue({ description: 'Leads the close.', tokensUsed: 5 }),
   } as unknown as jest.Mocked<GeminiService>;
 }
 
@@ -25,6 +30,7 @@ function buildPrisma() {
     job_spec_import: {
       create: jest.fn(),
     },
+    roles: { findUniqueOrThrow: jest.fn() },
   };
 }
 
@@ -38,7 +44,7 @@ describe('JobSpecImportService', () => {
     geminiService = buildGeminiService();
     service = new JobSpecImportService(
       prisma as unknown as PrismaService,
-      geminiService,
+      reasoningServiceFor(geminiService),
     );
   });
 
@@ -79,6 +85,7 @@ describe('JobSpecImportService', () => {
 
       expect(geminiService.parseJobSpec).toHaveBeenCalledWith(
         'Senior Engineer, London, TypeScript required.',
+        { model: DEFAULT_REASONING_MODEL.model },
       );
       expect(prisma.job_spec_import.create).toHaveBeenCalledWith({
         data: {
@@ -105,7 +112,15 @@ describe('JobSpecImportService', () => {
                 priority: 'ESSENTIAL',
                 non_negotiable: true,
                 children: {
+                  // The AI's legacy remote_work flag becomes work types,
+                  // with remote_work kept in sync.
                   create: [
+                    {
+                      title: 'work_types',
+                      value: undefined,
+                      list_value: ['ONSITE', 'REMOTE'],
+                      boolean: false,
+                    },
                     {
                       title: 'remote_work',
                       value: undefined,
@@ -161,6 +176,64 @@ describe('JobSpecImportService', () => {
       jest.useRealTimers();
     });
 
+    it("keeps the AI's company exclusion and named institutions", async () => {
+      geminiService.parseJobSpec.mockResolvedValue({
+        items: [
+          {
+            category: 'companies',
+            list_value: ['Deloitte', 'PwC'],
+            priority: 'ESSENTIAL',
+            non_negotiable: false,
+            children: [{ title: 'company_type', value: 'exclude' }],
+          },
+          {
+            category: 'education',
+            list_value: ['CA(SA)'],
+            priority: 'ESSENTIAL',
+            non_negotiable: false,
+            children: [
+              { title: 'institutions', list_value: ['UCT', 'Wits'] },
+              { title: 'type', value: 'include' },
+            ],
+          },
+          {
+            category: 'location',
+            value: 'ZA',
+            priority: 'ESSENTIAL',
+            non_negotiable: false,
+            children: [
+              { title: 'city', value: 'Cape Town' },
+              { title: 'work_types', list_value: ['HYBRID'] },
+            ],
+          },
+        ],
+        tokensUsed: 50,
+      });
+      prisma.job_spec_import.create.mockResolvedValue({ uid: 'import-1' });
+
+      await service.importJobSpec(
+        'role-1',
+        { text: 'CA(SA) from UCT or Wits, hybrid in Cape Town, not Big 4.' },
+        'user-1',
+        'Jane Admin',
+      );
+
+      const [companies, education, location] =
+        prisma.job_spec_import.create.mock.calls[0][0].data.role_filter_items
+          .create;
+      const child = (item: any, title: string) =>
+        item.children.create.find((c: any) => c.title === title);
+      expect(child(companies, 'company_type').value).toBe('exclude');
+      expect(child(education, 'institutions').list_value).toEqual([
+        'UCT',
+        'Wits',
+      ]);
+      expect(child(education, 'use_institution').boolean).toBe(true);
+      expect(child(location, 'work_types').list_value).toEqual(['HYBRID']);
+      expect(child(location, 'remote_work').boolean).toBe(false);
+      expect(child(location, 'city').value).toBe('Cape Town');
+    });
+
     it('throws a 400 RequestException when the uploaded file exceeds 5MB', async () => {
       const oversized = Buffer.alloc(5 * 1024 * 1024 + 1, 'a').toString(
         'base64',
@@ -212,6 +285,7 @@ describe('JobSpecImportService', () => {
 
       expect(geminiService.parseJobSpec).toHaveBeenCalledWith(
         'Plain text job spec.',
+        { model: DEFAULT_REASONING_MODEL.model },
       );
     });
 
@@ -254,7 +328,61 @@ describe('JobSpecImportService', () => {
         'Jane Admin',
       );
 
-      expect(geminiService.parseJobSpec).toHaveBeenCalledWith('pasted text');
+      expect(geminiService.parseJobSpec).toHaveBeenCalledWith('pasted text', {
+        model: DEFAULT_REASONING_MODEL.model,
+      });
+    });
+  });
+
+  describe('describeRole', () => {
+    const roleWith = (brief: string | null, items: object[] = []) => ({
+      name: 'Senior Finance Manager',
+      job_spec_import: brief ? [{ original_text: brief }] : [],
+      role_filters: [{ role_filter_items: items }],
+    });
+
+    it('writes the description from the latest brief', async () => {
+      prisma.roles.findUniqueOrThrow.mockResolvedValue(
+        roleWith('CA(SA) finance lead in Cape Town'),
+      );
+
+      const result = await service.describeRole('role-1');
+
+      expect(geminiService.describeRole).toHaveBeenCalledWith(
+        {
+          roleName: 'Senior Finance Manager',
+          brief: 'CA(SA) finance lead in Cape Town',
+        },
+        { model: DEFAULT_REASONING_MODEL.model },
+      );
+      expect(result).toEqual({ description: 'Leads the close.' });
+    });
+
+    it("falls back to the role's filters when there's no brief", async () => {
+      prisma.roles.findUniqueOrThrow.mockResolvedValue(
+        roleWith(null, [
+          { category: 'job_titles', value: null, list_value: ['CFO', 'FD'] },
+          { category: 'location', value: 'ZA', list_value: [] },
+        ]),
+      );
+
+      await service.describeRole('role-1');
+
+      expect(geminiService.describeRole).toHaveBeenCalledWith(
+        expect.objectContaining({
+          brief: 'job_titles: CFO, FD\nlocation: ZA',
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('refuses with a 422 when there is nothing to write from', async () => {
+      prisma.roles.findUniqueOrThrow.mockResolvedValue(roleWith(null));
+
+      const error = await captureError(service.describeRole('role-1'));
+
+      expect(error.getStatus()).toBe(422);
+      expect(geminiService.describeRole).not.toHaveBeenCalled();
     });
   });
 });

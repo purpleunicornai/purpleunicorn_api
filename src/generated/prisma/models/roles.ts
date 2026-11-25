@@ -33,6 +33,9 @@ export type RolesMinAggregateOutputType = {
   description: string | null
   summary: string | null
   created_by: string | null
+  location: string | null
+  seniority: string | null
+  hiring_manager: string | null
 }
 
 export type RolesMaxAggregateOutputType = {
@@ -44,6 +47,9 @@ export type RolesMaxAggregateOutputType = {
   description: string | null
   summary: string | null
   created_by: string | null
+  location: string | null
+  seniority: string | null
+  hiring_manager: string | null
 }
 
 export type RolesCountAggregateOutputType = {
@@ -55,6 +61,9 @@ export type RolesCountAggregateOutputType = {
   description: number
   summary: number
   created_by: number
+  location: number
+  seniority: number
+  hiring_manager: number
   _all: number
 }
 
@@ -68,6 +77,9 @@ export type RolesMinAggregateInputType = {
   description?: true
   summary?: true
   created_by?: true
+  location?: true
+  seniority?: true
+  hiring_manager?: true
 }
 
 export type RolesMaxAggregateInputType = {
@@ -79,6 +91,9 @@ export type RolesMaxAggregateInputType = {
   description?: true
   summary?: true
   created_by?: true
+  location?: true
+  seniority?: true
+  hiring_manager?: true
 }
 
 export type RolesCountAggregateInputType = {
@@ -90,6 +105,9 @@ export type RolesCountAggregateInputType = {
   description?: true
   summary?: true
   created_by?: true
+  location?: true
+  seniority?: true
+  hiring_manager?: true
   _all?: true
 }
 
@@ -174,6 +192,9 @@ export type RolesGroupByOutputType = {
   description: string | null
   summary: string | null
   created_by: string | null
+  location: string | null
+  seniority: string | null
+  hiring_manager: string | null
   _count: RolesCountAggregateOutputType | null
   _min: RolesMinAggregateOutputType | null
   _max: RolesMaxAggregateOutputType | null
@@ -206,6 +227,9 @@ export type rolesWhereInput = {
   description?: Prisma.StringNullableFilter<"roles"> | string | null
   summary?: Prisma.StringNullableFilter<"roles"> | string | null
   created_by?: Prisma.StringNullableFilter<"roles"> | string | null
+  location?: Prisma.StringNullableFilter<"roles"> | string | null
+  seniority?: Prisma.StringNullableFilter<"roles"> | string | null
+  hiring_manager?: Prisma.StringNullableFilter<"roles"> | string | null
   project?: Prisma.XOR<Prisma.ProjectsScalarRelationFilter, Prisma.projectsWhereInput>
   role_filters?: Prisma.Role_filtersListRelationFilter
   role_result?: Prisma.Role_resultListRelationFilter
@@ -222,6 +246,9 @@ export type rolesOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
   created_by?: Prisma.SortOrderInput | Prisma.SortOrder
+  location?: Prisma.SortOrderInput | Prisma.SortOrder
+  seniority?: Prisma.SortOrderInput | Prisma.SortOrder
+  hiring_manager?: Prisma.SortOrderInput | Prisma.SortOrder
   project?: Prisma.projectsOrderByWithRelationInput
   role_filters?: Prisma.role_filtersOrderByRelationAggregateInput
   role_result?: Prisma.role_resultOrderByRelationAggregateInput
@@ -241,6 +268,9 @@ export type rolesWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"roles"> | string | null
   summary?: Prisma.StringNullableFilter<"roles"> | string | null
   created_by?: Prisma.StringNullableFilter<"roles"> | string | null
+  location?: Prisma.StringNullableFilter<"roles"> | string | null
+  seniority?: Prisma.StringNullableFilter<"roles"> | string | null
+  hiring_manager?: Prisma.StringNullableFilter<"roles"> | string | null
   project?: Prisma.XOR<Prisma.ProjectsScalarRelationFilter, Prisma.projectsWhereInput>
   role_filters?: Prisma.Role_filtersListRelationFilter
   role_result?: Prisma.Role_resultListRelationFilter
@@ -257,6 +287,9 @@ export type rolesOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
   created_by?: Prisma.SortOrderInput | Prisma.SortOrder
+  location?: Prisma.SortOrderInput | Prisma.SortOrder
+  seniority?: Prisma.SortOrderInput | Prisma.SortOrder
+  hiring_manager?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.rolesCountOrderByAggregateInput
   _max?: Prisma.rolesMaxOrderByAggregateInput
   _min?: Prisma.rolesMinOrderByAggregateInput
@@ -274,6 +307,9 @@ export type rolesScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"roles"> | string | null
   summary?: Prisma.StringNullableWithAggregatesFilter<"roles"> | string | null
   created_by?: Prisma.StringNullableWithAggregatesFilter<"roles"> | string | null
+  location?: Prisma.StringNullableWithAggregatesFilter<"roles"> | string | null
+  seniority?: Prisma.StringNullableWithAggregatesFilter<"roles"> | string | null
+  hiring_manager?: Prisma.StringNullableWithAggregatesFilter<"roles"> | string | null
 }
 
 export type rolesCreateInput = {
@@ -284,6 +320,9 @@ export type rolesCreateInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
@@ -300,6 +339,9 @@ export type rolesUncheckedCreateInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
@@ -314,6 +356,9 @@ export type rolesUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
@@ -330,6 +375,9 @@ export type rolesUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
@@ -345,6 +393,9 @@ export type rolesCreateManyInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
 }
 
 export type rolesUpdateManyMutationInput = {
@@ -355,6 +406,9 @@ export type rolesUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type rolesUncheckedUpdateManyInput = {
@@ -366,6 +420,9 @@ export type rolesUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type RolesScalarRelationFilter = {
@@ -397,6 +454,9 @@ export type rolesCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   created_by?: Prisma.SortOrder
+  location?: Prisma.SortOrder
+  seniority?: Prisma.SortOrder
+  hiring_manager?: Prisma.SortOrder
 }
 
 export type rolesMaxOrderByAggregateInput = {
@@ -408,6 +468,9 @@ export type rolesMaxOrderByAggregateInput = {
   description?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   created_by?: Prisma.SortOrder
+  location?: Prisma.SortOrder
+  seniority?: Prisma.SortOrder
+  hiring_manager?: Prisma.SortOrder
 }
 
 export type rolesMinOrderByAggregateInput = {
@@ -419,6 +482,9 @@ export type rolesMinOrderByAggregateInput = {
   description?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   created_by?: Prisma.SortOrder
+  location?: Prisma.SortOrder
+  seniority?: Prisma.SortOrder
+  hiring_manager?: Prisma.SortOrder
 }
 
 export type rolesCreateNestedOneWithoutJob_spec_importInput = {
@@ -529,6 +595,9 @@ export type rolesCreateWithoutJob_spec_importInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
@@ -544,6 +613,9 @@ export type rolesUncheckedCreateWithoutJob_spec_importInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
@@ -573,6 +645,9 @@ export type rolesUpdateWithoutJob_spec_importInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
@@ -588,6 +663,9 @@ export type rolesUncheckedUpdateWithoutJob_spec_importInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
@@ -601,6 +679,9 @@ export type rolesCreateWithoutLogsInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
@@ -616,6 +697,9 @@ export type rolesUncheckedCreateWithoutLogsInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
@@ -645,6 +729,9 @@ export type rolesUpdateWithoutLogsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
@@ -660,6 +747,9 @@ export type rolesUncheckedUpdateWithoutLogsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
@@ -673,6 +763,9 @@ export type rolesCreateWithoutProjectInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
@@ -687,6 +780,9 @@ export type rolesUncheckedCreateWithoutProjectInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
@@ -731,6 +827,9 @@ export type rolesScalarWhereInput = {
   description?: Prisma.StringNullableFilter<"roles"> | string | null
   summary?: Prisma.StringNullableFilter<"roles"> | string | null
   created_by?: Prisma.StringNullableFilter<"roles"> | string | null
+  location?: Prisma.StringNullableFilter<"roles"> | string | null
+  seniority?: Prisma.StringNullableFilter<"roles"> | string | null
+  hiring_manager?: Prisma.StringNullableFilter<"roles"> | string | null
 }
 
 export type rolesCreateWithoutRole_filtersInput = {
@@ -741,6 +840,9 @@ export type rolesCreateWithoutRole_filtersInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_result?: Prisma.role_resultCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
@@ -756,6 +858,9 @@ export type rolesUncheckedCreateWithoutRole_filtersInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   role_result?: Prisma.role_resultUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
   job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
@@ -785,6 +890,9 @@ export type rolesUpdateWithoutRole_filtersInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
@@ -800,6 +908,9 @@ export type rolesUncheckedUpdateWithoutRole_filtersInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
   job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
@@ -813,6 +924,9 @@ export type rolesCreateWithoutRole_resultInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   project: Prisma.projectsCreateNestedOneWithoutRolesInput
   role_filters?: Prisma.role_filtersCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logCreateNestedManyWithoutRoleInput
@@ -828,6 +942,9 @@ export type rolesUncheckedCreateWithoutRole_resultInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
   role_filters?: Prisma.role_filtersUncheckedCreateNestedManyWithoutRoleInput
   logs?: Prisma.organization_logUncheckedCreateNestedManyWithoutRoleInput
   job_spec_import?: Prisma.job_spec_importUncheckedCreateNestedManyWithoutRoleInput
@@ -857,6 +974,9 @@ export type rolesUpdateWithoutRole_resultInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   project?: Prisma.projectsUpdateOneRequiredWithoutRolesNestedInput
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
@@ -872,6 +992,9 @@ export type rolesUncheckedUpdateWithoutRole_resultInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
   job_spec_import?: Prisma.job_spec_importUncheckedUpdateManyWithoutRoleNestedInput
@@ -885,6 +1008,9 @@ export type rolesCreateManyProjectInput = {
   description?: string | null
   summary?: string | null
   created_by?: string | null
+  location?: string | null
+  seniority?: string | null
+  hiring_manager?: string | null
 }
 
 export type rolesUpdateWithoutProjectInput = {
@@ -895,6 +1021,9 @@ export type rolesUpdateWithoutProjectInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUpdateManyWithoutRoleNestedInput
@@ -909,6 +1038,9 @@ export type rolesUncheckedUpdateWithoutProjectInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role_filters?: Prisma.role_filtersUncheckedUpdateManyWithoutRoleNestedInput
   role_result?: Prisma.role_resultUncheckedUpdateManyWithoutRoleNestedInput
   logs?: Prisma.organization_logUncheckedUpdateManyWithoutRoleNestedInput
@@ -923,6 +1055,9 @@ export type rolesUncheckedUpdateManyWithoutProjectInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seniority?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hiring_manager?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -992,6 +1127,9 @@ export type rolesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   description?: boolean
   summary?: boolean
   created_by?: boolean
+  location?: boolean
+  seniority?: boolean
+  hiring_manager?: boolean
   project?: boolean | Prisma.projectsDefaultArgs<ExtArgs>
   role_filters?: boolean | Prisma.roles$role_filtersArgs<ExtArgs>
   role_result?: boolean | Prisma.roles$role_resultArgs<ExtArgs>
@@ -1009,6 +1147,9 @@ export type rolesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   summary?: boolean
   created_by?: boolean
+  location?: boolean
+  seniority?: boolean
+  hiring_manager?: boolean
   project?: boolean | Prisma.projectsDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["roles"]>
 
@@ -1021,6 +1162,9 @@ export type rolesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   description?: boolean
   summary?: boolean
   created_by?: boolean
+  location?: boolean
+  seniority?: boolean
+  hiring_manager?: boolean
   project?: boolean | Prisma.projectsDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["roles"]>
 
@@ -1033,9 +1177,12 @@ export type rolesSelectScalar = {
   description?: boolean
   summary?: boolean
   created_by?: boolean
+  location?: boolean
+  seniority?: boolean
+  hiring_manager?: boolean
 }
 
-export type rolesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "project_id" | "name" | "description" | "summary" | "created_by", ExtArgs["result"]["roles"]>
+export type rolesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uid" | "created" | "updated" | "project_id" | "name" | "description" | "summary" | "created_by" | "location" | "seniority" | "hiring_manager", ExtArgs["result"]["roles"]>
 export type rolesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.projectsDefaultArgs<ExtArgs>
   role_filters?: boolean | Prisma.roles$role_filtersArgs<ExtArgs>
@@ -1069,6 +1216,9 @@ export type $rolesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     description: string | null
     summary: string | null
     created_by: string | null
+    location: string | null
+    seniority: string | null
+    hiring_manager: string | null
   }, ExtArgs["result"]["roles"]>
   composites: {}
 }
@@ -1505,6 +1655,9 @@ export interface rolesFieldRefs {
   readonly description: Prisma.FieldRef<"roles", 'String'>
   readonly summary: Prisma.FieldRef<"roles", 'String'>
   readonly created_by: Prisma.FieldRef<"roles", 'String'>
+  readonly location: Prisma.FieldRef<"roles", 'String'>
+  readonly seniority: Prisma.FieldRef<"roles", 'String'>
+  readonly hiring_manager: Prisma.FieldRef<"roles", 'String'>
 }
     
 

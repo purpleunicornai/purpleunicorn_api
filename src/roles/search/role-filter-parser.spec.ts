@@ -59,6 +59,42 @@ describe('parseRoleFilters', () => {
         countryCode: 'ZA',
         regions: [{ type: 'province', value: 'GP' }],
         remoteWork: false,
+        workTypes: [],
+        workAuthorizationRequired: false,
+      },
+      priority: 'ESSENTIAL',
+      nonNegotiable: false,
+    });
+  });
+
+  it('keeps the strictest of several location rows and drops blank regions', () => {
+    // Shape copied from a real role: an ESSENTIAL ZA row saved with a blank
+    // province, then an OPTIONAL ZA row with Gauteng.
+    const items = [
+      buildItem({
+        uid: 'loc-1',
+        category: 'location',
+        value: 'ZA',
+        priority: 'ESSENTIAL',
+        children: [buildChild({ title: 'province', value: '' })],
+      }),
+      buildItem({
+        uid: 'loc-2',
+        category: 'location',
+        value: 'ZA',
+        priority: 'OPTIONAL',
+        children: [buildChild({ title: 'province', value: 'GP' })],
+      }),
+    ];
+
+    const result = parseRoleFilters(items);
+
+    expect(result.location).toEqual({
+      value: {
+        countryCode: 'ZA',
+        regions: [{ type: 'province', value: 'GP' }],
+        remoteWork: false,
+        workTypes: [],
         workAuthorizationRequired: false,
       },
       priority: 'ESSENTIAL',
@@ -82,6 +118,64 @@ describe('parseRoleFilters', () => {
 
     expect(result.location?.value.remoteWork).toBe(true);
     expect(result.location?.value.workAuthorizationRequired).toBe(true);
+  });
+
+  it('reads work_types into workTypes, keeps remoteWork in sync and never treats it as a region', () => {
+    const items = [
+      buildItem({
+        category: 'location',
+        value: 'ZA',
+        children: [
+          buildChild({ title: 'city', value: 'Cape Town' }),
+          buildChild({
+            title: 'work_types',
+            list_value: ['HYBRID', 'ONSITE', 'bogus'],
+          }),
+          // A stale flag loses to the explicit work types.
+          buildChild({ title: 'remote_work', boolean: true }),
+        ],
+      }),
+    ];
+
+    const result = parseRoleFilters(items);
+
+    expect(result.location?.value).toEqual({
+      countryCode: 'ZA',
+      regions: [{ type: 'city', value: 'Cape Town' }],
+      remoteWork: false,
+      workTypes: ['ONSITE', 'HYBRID'],
+      workAuthorizationRequired: false,
+    });
+  });
+
+  it('sets remoteWork when REMOTE is one of the work types', () => {
+    const items = [
+      buildItem({
+        category: 'location',
+        value: 'ZA',
+        children: [buildChild({ title: 'work_types', list_value: ['REMOTE'] })],
+      }),
+    ];
+
+    const result = parseRoleFilters(items);
+
+    expect(result.location?.value.remoteWork).toBe(true);
+    expect(result.location?.value.workTypes).toEqual(['REMOTE']);
+  });
+
+  it('reads a legacy remote_work-only row as on-site plus remote', () => {
+    const items = [
+      buildItem({
+        category: 'location',
+        value: 'ZA',
+        children: [buildChild({ title: 'remote_work', boolean: true })],
+      }),
+    ];
+
+    expect(parseRoleFilters(items).location?.value.workTypes).toEqual([
+      'ONSITE',
+      'REMOTE',
+    ]);
   });
 
   it('leaves location undefined when there is no location item', () => {

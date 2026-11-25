@@ -3,7 +3,11 @@ import AiConfig from '../../config/ai.config';
 import { type ConfigType } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
-import { GoogleSearchItem } from '../google-search/google-search.service';
+import { GoogleSearchItem } from '../search-item';
+import {
+  countryName,
+  resolveRegionNames,
+} from '../../roles/search/filter-terms';
 
 interface GithubUser {
   id: number | string;
@@ -36,7 +40,10 @@ export class GithubSearchService {
   // failure, or network error should just mean "no GitHub results this
   // run," not fail the whole search.
   async search(filters: ParsedRoleFilters): Promise<GoogleSearchItem[]> {
-    const query = this.buildQuery(filters);
+    const regionNames = filters.location
+      ? await resolveRegionNames(filters.location.value)
+      : [];
+    const query = this.buildQuery(filters, regionNames);
     if (!query) return [];
 
     try {
@@ -68,11 +75,14 @@ export class GithubSearchService {
   }
 
   // GitHub's Search Users API takes qualifiers (location:) rather than
-  // boolean/quoted syntax, so this is deliberately simpler than
-  // GoogleSearchService.buildXrayQueries. Returns undefined — rather than
-  // falling back to a generic term — when the role has neither a title nor
-  // a skill, since a search with no real signal isn't worth the API call.
-  private buildQuery(filters: ParsedRoleFilters): string | undefined {
+  // boolean/quoted syntax, so this is deliberately simpler than the
+  // Vertex query builder. Returns undefined — rather than falling back
+  // to a generic term — when the role has neither a title nor a skill,
+  // since a search with no real signal isn't worth the API call.
+  private buildQuery(
+    filters: ParsedRoleFilters,
+    regionNames?: string[],
+  ): string | undefined {
     const mainTitle = filters.jobTitles.find(
       (row) => row.value.option === 'main_title',
     )?.value.titles[0];
@@ -89,7 +99,7 @@ export class GithubSearchService {
       return undefined;
     }
 
-    const locationTerm = this.buildLocationTerm(filters);
+    const locationTerm = this.buildLocationTerm(filters, regionNames);
     if (locationTerm) terms.push(locationTerm);
 
     if (topSkill && !skillUsedAsPrimary && terms.length < 2) {
@@ -101,13 +111,21 @@ export class GithubSearchService {
 
   // Best-effort: GitHub's location: qualifier matches free text against a
   // user's self-reported location, so this needs a human-readable place
-  // name — the parsed countryCode (an ISO code) won't match profile text,
-  // so only a region entry (the first one, whatever it is) is used.
-  private buildLocationTerm(filters: ParsedRoleFilters): string | undefined {
+  // name. Uses the most specific region (the filter UI stores province then
+  // city), falling back to the country's name rather than its ISO code.
+  private buildLocationTerm(
+    filters: ParsedRoleFilters,
+    regionNames?: string[],
+  ): string | undefined {
     if (!filters.location || filters.location.value.remoteWork) {
       return undefined;
     }
-    const place = filters.location.value.regions[0]?.value;
+    const regions =
+      regionNames ??
+      filters.location.value.regions.map((region) => region.value);
+    const place =
+      regions[regions.length - 1] ??
+      countryName(filters.location.value.countryCode);
     if (!place) return undefined;
     return `location:"${place}"`;
   }

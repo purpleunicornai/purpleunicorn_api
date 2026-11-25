@@ -2,6 +2,12 @@ import {
   role_filter_item,
   role_filter_child,
 } from '../../generated/prisma/client';
+import {
+  REMOTE_WORK_CHILD,
+  WORK_TYPES_CHILD,
+  WorkType,
+  workTypesFromChildren,
+} from './work-types';
 
 type RoleFilterItemRow = role_filter_item & { children: role_filter_child[] };
 
@@ -14,7 +20,12 @@ export interface ParsedFilterRow<T> {
 export interface ParsedLocation {
   countryCode: string;
   regions: { type: string; value: string }[];
+  // True when remote candidates are acceptable (REMOTE is a work type).
   remoteWork: boolean;
+  // How the role may be worked. Always set by the parser; optional so
+  // hand-built filters (tests, older callers) keep the legacy meaning.
+  // See work-types.ts.
+  workTypes?: WorkType[];
   workAuthorizationRequired: boolean;
 }
 
@@ -53,7 +64,7 @@ export interface ParsedRoleFilters {
 // Turns raw, open-ended role_filter_item + children rows into one typed,
 // stable structure — isolating the dynamic (child.title is an open-ended
 // label) parsing in one place instead of duplicating it in
-// GoogleSearchService, GeminiService, and CandidateScoringService.
+// VertexSearchService, GeminiService, and CandidateScoringService.
 export function parseRoleFilters(
   items: RoleFilterItemRow[],
 ): ParsedRoleFilters {
@@ -73,7 +84,10 @@ export function parseRoleFilters(
 
     switch (item.category) {
       case 'location':
-        result.location = { ...base, value: parseLocation(item) };
+        result.location = mergeLocation(result.location, {
+          ...base,
+          value: parseLocation(item),
+        });
         break;
       case 'job_titles':
         result.jobTitles.push({ ...base, value: parseJobTitles(item) });
@@ -113,18 +127,54 @@ function findChild(
   return children.find((child) => child.title === title);
 }
 
+// The filter UI can save several location rows for one role (seen in real
+// data: an ESSENTIAL ZA row with an empty province plus an OPTIONAL ZA row
+// with GP). Last-row-wins silently downgraded the requirement, so keep the
+// strictest priority and union the regions instead.
+function mergeLocation(
+  current: ParsedFilterRow<ParsedLocation> | undefined,
+  next: ParsedFilterRow<ParsedLocation>,
+): ParsedFilterRow<ParsedLocation> {
+  if (!current) return next;
+  const strictness = (row: ParsedFilterRow<ParsedLocation>) =>
+    (row.nonNegotiable ? 2 : 0) + (row.priority === 'ESSENTIAL' ? 1 : 0);
+  const [primary, secondary] =
+    strictness(next) > strictness(current) ? [next, current] : [current, next];
+  const regions = [...primary.value.regions];
+  for (const region of secondary.value.regions) {
+    if (!regions.some((existing) => existing.value === region.value)) {
+      regions.push(region);
+    }
+  }
+  return {
+    ...primary,
+    value: {
+      ...primary.value,
+      countryCode: primary.value.countryCode || secondary.value.countryCode,
+      regions,
+    },
+  };
+}
+
 function parseLocation(item: RoleFilterItemRow): ParsedLocation {
+  // Empty region children are common (the UI saves a blank province when
+  // none is picked) and would otherwise blank out the location clause.
   const regions = item.children
     .filter(
       (child) =>
-        child.title !== 'remote_work' && child.title !== 'work_authorization',
+        child.title !== REMOTE_WORK_CHILD &&
+        child.title !== WORK_TYPES_CHILD &&
+        child.title !== 'work_authorization' &&
+        !!child.value?.trim(),
     )
-    .map((child) => ({ type: child.title, value: child.value ?? '' }));
+    .map((child) => ({ type: child.title, value: (child.value ?? '').trim() }));
+  const workTypes = workTypesFromChildren(item.children);
 
   return {
     countryCode: item.value ?? '',
     regions,
-    remoteWork: findChild(item.children, 'remote_work')?.boolean ?? false,
+    remoteWork: workTypes.includes('REMOTE'),
+    workTypes,
     workAuthorizationRequired:
       findChild(item.children, 'work_authorization')?.boolean ?? false,
   };

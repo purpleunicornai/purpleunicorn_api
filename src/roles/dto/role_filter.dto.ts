@@ -1,13 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayUnique,
   IsArray,
   IsBoolean,
   IsIn,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
+import {
+  MAX_TERM_LENGTH,
+  MAX_TERMS_PER_SEED,
+} from '../search/criterion-expansions';
+import { WORK_TYPES, WorkType } from '../search/work-types';
 
 export class ChildFilterItemDto {
   @ApiProperty({
@@ -143,6 +152,63 @@ export class FilterItemDto {
   @ValidateNested({ each: true })
   @Type(() => ChildFilterItemDto)
   children?: ChildFilterItemDto[];
+
+  @ApiProperty({
+    description:
+      'Location rows only: how the role may be worked. REMOTE allows remote candidates; ONSITE or HYBRID mean the location matters. Stored as a work_types child; the remote_work child is kept in sync. Omit to keep the children as sent.',
+    enum: WORK_TYPES,
+    isArray: true,
+    required: false,
+    example: ['ONSITE', 'HYBRID'],
+  })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsIn(WORK_TYPES, { each: true })
+  work_types?: WorkType[];
+}
+
+export class ExpansionGroupDto {
+  @ApiProperty({
+    description: 'The recruiter title or skill the terms widen.',
+    example: 'Finance Manager',
+  })
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  seed: string;
+
+  @ApiProperty({
+    description: `OR terms for the seed, the seed itself included or not (it is always put first). Up to ${MAX_TERMS_PER_SEED} terms; only the seed means "keep it literal".`,
+    type: [String],
+    example: ['Finance Manager', 'Head of Finance', 'Financial Controller'],
+  })
+  @Expose()
+  @IsArray()
+  @ArrayMaxSize(MAX_TERMS_PER_SEED)
+  @IsString({ each: true })
+  @MaxLength(MAX_TERM_LENGTH, { each: true })
+  terms: string[];
+}
+
+export class CriterionExpansionsInputDto {
+  @ApiProperty({ type: [ExpansionGroupDto], required: false })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ExpansionGroupDto)
+  job_titles?: ExpansionGroupDto[];
+
+  @ApiProperty({ type: [ExpansionGroupDto], required: false })
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ExpansionGroupDto)
+  skills?: ExpansionGroupDto[];
 }
 
 export class RoleFilterDto {
@@ -155,4 +221,16 @@ export class RoleFilterDto {
   @ValidateNested({ each: true })
   @Type(() => FilterItemDto)
   filters: FilterItemDto[];
+
+  @ApiProperty({
+    description:
+      'Recruiter-edited OR terms. Each group given is saved as-is for its seed and never regenerated; seeds left out reuse their saved group or get a fresh AI one.',
+    type: CriterionExpansionsInputDto,
+    required: false,
+  })
+  @Expose()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CriterionExpansionsInputDto)
+  criterion_expansions?: CriterionExpansionsInputDto;
 }

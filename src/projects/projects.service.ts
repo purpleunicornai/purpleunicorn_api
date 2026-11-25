@@ -10,11 +10,13 @@ const PROJECT_WITH_ROLES_INCLUDE = {
     include: {
       _count: {
         select: {
+          // Results marked not suitable don't count as scored.
           role_result: {
             where: {
               role_filter: {
                 archived: false,
               },
+              OR: [{ not_suitable: false }, { not_suitable: null }],
             },
           },
         },
@@ -130,7 +132,8 @@ export class ProjectsService {
     return project;
   }
 
-  private visibleToUser(userId: string) {
+  // Where clause for the projects a user can see in their org.
+  visibleToUser(userId: string) {
     return {
       OR: [
         { user_id: userId },

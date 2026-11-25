@@ -4,6 +4,7 @@ import baseConfig from './base.config';
 import authConfig from './auth.config';
 import aiConfig from './ai.config';
 import databaseConfig from './database.config';
+import creditsConfig from './credits.config';
 
 @Global()
 @Module({
@@ -13,6 +14,7 @@ import databaseConfig from './database.config';
       authConfig,
       aiConfig,
       databaseConfig,
+      creditsConfig,
     ]),
   ],
   exports: [ConfigCoreModule],

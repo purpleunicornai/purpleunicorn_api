@@ -1,8 +1,14 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/database/prisma.service';
-import { GEMINI_MODEL, GeminiService } from '../services/gemini/gemini.service';
+import { ReasoningService } from '../services/reasoning/reasoning.service';
 import { RequestException } from '../common/exception/core/ExceptionBase';
 import { ImportJobSpecDto } from './dto/job-spec-import.dto';
+import type { GeminiJobSpecFilterItem } from '../services/gemini/gemini.service';
+import {
+  WORK_TYPES_CHILD,
+  withWorkTypeChildren,
+  workTypesFromChildren,
+} from './search/work-types';
 // Must stay before the 'pdf-parse' import below — it defines DOMMatrix/
 // Path2D/ImageData on globalThis before pdf-parse's module-top-level code
 // runs and crashes without them. See pdf-dom-polyfills.ts for why.
@@ -32,6 +38,57 @@ try {
   // build-time tracing — see comment above.
 }
 
+type ImportedChild = NonNullable<GeminiJobSpecFilterItem['children']>[number];
+
+const childOf = (item: GeminiJobSpecFilterItem, title: string) =>
+  item.children?.find((child) => child.title === title);
+
+// Fills in the children the filter UI expects for companies and education,
+// keeping what the AI actually read from the spec (include vs exclude, the
+// named institutions) instead of overwriting it with defaults. Location rows
+// get a work_types child, with remote_work kept in sync.
+export function importedChildren(
+  item: GeminiJobSpecFilterItem,
+): ImportedChild[] {
+  if (item.category === 'companies') {
+    const type = childOf(item, 'company_type')?.value;
+    return [
+      {
+        title: 'company_type',
+        value: type === 'exclude' || type === 'current' ? type : 'include',
+      },
+      {
+        title: 'start_date',
+        value: dayjs.utc().subtract(5, 'year').toISOString(),
+      },
+      { title: 'end_date', value: dayjs.utc().toISOString() },
+      { title: 'include_dates', boolean_value: true },
+    ];
+  }
+  if (item.category === 'education') {
+    const institutions = (
+      childOf(item, 'institutions')?.list_value ?? []
+    ).filter((name) => name.trim());
+    const type = childOf(item, 'type')?.value;
+    return [
+      { title: 'use_institution', boolean_value: institutions.length > 0 },
+      { title: 'institutions', list_value: institutions, value: '' },
+      { title: 'type', value: type === 'exclude' ? 'exclude' : 'include' },
+    ];
+  }
+  if (item.category === 'location') {
+    const children = item.children ?? [];
+    const hasWorkInfo = children.some(
+      (child) =>
+        child.title === WORK_TYPES_CHILD || child.title === 'remote_work',
+    );
+    return hasWorkInfo
+      ? withWorkTypeChildren(children, workTypesFromChildren(children))
+      : children;
+  }
+  return item.children ?? [];
+}
+
 @Injectable()
 export class JobSpecImportService {
   private readonly logger = new Logger(JobSpecImportService.name);
@@ -39,7 +96,7 @@ export class JobSpecImportService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly geminiService: GeminiService,
+    private readonly reasoningService: ReasoningService,
   ) {}
 
   // Persists the AI's output as real role_filter_item/role_filter_child
@@ -53,7 +110,10 @@ export class JobSpecImportService {
     userName: string,
   ) {
     const text = await this.resolveText(dto);
-    const { items, tokensUsed } = await this.geminiService.parseJobSpec(text);
+    const ai = await this.reasoningService.forRole(roleId);
+    const { items, tokensUsed } = await ai.provider.parseJobSpec(text, {
+      model: ai.model,
+    });
 
     return this.prisma.job_spec_import.create({
       data: {
@@ -61,49 +121,11 @@ export class JobSpecImportService {
         original_text: text,
         created_by: userName,
         created_by_id: userId,
-        ai_model_used: GEMINI_MODEL,
+        ai_model_used: ai.model,
         tokens_used: tokensUsed,
         role_filter_items: {
           create: items.map((item) => {
-            let children = item.children ?? [];
-            if (item.category === 'companies') {
-              children = [
-                {
-                  title: 'company_type',
-                  value: 'include',
-                },
-                {
-                  title: 'start_date',
-                  value: dayjs.utc().subtract(5, 'year').toISOString(),
-                },
-                {
-                  title: 'end_date',
-                  value: dayjs.utc().toISOString(),
-                },
-                {
-                  title: 'include_dates',
-                  boolean_value: true,
-                },
-              ];
-            }
-            if (item.category === 'education') {
-              children = [
-                {
-                  title: 'use_institution',
-                  boolean_value: false,
-                },
-                {
-                  title: 'institutions',
-                  list_value: [],
-                  value: '',
-                },
-                {
-                  title: 'type',
-                  value: 'include',
-                },
-              ];
-            }
-
+            const children = importedChildren(item);
             return {
               category: item.category,
               value: item.value,
@@ -124,6 +146,53 @@ export class JobSpecImportService {
       },
       include: { role_filter_items: { include: { children: true } } },
     });
+  }
+
+  // "Generate from brief": the latest imported brief or job spec, or failing
+  // that the role's current filters, written up as a description to review.
+  async describeRole(roleId: string): Promise<{ description: string }> {
+    const role = await this.prisma.roles.findUniqueOrThrow({
+      where: { uid: roleId },
+      select: {
+        name: true,
+        job_spec_import: {
+          where: { original_text: { not: null } },
+          orderBy: { created: 'desc' },
+          take: 1,
+          select: { original_text: true },
+        },
+        role_filters: {
+          where: { archived: false },
+          select: {
+            role_filter_items: {
+              select: { category: true, value: true, list_value: true },
+            },
+          },
+        },
+      },
+    });
+    const filterLines = role.role_filters
+      .flatMap((f) => f.role_filter_items)
+      .map(
+        (i) =>
+          `${i.category}: ${[i.value, ...i.list_value].filter(Boolean).join(', ')}`,
+      );
+    const brief =
+      role.job_spec_import[0]?.original_text?.trim() || filterLines.join('\n');
+    if (!brief) {
+      throw new RequestException(
+        'Add a brief or filters first, then generate a description from them',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        'ROLE_BRIEF_MISSING',
+      );
+    }
+
+    const ai = await this.reasoningService.forRole(roleId);
+    const { description } = await ai.provider.describeRole(
+      { roleName: role.name, brief },
+      { model: ai.model },
+    );
+    return { description };
   }
 
   // Pasted text always wins over an uploaded file when both are somehow

@@ -1,10 +1,14 @@
 import { HttpStatus, Injectable, Logger, MessageEvent } from '@nestjs/common';
 import { parseRoleFilters, ParsedRoleFilters } from './role-filter-parser';
+import { parseTraits } from './lookalike';
+import { FilterItemDto } from '../dto/role_filter.dto';
+import { scoreBreakdownRows, scoreColumns } from './score-persistence';
 import {
-  GoogleSearchItem,
-  GoogleSearchService,
-} from '../../services/google-search/google-search.service';
-import { PageFetchService } from '../../services/page-fetch/page-fetch.service';
+  CriterionExpansions,
+  parseCriterionExpansions,
+} from './criterion-expansions';
+import { GoogleSearchItem } from '../../services/search-item';
+import { VertexSearchService } from '../../services/vertex/vertex-search.service';
 import {
   GeminiCandidateEducationEnrichment,
   GeminiCandidateEnrichment,
@@ -12,11 +16,24 @@ import {
   GeminiCandidateFields,
   GeminiCandidateMatch,
   GeminiCandidateSourceEnrichment,
-  GeminiService,
   GEMINI_MODEL,
   GEMINI_PLATFORM,
+  CandidateResearch,
 } from '../../services/gemini/gemini.service';
+import {
+  addUsage,
+  parseResultUsage,
+  recordUsage,
+  shareOf,
+  type GeminiUsage,
+} from '../../services/gemini/gemini-usage';
 import { PrismaService } from '../../common/database/prisma.service';
+import { ReasoningService } from '../../services/reasoning/reasoning.service';
+import type { Reasoning } from '../../services/reasoning/reasoning-model';
+import {
+  bestContactOf,
+  type RocketReachPerson,
+} from '../../services/rocket-reach/rocket-reach.service';
 import {
   candidate,
   candidate_education,
@@ -36,9 +53,36 @@ import {
   CandidateScoreCategory,
   CandidateScoreResult,
   CandidateScoringService,
+  ScoringFacts,
+  scoringFactsOf,
 } from './candidate-scoring.service';
+import {
+  legacyQualifications,
+  parseResearchFacts,
+  parseScoringFacts,
+  parseSearchScore,
+  rescoreWithResearch,
+  researchFactsOf,
+  rocketReachFactsOf,
+  combineResearchFacts,
+  searchScoreOf,
+} from './research-rescore';
 import { ExistingCandidateSearchService } from './existing-candidate-search.service';
 import { GithubSearchService } from '../../services/github/github-search.service';
+import { isKnownWrongCountry } from './filter-terms';
+import { describeRole } from './describe-role';
+import { applyScores, ScoredCandidate } from './candidate-score';
+import { normalizeImageUrl } from './candidate-profile';
+import { parseSearchPageToken } from './search-page-token';
+import { broadenFilters } from './broaden-filters';
+import {
+  isExhausted,
+  mergeSearchProgress,
+  parseSearchProgress,
+  SearchProgress,
+  SearchProgressPatch,
+  withSearchProgress,
+} from './search-progress';
 
 // Both a freshly-extracted match (GeminiCandidateMatch) and an
 // already-known candidate's judgment (GeminiKnownCandidateMatch) carry
@@ -48,7 +92,13 @@ import { GithubSearchService } from '../../services/github/github-search.service
 type MatchNarrative = Pick<
   GeminiCandidateMatch,
   'summary' | 'reasoning' | 'skills_matched' | 'score'
->;
+> & {
+  page?: number;
+  matchedBy?: 'location' | 'remote';
+  missing?: string[];
+  nonNegotiableUnconfirmed?: string[];
+  qualifications_matched?: string[];
+};
 
 // A single generateText call asking Gemini to score the whole result set at
 // once scales badly (a 200-item synthetic batch took ~2.7 minutes end to
@@ -57,14 +107,82 @@ type MatchNarrative = Pick<
 // be persisted batch-by-batch instead of only after everything finishes.
 const CANDIDATE_FORMAT_BATCH_SIZE = 20;
 
+// A paged search scores each Vertex page (up to 20 profiles) in two Gemini
+// calls, so the first results land on screen sooner.
+const PAGE_SCORE_BATCH_SIZE = 10;
+
+// The stages a paged search reports, in order.
+export const SEARCH_PAGE_STAGES = [
+  'preparing',
+  'searching',
+  'scoring',
+  'ranking',
+] as const;
+export type SearchPageStage = (typeof SEARCH_PAGE_STAGES)[number];
+
+export type SearchPageStageEvent = {
+  stage: SearchPageStage;
+  status: 'started' | 'progress' | 'done';
+  page: number;
+  // searching:done
+  found?: number;
+  estimatedTotal?: number | null;
+  skippedDuplicates?: number;
+  // scoring
+  completed?: number;
+  total?: number;
+  // preparing:done and scoring:progress: results saved since the last event.
+  savedIds?: string[];
+};
+
+export type SearchPageDone = {
+  page: number;
+  hasMore: boolean;
+  estimatedTotal: number | null;
+  saved: number;
+  tokensUsed: number;
+};
+
+export type SearchPageOutcome =
+  | ({ kind: 'done' } & SearchPageDone)
+  // shouldStop asked to stop between batches; the resume point is unmoved.
+  | { kind: 'stopped' }
+  // The role's filters were replaced since the job started.
+  | { kind: 'superseded' };
+
+export interface SearchPageHooks {
+  onStage?: (event: SearchPageStageEvent) => void | Promise<void>;
+  shouldStop?: () => Promise<boolean>;
+}
+
+// Contact details from a RocketReach profile, only for fields the stored
+// candidate doesn't have yet. Over a value this research run guessed for
+// an empty field, RocketReach's looked-up one wins.
+function contactFromRocketReach(
+  person: RocketReachPerson | undefined,
+  existing: candidate,
+): Prisma.candidateUpdateInput {
+  if (!person) return {};
+  const { email, phone } = bestContactOf(person);
+  const data: Prisma.candidateUpdateInput = {
+    ...(!existing.rocketreach_profile_id
+      ? { rocketreach_profile_id: String(person.id) }
+      : {}),
+    ...(!existing.email && email ? { email } : {}),
+    ...(!existing.phone && phone ? { phone } : {}),
+  };
+  return data.email || data.phone
+    ? { ...data, contact_info_last_updated: new Date() }
+    : data;
+}
+
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
 
   constructor(
-    private readonly googleSearchService: GoogleSearchService,
-    private readonly geminiService: GeminiService,
-    private readonly pageFetchService: PageFetchService,
+    private readonly vertexSearchService: VertexSearchService,
+    private readonly reasoningService: ReasoningService,
     private readonly candidateScoringService: CandidateScoringService,
     private readonly existingCandidateSearchService: ExistingCandidateSearchService,
     private readonly githubSearchService: GithubSearchService,
@@ -79,6 +197,8 @@ export class SearchService {
   ): Promise<role_result[]> {
     const filterSet = await this.getRoleFilters(roleId);
     const filters = parseRoleFilters(filterSet.role_filter_items);
+    const expansions = parseCriterionExpansions(filterSet.metadata);
+    const ai = await this.reasoningService.forRole(roleId);
 
     const roleResults: role_result[] = [];
     roleResults.push(
@@ -86,18 +206,17 @@ export class SearchService {
         role.uid,
         filterSet.uid,
         filters,
+        ai,
       )),
     );
 
     const { items, sourceByLink } = await this.searchForItems(
       filters,
       role.name,
+      expansions,
     );
     for (const batch of this.chunk(items, CANDIDATE_FORMAT_BATCH_SIZE)) {
-      const formatted = await this.geminiService.formatCandidates(
-        batch,
-        filters,
-      );
+      const formatted = await this.formatBatch(batch, filters, ai);
       const saved = await this.saveCandidateMatches(
         role.uid,
         filterSet.uid,
@@ -115,12 +234,19 @@ export class SearchService {
   // Digs deeper on a single already-found candidate to build out their
   // profile — a no-op if it's already been done (enriched_at is set) or
   // there's no name on file to search on, unless `force` is set to bypass
-  // the already-enriched check and refetch from Google regardless. Always
+  // the already-enriched check and refetch with grounded research regardless. Always
   // includes `experience`/`education` so every return path has the same shape.
+  // `rocketReach` is a person lookup already under way (it runs alongside
+  // the AI research): its profile fills empty contact fields, adds title,
+  // employer and country facts to the re-score, and is kept raw on the
+  // result's metadata.
   async deepSearchCandidate(
     candidateUid: string,
     roleId: string,
     force = false,
+    {
+      rocketReach,
+    }: { rocketReach?: Promise<RocketReachPerson | undefined> } = {},
   ): Promise<
     candidate & {
       experience: candidate_experience[];
@@ -149,24 +275,36 @@ export class SearchService {
       .trim();
     if (!fullName) return existing;
 
-    const items = await this.googleSearchService.searchCandidate(existing);
-    if (items.length === 0) {
-      return this.prisma.candidate.update({
-        where: { uid: candidateUid },
-        data: { enriched_at: new Date() },
-        include: { experience: true, education: true, sources: true },
-      });
-    }
+    const filterSet = await this.getRoleFilters(roleId);
+    const filters = parseRoleFilters(filterSet.role_filter_items);
+    const linkedinUrl =
+      existing.sources.find((source) => source.main)?.url ??
+      existing.sources.find((source) =>
+        (source.url ?? '').includes('linkedin.com/in/'),
+      )?.url ??
+      '';
 
-    const enrichedItems = await this.attachPageContent(items);
-    const { enrichment } = await this.geminiService.enrichCandidate(
-      enrichedItems,
-      existing,
+    const ai = await this.reasoningService.forRole(roleId);
+    const researching = ai.provider.researchCandidate(
+      describeRole(filters),
+      {
+        name: fullName,
+        headline: existing.current_title ?? undefined,
+        company: existing.current_company ?? undefined,
+        location: [
+          existing.current_location_city,
+          existing.current_location_country_code,
+        ]
+          .filter(Boolean)
+          .join(', '),
+        linkedinUrl,
+        imageUrl: existing.image_url ?? undefined,
+      },
+      { model: ai.model },
     );
+    const [research, person] = await Promise.all([researching, rocketReach]);
+    const enrichment = enrichmentFromResearch(research);
 
-    // Create any new work/education/source rows before the final read so
-    // they're included in the `experience`/`education`/`sources` this
-    // method returns.
     await this.createCandidateExperience(
       candidateUid,
       this.mergeCurrentRoleExperience(existing, enrichment),
@@ -177,10 +315,11 @@ export class SearchService {
       enrichment.additional_sources,
     );
 
-    return this.prisma.candidate.update({
+    const updated = await this.prisma.candidate.update({
       where: { uid: candidateUid },
       data: {
         ...this.buildEnrichmentCandidateData(enrichment, existing),
+        ...contactFromRocketReach(person, existing),
         enriched_at: new Date(),
       },
       include: {
@@ -194,22 +333,91 @@ export class SearchService {
         },
       },
     });
-  }
 
-  // Fetches each result's own page text in parallel (PageFetchService skips
-  // blocked hosts like LinkedIn and swallows failures on its own, resolving
-  // to undefined) so Gemini can prefer the full profile over the search
-  // snippet when it's available.
-  private async attachPageContent(
-    items: GoogleSearchItem[],
-  ): Promise<GoogleSearchItem[]> {
-    const pageContents = await Promise.all(
-      items.map((item) => this.pageFetchService.fetchPageText(item.link)),
-    );
-    return items.map((item, index) => ({
-      ...item,
-      page_content: pageContents[index],
-    }));
+    const roleResult = existing.role_results?.[0];
+    if (roleResult) {
+      const previous = asMetadata(roleResult.metadata);
+      const usage = parseResultUsage(roleResult.metadata);
+      const researchUsage = recordUsage(usage.research, research.usage);
+
+      // Re-run the fixed algorithm on the search-time evidence plus this
+      // research's verified facts. The search snapshot (taken from the
+      // record before research touched it, on results saved before
+      // snapshots were kept) is stored, so a re-run never stacks.
+      const searchFacts =
+        parseScoringFacts(previous.searchEvidence) ??
+        scoringFactsOf(existing, {
+          qualifications: legacyQualifications(
+            await this.prisma.role_result_score_breakdown.findMany({
+              where: { role_result_id: roleResult.uid },
+            }),
+          ),
+        });
+      const searchScore = parseSearchScore(previous.searchScore) ?? {
+        score: roleResult.score ?? 0,
+        rawScore:
+          roleResult.pre_disqualification_score ?? roleResult.score ?? 0,
+        disqualified: !!roleResult.disqualified,
+        disqualifiedReasons: roleResult.disqualified_reasons ?? [],
+      };
+      const researchFacts = combineResearchFacts(
+        researchFactsOf(research),
+        rocketReachFactsOf(person),
+      );
+      const { final, researchBefore } = rescoreWithResearch(
+        this.candidateScoringService,
+        filters,
+        searchFacts,
+        researchFacts,
+      );
+
+      const { researchEvidence: _staleResearch, ...kept } = previous;
+      void _staleResearch;
+      const metadata = {
+        ...kept,
+        ...(researchUsage
+          ? { geminiUsage: { ...usage, research: researchUsage } }
+          : {}),
+        ...(research.findings.length ? { findings: research.findings } : {}),
+        identityConfidence: research.identityConfidence,
+        identityReason: research.identityReason,
+        searchQueries: research.searchQueries,
+        searchEvidence: searchFacts,
+        searchScore,
+        ...(researchFacts ? { researchEvidence: researchFacts } : {}),
+        ...(person
+          ? {
+              rocketReach: {
+                fetchedAt: new Date().toISOString(),
+                // Parsed from RocketReach's JSON response, so it is JSON.
+                profile: person as unknown as Prisma.InputJsonObject,
+              },
+            }
+          : {}),
+      };
+      await this.prisma.role_result.update({
+        where: { uid: roleResult.uid },
+        data: {
+          summary: research.summary,
+          reasoning: research.reasoning,
+          ai_score: research.score,
+          ...scoreColumns(final),
+          sources: mergeSources(
+            roleResult.sources,
+            research.sources.map((source) => source.url),
+          ),
+          metadata,
+        },
+      });
+      await this.createScoreBreakdown(
+        roleResult.uid,
+        filterSet.uid,
+        final.breakdown,
+        researchBefore,
+      );
+    }
+
+    return updated;
   }
 
   // Scalar fields get overwritten by newly-found values (a targeted deep
@@ -245,6 +453,12 @@ export class SearchService {
     for (const field of scalarFields) {
       const value = enrichment[field];
       if (value !== undefined) data[field] = value;
+    }
+    // Never let a placeholder (or junk) replace a real stored photo.
+    if ('image_url' in data) {
+      const imageUrl = normalizeImageUrl(data.image_url as string);
+      if (imageUrl) data.image_url = imageUrl;
+      else delete data.image_url;
     }
 
     if (enrichment.current_role_start_date !== undefined) {
@@ -435,6 +649,8 @@ export class SearchService {
           });
           this.logger.debug('Parsing role filters');
           const filters = parseRoleFilters(filterSet.role_filter_items);
+          const expansions = parseCriterionExpansions(filterSet.metadata);
+          const ai = await this.reasoningService.forRole(roleId);
           subscriber.next({
             type: 'stage',
             data: { stage: 'parsing filters', status: 'done' },
@@ -454,6 +670,7 @@ export class SearchService {
             roleId,
             filterSet.uid,
             filters,
+            ai,
           );
           roleResults.push(...existingMatches);
           subscriber.next({
@@ -473,9 +690,11 @@ export class SearchService {
               status: 'started',
             },
           });
+          // TODO - Need to add update in here.
           const { items, sourceByLink } = await this.searchForItems(
             filters,
             roleName,
+            expansions,
           );
           this.logger.debug(
             `Finished searching candidates for roleId=${roleId}, found ${items?.length} items`,
@@ -502,10 +721,7 @@ export class SearchService {
             this.logger.debug(
               `Formatting batch ${i + 1}/${batches.length} for roleId=${roleId}`,
             );
-            const formatted = await this.geminiService.formatCandidates(
-              batches[i],
-              filters,
-            );
+            const formatted = await this.formatBatch(batches[i], filters, ai);
             const saved = await this.saveCandidateMatches(
               roleId,
               filterSet.uid,
@@ -574,6 +790,282 @@ export class SearchService {
     });
   }
 
+  // Runs one page of the role's search: existing candidates on page 1, then
+  // one Vertex page (plus GitHub on page 1), scored and saved in small
+  // batches, and moves the filter set's resume point on. `shouldStop` is
+  // checked between batches; stopping leaves the resume point where it was,
+  // so resuming re-runs that page (saved results are upserted). The role
+  // background job (RoleSearchProcessor) calls this once per page.
+  async runSearchPage(
+    roleId: string,
+    filterId: string,
+    userId: string,
+    userName: string,
+    roleName: string | undefined,
+    { onStage, shouldStop }: SearchPageHooks = {},
+  ): Promise<SearchPageOutcome> {
+    const emit = async (event: SearchPageStageEvent) => {
+      await onStage?.(event);
+    };
+    const stopRequested = async () => (shouldStop ? shouldStop() : false);
+
+    const filterSet = await this.getRoleFilters(roleId);
+    if (filterSet.uid !== filterId) return { kind: 'superseded' };
+    const filters = parseRoleFilters(filterSet.role_filter_items);
+    const expansions = parseCriterionExpansions(filterSet.metadata);
+    const previous = parseSearchProgress(filterSet.metadata);
+    if (previous && isExhausted(previous)) {
+      return {
+        kind: 'done',
+        page: previous.pagesLoaded,
+        hasMore: false,
+        estimatedTotal: previous.estimatedTotal,
+        saved: 0,
+        tokensUsed: 0,
+      };
+    }
+
+    const page = (previous?.pagesLoaded ?? 0) + 1;
+    // After Look deeper, Vertex gets the broader query; scoring still uses
+    // the role's full filters.
+    const broad = previous?.broadFrom != null;
+    const queryFilters = broad ? (broadenFilters(filters) ?? filters) : filters;
+    await emit({ stage: 'preparing', status: 'started', page });
+    const ai = await this.reasoningService.forRole(roleId);
+    const saved: role_result[] =
+      page === 1
+        ? await this.findExistingCandidateMatches(roleId, filterId, filters, ai)
+        : [];
+    await emit({
+      stage: 'preparing',
+      status: 'done',
+      page,
+      savedIds: saved.map((result) => result.uid),
+    });
+    if (await stopRequested()) return { kind: 'stopped' };
+
+    await emit({ stage: 'searching', status: 'started', page });
+    const vertexPage = await this.vertexSearchService.searchRolePage(
+      queryFilters,
+      roleName,
+      expansions,
+      previous?.nextPageToken
+        ? parseSearchPageToken(previous.nextPageToken)
+        : undefined,
+    );
+    const githubItems =
+      page === 1 ? await this.githubSearchService.search(filters) : [];
+    // The broader query starts from the top again, so it meets people the
+    // role already has: skip them rather than pay to score them again.
+    const known = broad
+      ? await this.knownProfileLinks(roleId, vertexPage.items)
+      : new Set<string>();
+    // Stamped with the run's page: a broader pass counts its own from 1.
+    const vertexItems = vertexPage.items
+      .filter((item) => !known.has(item.link))
+      .map((item) => ({ ...item, page }));
+    const sourceByLink = new Map<string, string>();
+    for (const item of vertexItems) sourceByLink.set(item.link, 'Vertex');
+    for (const item of githubItems) sourceByLink.set(item.link, 'GitHub');
+    const items = [...vertexItems, ...githubItems];
+    const estimatedTotal =
+      vertexPage.estimatedTotal ?? previous?.estimatedTotal ?? null;
+    await emit({
+      stage: 'searching',
+      status: 'done',
+      page,
+      found: items.length,
+      estimatedTotal,
+      skippedDuplicates: vertexPage.skippedDuplicates + known.size,
+    });
+
+    await emit({
+      stage: 'scoring',
+      status: 'started',
+      page,
+      completed: 0,
+      total: items.length,
+    });
+    let completed = 0;
+    for (const batch of this.chunk(items, PAGE_SCORE_BATCH_SIZE)) {
+      if (await stopRequested()) return { kind: 'stopped' };
+      const formatted = await this.formatBatch(batch, filters, ai);
+      const batchSaved = await this.saveCandidateMatches(
+        roleId,
+        filterId,
+        filters,
+        formatted,
+        sourceByLink,
+      );
+      saved.push(...batchSaved);
+      completed += batch.length;
+      await emit({
+        stage: 'scoring',
+        status: 'progress',
+        page,
+        completed,
+        total: items.length,
+        savedIds: batchSaved.map((result) => result.uid),
+      });
+    }
+    if (await stopRequested()) return { kind: 'stopped' };
+
+    await emit({ stage: 'ranking', status: 'started', page });
+    const nextPageToken = vertexPage.nextPageToken ?? null;
+    await this.saveSearchProgress(filterId, {
+      pagesLoaded: page,
+      nextPageToken,
+      estimatedTotal,
+    });
+    await this.markSearchRunDate(roleId, userId, userName);
+    await emit({ stage: 'ranking', status: 'done', page });
+
+    return {
+      kind: 'done',
+      page,
+      hasMore: nextPageToken !== null,
+      estimatedTotal,
+      saved: saved.length,
+      tokensUsed: saved.reduce((sum, r) => sum + (r.tokens_used ?? 0), 0),
+    };
+  }
+
+  // Whether Look deeper has a broader query to run for this filter set.
+  // "Add to another role" with scoring on: scores one candidate already on
+  // file against this role's active filters, the same way the existing-
+  // candidate pass does, and saves it as the role's result. Null when the
+  // AI returned no match for them.
+  async scoreCandidateForRole(
+    roleId: string,
+    candidateUid: string,
+  ): Promise<role_result | null> {
+    const filterSet = await this.getRoleFilters(roleId);
+    const filters = parseRoleFilters(filterSet.role_filter_items);
+    const candidate = await this.prisma.candidate.findUniqueOrThrow({
+      where: { uid: candidateUid },
+      include: { experience: true, education: true },
+    });
+    const ai = await this.reasoningService.forRole(roleId);
+    const { matches, tokensUsed, usage } =
+      await ai.provider.scoreKnownCandidates([candidate], filters, {
+        model: ai.model,
+      });
+    const match = matches.find((m) => m.candidate_uid === candidateUid);
+    if (!match) return null;
+    return this.upsertRoleResult(
+      roleId,
+      filterSet.uid,
+      candidateUid,
+      match,
+      tokensUsed,
+      this.candidateScoringService.scoreCandidate(filters, candidate),
+      'Database',
+      usage,
+      { filters, facts: scoringFactsOf(candidate) },
+      ai.model,
+    );
+  }
+
+  // "Find more like this": people already on file who share the seed's
+  // traits and aren't in this role yet, ranked by the deterministic score
+  // against those traits (the similarity, 0-100). No provider or AI calls,
+  // so it spends no searches.
+  async findSimilar(
+    roleId: string,
+    seedUid: string,
+    traits: FilterItemDto[],
+    limit: number,
+  ) {
+    const filters = parseTraits(traits);
+    const pool = await this.existingCandidateSearchService.findCandidates(
+      roleId,
+      filters,
+    );
+    return pool
+      .filter((candidate) => candidate.uid !== seedUid)
+      .map((candidate) => {
+        const { score, breakdown } =
+          this.candidateScoringService.scoreCandidate(filters, candidate);
+        const rows = breakdown.filter((row) => row.applicable);
+        // The card only needs the profile, not the full work history.
+        const profile: Partial<typeof candidate> = { ...candidate };
+        delete profile.experience;
+        delete profile.education;
+        return {
+          candidate: profile,
+          similarity: score,
+          shared: rows.filter((r) => r.earned > 0).map((r) => r.requirement),
+          differs: rows
+            .filter((r) => r.earned === 0 && r.priority === 'ESSENTIAL')
+            .map((r) => r.requirement),
+          traits: rows.length,
+        };
+      })
+      .filter((match) => match.similarity > 0)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+  }
+
+  async canBroaden(filterId: string): Promise<boolean> {
+    const items = await this.prisma.role_filter_item.findMany({
+      where: { role_filter_id: filterId },
+      include: { children: true },
+    });
+    return broadenFilters(parseRoleFilters(items)) !== null;
+  }
+
+  // Of these search hits, the profile links the role already has a result for.
+  private async knownProfileLinks(
+    roleId: string,
+    items: GoogleSearchItem[],
+  ): Promise<Set<string>> {
+    if (items.length === 0) return new Set();
+    const sources = await this.prisma.candidate_source.findMany({
+      where: {
+        url: { in: items.map((item) => item.link) },
+        candidate: { role_results: { some: { role_id: roleId } } },
+      },
+      select: { url: true },
+    });
+    return new Set(sources.flatMap((source) => source.url ?? []));
+  }
+
+  // The role's current filter set, if it has one, for reading its progress.
+  findActiveFilterSet(
+    roleId: string,
+  ): Promise<Pick<role_filters, 'uid' | 'metadata'> | null> {
+    return this.prisma.role_filters.findFirst({
+      where: { role_id: roleId, archived: false },
+      select: { uid: true, metadata: true },
+    });
+  }
+
+  // Patches the filter set's search progress, re-reading its metadata first
+  // so other keys (criterion expansions) and fields are kept.
+  async saveSearchProgress(
+    filterId: string,
+    patch: SearchProgressPatch,
+  ): Promise<SearchProgress> {
+    const filterSet = await this.prisma.role_filters.findUnique({
+      where: { uid: filterId },
+      select: { metadata: true },
+    });
+    const progress = mergeSearchProgress(
+      parseSearchProgress(filterSet?.metadata),
+      patch,
+    );
+    await this.prisma.role_filters.update({
+      where: { uid: filterId },
+      data: {
+        metadata: withSearchProgress(
+          filterSet?.metadata,
+          progress,
+        ) as Prisma.InputJsonObject,
+      },
+    });
+    return progress;
+  }
+
   private async getRoleFilters(roleId: string): Promise<
     role_filters & {
       role_filter_items: (role_filter_item & {
@@ -601,27 +1093,53 @@ export class SearchService {
     roleId: string,
     filterId: string,
     filters: ParsedRoleFilters,
-    result: { matches: GeminiCandidateMatch[]; tokensUsed: number },
+    result: {
+      matches: GeminiCandidateMatch[];
+      tokensUsed: number;
+      usage?: GeminiUsage | null;
+      // The reasoning model that produced the matches.
+      model: string;
+    },
     sourceByLink: Map<string, string>,
   ): Promise<role_result[]> {
     const tokensPerMatch = result.matches.length
       ? Math.round(result.tokensUsed / result.matches.length)
       : 0;
+    const usagePerMatch = result.usage
+      ? shareOf(result.usage, result.matches.length)
+      : null;
 
     const roleResults: role_result[] = [];
     for (const match of result.matches) {
+      // Vertex still returns some people outside a required country (a
+      // profile can mention "South Africa" without being based there), so
+      // drop anyone whose stated country is known to be wrong.
+      if (
+        isKnownWrongCountry(
+          filters,
+          match.candidate.current_location_country_code,
+          match.candidate.open_to_relocation,
+        )
+      ) {
+        this.logger.debug(
+          `Skipping ${match.candidate.source_url ?? 'result'}: based in ${match.candidate.current_location_country_code}`,
+        );
+        continue;
+      }
       const candidateRecord = await this.upsertCandidate(match.candidate);
+      const evidence = { qualifications: match.qualifications_matched };
       const scoreResult = this.candidateScoringService.scoreCandidate(
         filters,
         candidateRecord,
+        evidence,
       );
       // Gemini is instructed to copy source_url verbatim from the input
       // item's link, so it doubles as the key for recovering which engine
-      // actually produced this match — default to Google since that's the
+      // actually produced this match — default to Vertex since that's the
       // dominant source if a URL was altered or omitted.
       const source = match.candidate.source_url
-        ? (sourceByLink.get(match.candidate.source_url) ?? 'Google')
-        : 'Google';
+        ? (sourceByLink.get(match.candidate.source_url) ?? 'Vertex')
+        : 'Vertex';
       const roleResult = await this.upsertRoleResult(
         roleId,
         filterId,
@@ -630,6 +1148,9 @@ export class SearchService {
         tokensPerMatch,
         scoreResult,
         source,
+        usagePerMatch,
+        { filters, facts: scoringFactsOf(candidateRecord, evidence) },
+        result.model,
       );
       roleResults.push(roleResult);
     }
@@ -637,7 +1158,7 @@ export class SearchService {
     return roleResults;
   }
 
-  // Google x-ray and GitHub are two independent candidate sources that both
+  // Vertex (LinkedIn profiles) and GitHub are two independent candidate sources that both
   // return the same GoogleSearchItem shape — merging them here means every
   // downstream step (chunking, Gemini extraction, upsertCandidate dedup by
   // source_url) needs no awareness that more than one source exists. The
@@ -646,26 +1167,28 @@ export class SearchService {
   // still tell which engine actually found it, to record on role_result.
   private async searchForItems(
     filters: ParsedRoleFilters,
-    roleName?: string,
+    roleName: string | undefined,
+    expansions: CriterionExpansions | null,
   ): Promise<{
     items: GoogleSearchItem[];
     sourceByLink: Map<string, string>;
   }> {
-    const googleItems = await this.googleSearchService.search(
+    const vertexItems = await this.vertexSearchService.search(
       filters,
       roleName,
+      expansions,
     );
     const githubItems = await this.githubSearchService.search(filters);
 
     const sourceByLink = new Map<string, string>();
-    for (const item of googleItems) sourceByLink.set(item.link, 'Google');
+    for (const item of vertexItems) sourceByLink.set(item.link, 'Vertex');
     for (const item of githubItems) sourceByLink.set(item.link, 'GitHub');
 
-    return { items: [...googleItems, ...githubItems], sourceByLink };
+    return { items: [...vertexItems, ...githubItems], sourceByLink };
   }
 
   // Finds candidates already on file that weren't surfaced by this role's
-  // Google search, scores them with the same deterministic algorithm used
+  // Vertex search, scores them with the same deterministic algorithm used
   // for freshly-found matches, and sends only the top-ranked, non-
   // disqualified subset to Gemini for a narrative judgment — capping
   // Gemini usage regardless of how many candidates the DB query returns.
@@ -673,6 +1196,7 @@ export class SearchService {
     roleId: string,
     filterId: string,
     filters: ParsedRoleFilters,
+    ai: Reasoning,
   ): Promise<role_result[]> {
     const pool = await this.existingCandidateSearchService.findCandidates(
       roleId,
@@ -695,14 +1219,16 @@ export class SearchService {
 
     if (ranked.length === 0) return [];
 
-    const { matches, tokensUsed } =
-      await this.geminiService.scoreKnownCandidates(
+    const { matches, tokensUsed, usage } =
+      await ai.provider.scoreKnownCandidates(
         ranked.map((entry) => entry.candidate),
         filters,
+        { model: ai.model },
       );
     const tokensPerMatch = matches.length
       ? Math.round(tokensUsed / matches.length)
       : 0;
+    const usagePerMatch = usage ? shareOf(usage, matches.length) : null;
 
     const roleResults: role_result[] = [];
     for (const entry of ranked) {
@@ -720,6 +1246,9 @@ export class SearchService {
         tokensPerMatch,
         entry.scoreResult,
         'Database',
+        usagePerMatch,
+        { filters, facts: scoringFactsOf(entry.candidate) },
+        ai.model,
       );
       roleResults.push(roleResult);
     }
@@ -746,6 +1275,77 @@ export class SearchService {
         search_run_by_id: userId,
       },
     });
+  }
+
+  // A single Gemini timeout or malformed response used to abort the whole
+  // search and lose every later batch. Skip just that batch instead.
+  private async formatBatch(
+    batch: GoogleSearchItem[],
+    filters: ParsedRoleFilters,
+    ai: Reasoning,
+  ): Promise<{
+    matches: Array<GeminiCandidateMatch & MatchNarrative>;
+    tokensUsed: number;
+    usage: GeminiUsage | null;
+    model: string;
+  }> {
+    const extractedItems = batch.filter((item) => item.extracted);
+    const otherItems = batch.filter((item) => !item.extracted);
+    const matches: Array<GeminiCandidateMatch & MatchNarrative> = [];
+    let tokensUsed = 0;
+    let usage: GeminiUsage | null = null;
+
+    if (extractedItems.length > 0) {
+      const profiles = extractedItems.map((item) => item.extracted!);
+      try {
+        const scored = await ai.provider.scoreCandidates(
+          describeRole(filters),
+          profiles,
+          { model: ai.model },
+        );
+        tokensUsed += scored.tokensUsed;
+        usage = addUsage(usage, scored.usage);
+        const ranked = applyScores(profiles, scored.scores);
+        matches.push(
+          ...ranked.map((candidate) =>
+            scoredCandidateToMatch(candidate, extractedItems),
+          ),
+        );
+      } catch (error) {
+        this.logger.warn(
+          `Scoring failed for ${extractedItems.length} LinkedIn result(s): ${error instanceof Error ? error.message : String(error)}. Saving extracted profiles unscored.`,
+        );
+        matches.push(
+          ...extractedItems.map((item) =>
+            scoredCandidateToMatch(item.extracted!, extractedItems),
+          ),
+        );
+      }
+    }
+
+    if (otherItems.length > 0) {
+      try {
+        const formatted = await ai.provider.formatCandidates(
+          otherItems,
+          filters,
+          { model: ai.model },
+        );
+        if (formatted.matches.length < otherItems.length) {
+          this.logger.debug(
+            `Gemini returned ${formatted.matches.length} of ${otherItems.length} result(s) in a batch`,
+          );
+        }
+        tokensUsed += formatted.tokensUsed;
+        usage = addUsage(usage, formatted.usage);
+        matches.push(...formatted.matches);
+      } catch (error) {
+        this.logger.warn(
+          `Skipping a batch of ${otherItems.length} result(s): Gemini failed with ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    return { matches, tokensUsed, usage, model: ai.model };
   }
 
   private chunk<T>(items: T[], size: number): T[][] {
@@ -837,11 +1437,53 @@ export class SearchService {
     tokensUsed: number,
     scoreResult: CandidateScoreResult,
     source: string,
+    // This result's share of the scoring call(s); null when not reported.
+    usageShare: GeminiUsage | null = null,
+    // What scoreResult was scored from. Kept as the search snapshot, and
+    // used to re-apply earlier deep research on top of this search.
+    search?: { filters: ParsedRoleFilters; facts: ScoringFacts },
+    aiModel: string = GEMINI_MODEL,
   ): Promise<role_result> {
     const existing = await this.prisma.role_result.findFirst({
       where: { role_id: roleId, candidate_uid: candidateUid },
     });
 
+    const previous = asMetadata(existing?.metadata);
+    const usage = parseResultUsage(existing?.metadata);
+    const scoring = recordUsage(usage.scoring, usageShare);
+    const geminiUsage = { ...usage, ...(scoring ? { scoring } : {}) };
+    // A researched result keeps its research: the new search evidence plus
+    // the latest research's facts, scored by the same fixed algorithm.
+    const { final, researchBefore } = search
+      ? rescoreWithResearch(
+          this.candidateScoringService,
+          search.filters,
+          search.facts,
+          parseResearchFacts(previous.researchEvidence),
+          scoreResult,
+        )
+      : { final: scoreResult, researchBefore: [] };
+    const metadata = {
+      // Deep research's findings outlive a re-score.
+      ...Object.fromEntries(
+        RESEARCH_METADATA_KEYS.filter((key) => key in previous).map((key) => [
+          key,
+          previous[key],
+        ]),
+      ),
+      ...(Object.keys(geminiUsage).length > 0 ? { geminiUsage } : {}),
+      ...(match.matchedBy ? { matchedBy: match.matchedBy } : {}),
+      ...(match.missing ? { missing: match.missing } : {}),
+      ...(match.nonNegotiableUnconfirmed
+        ? { nonNegotiableUnconfirmed: match.nonNegotiableUnconfirmed }
+        : {}),
+      ...(search
+        ? {
+            searchEvidence: search.facts,
+            searchScore: searchScoreOf(scoreResult),
+          }
+        : {}),
+    };
     const data = {
       role_id: roleId,
       filter_id: filterId,
@@ -850,12 +1492,13 @@ export class SearchService {
       reasoning: match.reasoning,
       skills_matched: match.skills_matched,
       ai_score: match.score,
-      score: scoreResult.disqualified ? 0 : scoreResult.score,
-      disqualified: scoreResult.disqualified,
+      ...scoreColumns(final),
       tokens_used: tokensUsed,
       sources: [source],
       ai_platform: GEMINI_PLATFORM,
-      ai_model: GEMINI_MODEL,
+      ai_model: aiModel,
+      ...(match.page != null ? { page: match.page } : {}),
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
 
     const roleResult = existing
@@ -869,42 +1512,30 @@ export class SearchService {
     await this.createScoreBreakdown(
       roleResult.uid,
       filterId,
-      scoreResult.breakdown,
+      final.breakdown,
+      researchBefore,
     );
 
     return roleResult;
   }
 
-  // A role_result's score breakdown is fully replaced on every save rather
-  // than diffed, since the category set and weights are re-derived from
-  // scratch each search run. Every breakdown row shares the same
-  // role_filter_id: a role now has exactly one active filter set, so there's
-  // nothing finer-grained to link back to than that one row.
   private async createScoreBreakdown(
     roleResultId: string,
     filterId: string,
     breakdown: CandidateScoreCategory[],
+    researchBefore: (number | null)[] = [],
   ): Promise<void> {
     await this.prisma.role_result_score_breakdown.deleteMany({
       where: { role_result_id: roleResultId },
     });
-
     if (breakdown.length === 0) return;
-
     await this.prisma.role_result_score_breakdown.createMany({
-      data: breakdown.map((entry) => ({
-        role_result_id: roleResultId,
-        role_filter_id: filterId,
-        category: entry.category,
-        // weight is an Int column, but CandidateScoringService divides the
-        // 80/20 buckets evenly across however many rows exist (e.g.
-        // 80/3 = 26.666...) — rounding it the same way score is rounded
-        // keeps the two consistent, so a full match (fraction === 1) can
-        // never show a score higher than its own weight.
-        weight: Math.round(entry.weight),
-        applicable: entry.applicable,
-        score: Math.round(entry.earned),
-      })),
+      data: scoreBreakdownRows(
+        roleResultId,
+        filterId,
+        breakdown,
+        researchBefore,
+      ),
     });
   }
 
@@ -924,7 +1555,11 @@ export class SearchService {
     const data: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
       if (value === undefined) continue;
-      if (key === 'current_role_start_date') {
+      if (key === 'image_url') {
+        // A placeholder is dropped, so an existing real photo is kept.
+        const imageUrl = normalizeImageUrl(value as string);
+        if (imageUrl) data[key] = imageUrl;
+      } else if (key === 'current_role_start_date') {
         data[key] = new Date(value as string);
       } else {
         data[key] = value;
@@ -953,4 +1588,122 @@ export class SearchService {
     }
     return new Date(NaN);
   }
+}
+
+function scoredCandidateToMatch(
+  candidate: ScoredCandidate,
+  items: GoogleSearchItem[],
+): GeminiCandidateMatch & MatchNarrative {
+  const item = items.find((entry) => entry.extracted?.key === candidate.key);
+  const record = candidate.candidate;
+  const main = record.sources?.find((source) => source.main);
+  const {
+    sources: _sources,
+    experience: _experience,
+    education: _education,
+    ...scalar
+  } = record;
+  void _sources;
+  void _experience;
+  void _education;
+  return {
+    candidate: {
+      ...scalar,
+      source_title: main?.title ?? candidate.name,
+      source_name: main?.source ?? 'LinkedIn',
+      source_url: candidate.linkedinUrl,
+    },
+    summary: candidate.summary ?? '',
+    reasoning: candidate.reasoning ?? '',
+    skills_matched: candidate.skills_matched ?? [],
+    score: candidate.score ?? 0,
+    page: item?.page,
+    matchedBy: candidate.matchedBy ?? item?.matchedBy,
+    missing: candidate.missing,
+    nonNegotiableUnconfirmed: candidate.nonNegotiableUnconfirmed,
+  };
+}
+
+function enrichmentFromResearch(
+  research: CandidateResearch,
+): GeminiCandidateEnrichment {
+  const record = research.candidate;
+  return {
+    first_name: record.first_name,
+    last_name: record.last_name,
+    email: record.email,
+    phone: record.phone,
+    country_calling_code: record.country_calling_code,
+    current_location_city: record.current_location_city,
+    current_location_country_code: record.current_location_country_code,
+    current_location_postal_code: record.current_location_postal_code,
+    open_to_relocation: record.open_to_relocation,
+    open_to_remote_work: record.open_to_remote_work,
+    current_work_authorization_status: record.current_work_authorization_status,
+    experience_years: record.experience_years,
+    experience_roles: record.experience_roles,
+    current_title: record.current_title,
+    current_company: record.current_company,
+    current_salary: record.current_salary,
+    current_salary_currency: record.current_salary_currency,
+    current_role_start_date: record.current_role_start_date,
+    skills: record.skills,
+    languages: record.languages,
+    diversity: record.diversity,
+    summary: record.summary,
+    image_url: record.image_url,
+    additional_sources: [
+      ...(record.sources ?? [])
+        .filter((source) => !source.main)
+        .map((source) => ({
+          title: source.title,
+          name: source.source ?? source.title,
+          url: source.url,
+        })),
+      ...research.sources
+        .filter((source) => !isLinkedInUrl(source.url))
+        .map((source) => ({
+          title: source.title ?? source.url,
+          name: source.title ?? 'Web',
+          url: source.url,
+        })),
+    ],
+    experience: record.experience,
+    education: record.education,
+  };
+}
+
+function isLinkedInUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'linkedin.com' || host.endsWith('.linkedin.com');
+  } catch {
+    return false;
+  }
+}
+
+// Written by deepSearchCandidate; kept when a search re-scores the result.
+const RESEARCH_METADATA_KEYS = [
+  'findings',
+  'identityConfidence',
+  'identityReason',
+  'searchQueries',
+  'researchEvidence',
+] as const;
+
+function asMetadata(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
+function mergeSources(existing: string[], incoming: string[]): string[] {
+  const seen = new Set(existing);
+  const merged = [...existing];
+  for (const source of incoming) {
+    if (!source || seen.has(source)) continue;
+    seen.add(source);
+    merged.push(source);
+  }
+  return merged;
 }

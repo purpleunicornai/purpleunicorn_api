@@ -1,0 +1,59 @@
+enum RocketReachLookupPurpose {
+  DEEP_RESEARCH
+  CONTACT_DETAILS
+}
+
+enum RocketReachLookupOutcome {
+  FOUND
+  NOT_FOUND
+  ERROR
+  // Still processing at RocketReach when we stopped polling.
+  PENDING_TIMEOUT
+}
+
+// What the org paid for the lookup.
+enum RocketReachLookupCharge {
+  // Charged and kept (a profile came back).
+  CHARGED
+  // Charged, then refunded (no profile, an error, or the research failed).
+  REFUNDED
+  // Served from a recent lookup of the same candidate; never charged.
+  FREE
+}
+
+// Every RocketReach lookup we make (and every one a cache hit saved), for
+// reconciling against RocketReach's bill. Holds the query that was sent
+// but no contact details from the answer: the raw profile stays on
+// role_result.metadata.rocketReach, the contact fields on candidate.
+model rocketreach_lookup {
+  uid                    String                   @id @unique @default(uuid()) @db.Uuid
+  created                DateTime                 @default(now()) @db.Timestamptz(3)
+  organization_id        String
+  user_id                String?
+  // Plain ids, no relations: the log outlives deleted candidates and roles.
+  candidate_id           String                   @db.Uuid
+  role_id                String?                  @db.Uuid
+  role_result_id         String?                  @db.Uuid
+  purpose                RocketReachLookupPurpose
+  // Which identifier was sent: id, linkedin_url, email or name_employer.
+  query_type             String?
+  // The request parameters sent to RocketReach; null for a cache hit.
+  query                  Json?
+  outcome                RocketReachLookupOutcome
+  from_cache             Boolean                  @default(false)
+  // Our best guess at whether RocketReach billed us: it bills a lookup
+  // that returns a profile (and may bill one still pending when we stopped
+  // waiting), not a miss or an error.
+  likely_billed          Boolean
+  rocketreach_profile_id String?
+  http_status            Int?
+  // Error name or code only, never a message that could echo a response.
+  error                  String?
+  org_charge             RocketReachLookupCharge
+  charge_entry_id        String?                  @db.Uuid
+  refund_entry_id        String?                  @db.Uuid
+
+  @@index([organization_id, created])
+  @@index([candidate_id, created])
+  @@index([created])
+}

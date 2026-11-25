@@ -12,3 +12,16 @@ export const requireOrgId = (auth: ClerkAuthContext): string => {
   }
   return auth.orgId;
 };
+
+// Clerk sends the org role as "org:admin" (or "admin" in short-form claims).
+export const requireOrgAdmin = (auth: ClerkAuthContext): string => {
+  const orgId = requireOrgId(auth);
+  if (auth.orgRole !== 'org:admin' && auth.orgRole !== 'admin') {
+    throw new RequestException(
+      'Only an organization admin can do this',
+      HttpStatus.FORBIDDEN,
+      'ORG_ADMIN_REQUIRED',
+    );
+  }
+  return orgId;
+};

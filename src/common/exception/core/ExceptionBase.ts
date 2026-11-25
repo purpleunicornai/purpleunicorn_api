@@ -7,7 +7,9 @@ import { HttpException, HttpStatus } from '@nestjs/common';
  */
 export class RequestException extends HttpException {
   constructor(
-    message: string,
+    // An object becomes the response body (RequestExceptionFilter spreads it
+    // in), for errors that carry data, e.g. { message, balance, required }.
+    message: string | Record<string, unknown>,
     status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
     errorCode?: string,
   ) {
