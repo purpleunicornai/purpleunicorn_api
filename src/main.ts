@@ -1,70 +1,16 @@
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Logger, ValidationPipe } from '@nestjs/common';
-import { RequestExceptionFilter } from './common/middleware/request-exception.filter';
-import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
-import { ConfigType } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
+import { createApp } from './bootstrap';
 import baseConfig from './config/base.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    cors: true,
-  });
+  const app = await createApp();
 
-  // Base64 inflates file size by ~33% (job-spec-import accepts files up to
-  // 5MB decoded), so the raw request body needs headroom above Express's
-  // 100kb default or a 5MB-and-under file would still be rejected before
-  // JobSpecImportService's own size check ever runs.
-  app.useBodyParser('json', { limit: '7mb' });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-
-  app.enableCors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['content-type', 'origin', 'authorization'],
-  });
-
-  app.useGlobalFilters(new RequestExceptionFilter());
-  app.useGlobalInterceptors(new TimeoutInterceptor(120000)); // 2 minute timeout — the AI-backed candidate search can run long
-
-  const config = new DocumentBuilder()
-    .setTitle('Purple Unicorn Api')
-    .setDescription(
-      'The api to support the front end of the Purple Unicorn application',
-    )
-    .setVersion('1.0')
-    .addTag('Purple Unicorn')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description:
-          'Paste a Clerk session JWT (e.g. obtained from `await getToken()` on the client).',
-      },
-      'bearer',
-    )
-    .build();
-
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory, {
-    jsonDocumentUrl: 'docs-json',
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+  // On Vercel, api/index.ts serves requests through the Express adapter.
+  // Listening here would bind a port inside the function for no benefit.
+  if (process.env.VERCEL) return;
 
   const baseConf: ConfigType<typeof baseConfig> = app.get(baseConfig.KEY);
-
   const port = Number(baseConf.port ?? 4000);
   await app.listen(port);
   Logger.debug(
@@ -74,4 +20,4 @@ async function bootstrap() {
   Logger.debug(`Swagger UI:  http://localhost:${port}/docs`, 'Bootstrap');
   Logger.debug(`OpenAPI JSON: http://localhost:${port}/docs-json`, 'Bootstrap');
 }
-bootstrap();
+void bootstrap();

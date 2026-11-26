@@ -29,7 +29,10 @@ import { OrgCapturesService } from './capture/org-captures.service';
     AuthModule,
     LogsModule,
     CreditsModule,
-    BullModule.registerQueue({ name: ROLE_SEARCH_QUEUE }),
+    BullModule.registerQueue({
+      name: ROLE_SEARCH_QUEUE,
+      forceDisconnectOnShutdown: true,
+    }),
   ],
   controllers: [RolesController, RoleSearchController, ExtensionController],
   providers: [
