@@ -1,3 +1,4 @@
+import { encodeBase64Json } from '../../common/utils/base64';
 import { GeminiService } from './gemini.service';
 import { ParsedRoleFilters } from '../../roles/search/role-filter-parser';
 import { GoogleSearchItem } from '../search-item';
@@ -124,19 +125,30 @@ function buildItem(
   };
 }
 
+const VERTEX_CREDENTIALS = {
+  type: 'service_account',
+  client_email: 'sa@example.com',
+  private_key: 'fake-key',
+};
+const VERTEX = {
+  vertexProjectId: 'test-project',
+  vertexServiceAccount: encodeBase64Json(VERTEX_CREDENTIALS),
+  vertexAiLocation: 'global',
+};
+
 describe('GeminiService', () => {
   let service: GeminiService;
   let generateText: jest.Mock;
-  let createGoogleGenerativeAI: jest.Mock;
+  let createVertex: jest.Mock;
 
   beforeEach(() => {
     generateText = jest.fn();
-    createGoogleGenerativeAI = jest.fn(() => (modelId: string) => ({
+    createVertex = jest.fn(() => (modelId: string) => ({
       modelId,
-      provider: 'google',
+      provider: 'google.vertex',
     }));
 
-    service = new GeminiService({ geminiApiKey: 'test-gemini-key' });
+    service = new GeminiService(VERTEX);
     jest.spyOn(service as any, 'loadAi').mockResolvedValue({
       generateText,
       Output: {
@@ -145,8 +157,8 @@ describe('GeminiService', () => {
       },
     });
     jest
-      .spyOn(service as any, 'loadGoogleProvider')
-      .mockResolvedValue({ createGoogleGenerativeAI });
+      .spyOn(service as any, 'loadVertexProvider')
+      .mockResolvedValue({ createVertex });
   });
 
   it('should be defined', () => {
@@ -388,7 +400,12 @@ describe('GeminiService', () => {
       await service.formatCandidates([buildItem()], buildFilters());
       await service.formatCandidates([buildItem()], buildFilters());
 
-      expect(createGoogleGenerativeAI).toHaveBeenCalledTimes(1);
+      expect(createVertex).toHaveBeenCalledTimes(1);
+      expect(createVertex).toHaveBeenCalledWith({
+        project: 'test-project',
+        location: 'global',
+        googleAuthOptions: { credentials: VERTEX_CREDENTIALS },
+      });
     });
   });
 
@@ -921,7 +938,7 @@ describe('GeminiService', () => {
 
   describe('researchCandidate', () => {
     it('reports the Gemini usage of the grounded search and structuring calls together', async () => {
-      createGoogleGenerativeAI.mockReturnValue(
+      createVertex.mockReturnValue(
         Object.assign((modelId: string) => ({ modelId }), {
           tools: { googleSearch: jest.fn(() => ({})) },
         }),
@@ -962,7 +979,7 @@ describe('GeminiService', () => {
     });
 
     it("keeps research's own structured output and qualifications apart from the seeded record", async () => {
-      createGoogleGenerativeAI.mockReturnValue(
+      createVertex.mockReturnValue(
         Object.assign((modelId: string) => ({ modelId }), {
           tools: { googleSearch: jest.fn(() => ({})) },
         }),

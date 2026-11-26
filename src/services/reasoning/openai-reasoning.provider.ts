@@ -17,7 +17,13 @@ export class OpenAiReasoningProvider extends AiSdkReasoningProvider {
 
   constructor(
     @Inject(AiConfig.KEY)
-    aiConf: Pick<ConfigType<typeof AiConfig>, 'geminiApiKey' | 'openaiApiKey'>,
+    aiConf: Pick<
+      ConfigType<typeof AiConfig>,
+      | 'vertexProjectId'
+      | 'vertexServiceAccount'
+      | 'vertexAiLocation'
+      | 'openaiApiKey'
+    >,
   ) {
     super(aiConf);
   }
