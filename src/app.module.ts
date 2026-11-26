@@ -14,14 +14,13 @@ import { CountriesModule } from './system/config/countries/countries.module';
 import { CandidateModule } from './organization/candidate/candidate.module';
 import { CreditsModule } from './organization/credits/credits.module';
 import { OrganizationSettingsModule } from './organization/settings/organization-settings.module';
+import { redisConnection } from './common/redis/redis.connection';
 
 @Module({
   imports: [
     BullModule.forRootAsync({
       useFactory: () => ({
-        connection: {
-          url: process.env.REDIS_URL,
-        },
+        connection: redisConnection(),
       }),
     }),
     MiddlewareModule,

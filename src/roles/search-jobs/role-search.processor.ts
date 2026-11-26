@@ -7,8 +7,8 @@ import {
   applyStageEvent,
   initialLive,
   pagesPerRun,
-  ROLE_SEARCH_CONCURRENCY,
   ROLE_SEARCH_QUEUE,
+  ROLE_SEARCH_WORKER,
   RoleSearchControl,
   RoleSearchJobData,
   RoleSearchLive,
@@ -18,7 +18,7 @@ import {
 // pagesPerRun() pages, so it carries on after the tab closes. Between batches
 // it checks for a stop; between pages for a pause or stop. Where it got to is
 // saved on the filter set after every page, and how the run ended at the end.
-@Processor(ROLE_SEARCH_QUEUE, { concurrency: ROLE_SEARCH_CONCURRENCY })
+@Processor(ROLE_SEARCH_QUEUE, ROLE_SEARCH_WORKER)
 export class RoleSearchProcessor extends WorkerHost {
   private readonly logger = new Logger(RoleSearchProcessor.name);
 

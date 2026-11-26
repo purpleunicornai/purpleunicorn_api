@@ -19,6 +19,17 @@ export function pagesPerRun(env: NodeJS.ProcessEnv = process.env): number {
 // Vertex and Gemini.
 export const ROLE_SEARCH_CONCURRENCY = 3;
 
+// Worker options for a process that may be a Vercel isolate: autorun so a
+// wake picks up jobs; a longer lock than one search page (Vertex + two
+// Gemini calls); less frequent stalled checks to cut Redis chatter.
+export const ROLE_SEARCH_WORKER = {
+  concurrency: ROLE_SEARCH_CONCURRENCY,
+  autorun: true,
+  drainDelay: 5,
+  stalledInterval: 60_000,
+  lockDuration: 120_000,
+};
+
 // One job per filter set: BullMQ ignores an add whose id already exists, so
 // starting twice is a no-op. (BullMQ ids can't contain ':'.)
 export const roleSearchJobId = (filterId: string) => `role-search-${filterId}`;
