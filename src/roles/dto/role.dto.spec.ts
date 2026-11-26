@@ -82,7 +82,7 @@ describe('RoleFilterResponseDto metadata and work types', () => {
     criterionExpansions: {
       version: 1,
       generatedAt: '2026-11-01T10:00:00.000Z',
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       byCategory: {
         job_titles: [{ seed: 'founder', terms: ['founder', 'co-founder'] }],
       },

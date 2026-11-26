@@ -18,7 +18,7 @@ describe('OrganizationSettingsController', () => {
     const reasoning = {
       isEnabled: jest.fn((provider: string) => provider !== 'anthropic'),
       availableModels: jest.fn(() => [
-        { provider: 'google', model: 'gemini-2.5-flash' },
+        { provider: 'google', model: 'gemini-3.5-flash' },
         { provider: 'openai', model: 'gpt-6.2-sol' },
       ]),
       choiceFor: jest.fn().mockResolvedValue({
@@ -41,7 +41,7 @@ describe('OrganizationSettingsController', () => {
       aiModel: 'gpt-6.2-sol',
       aiModelIsDefault: false,
       supportedModels: [
-        { provider: 'google', model: 'gemini-2.5-flash' },
+        { provider: 'google', model: 'gemini-3.5-flash' },
         { provider: 'openai', model: 'gpt-6.2-sol' },
       ],
     });

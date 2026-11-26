@@ -50,7 +50,7 @@ describe('resolveReasoningModel', () => {
 
 describe('providerOfModel', () => {
   it('finds the provider a model belongs to', () => {
-    expect(providerOfModel('gemini-2.5-flash')).toBe('google');
+    expect(providerOfModel('gemini-3.5-flash')).toBe('google');
     expect(providerOfModel('gpt-6-luna')).toBe('openai');
     expect(providerOfModel('claude-haiku-5-5')).toBe('anthropic');
     expect(providerOfModel('llama-9')).toBeNull();

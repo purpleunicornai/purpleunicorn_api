@@ -5,7 +5,7 @@ model organization_settings {
   created                  DateTime @default(now()) @db.Timestamptz(3)
   updated                  DateTime @updatedAt @db.Timestamptz(3)
   // Reasoning model for scoring, deep research, criteria expansion and job
-  // spec parsing, e.g. provider "google", model "gemini-2.5-flash". Null
+  // spec parsing, e.g. provider "google", model "gemini-3.5-flash". Null
   // uses the default.
   ai_provider              String?
   ai_model                 String?

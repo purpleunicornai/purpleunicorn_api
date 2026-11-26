@@ -13,7 +13,7 @@ export const SUPPORTED_REASONING_MODELS: Record<
   ReasoningProviderId,
   readonly string[]
 > = {
-  google: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+  google: ['gemini-3.5-flash', 'gemini-3.5-pro'],
   openai: ['gpt-6.2-sol', 'gpt-6-luna', 'gpt-6.1-terra', 'gpt-6.2-astra'],
   anthropic: ['claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-opus-5-5'],
 };
@@ -25,7 +25,7 @@ export type ReasoningModelChoice = {
 
 export const DEFAULT_REASONING_MODEL: ReasoningModelChoice = {
   provider: 'google',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-3.5-flash',
 };
 
 // Every reasoning call takes this last; no model means the provider default.

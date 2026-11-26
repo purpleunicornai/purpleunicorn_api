@@ -93,7 +93,7 @@ describe('JobSpecImportService', () => {
           original_text: 'Senior Engineer, London, TypeScript required.',
           created_by: 'Jane Admin',
           created_by_id: 'user-1',
-          ai_model_used: 'gemini-2.5-flash',
+          ai_model_used: 'gemini-3.5-flash',
           tokens_used: 150,
           role_filter_items: {
             create: [
