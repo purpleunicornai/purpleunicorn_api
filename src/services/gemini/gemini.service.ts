@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import AiConfig from '../../config/ai.config';
+import { decodeBase64Json } from '../../common/utils/base64';
 import { type ConfigType } from '@nestjs/config';
 import { z } from 'zod';
 import {
@@ -437,7 +438,10 @@ export type ProviderCallSettings = {
 };
 
 export type ReasoningApiKeys = {
-  geminiApiKey: string;
+  vertexProjectId: string;
+  vertexServiceAccount: string;
+  // Gemini's Vertex location, default 'global'.
+  vertexAiLocation: string;
   openaiApiKey?: string;
   anthropicApiKey?: string;
 };
@@ -590,16 +594,16 @@ export abstract class AiSdkReasoningProvider implements ReasoningProvider {
     { model: modelId = this.defaultModel }: ReasoningCallOptions = {},
   ): Promise<CandidateResearch> {
     const { generateText, Output } = await this.loadAi();
-    const { createGoogleGenerativeAI } = await this.loadGoogleProvider();
-    const google = createGoogleGenerativeAI({
-      apiKey: this.aiConf.geminiApiKey,
-    });
+    const vertex = await this.getVertex();
 
     const searched = await generateText({
-      model: google(this.groundsWithOwnModel ? modelId : GEMINI_MODEL),
+      model: vertex(this.groundsWithOwnModel ? modelId : GEMINI_MODEL),
       system: RESEARCH_INSTRUCTIONS,
       prompt: `CANDIDATE:\n${describeCandidate(candidate)}\n\nROLE THEY ARE BEING CONSIDERED FOR:\n${roleDescription}\n\nResearch this person.`,
-      tools: { google_search: google.tools.googleSearch({}) },
+      tools: {
+        // Vertex tool typings are slightly ahead of this `ai` version.
+        google_search: vertex.tools.googleSearch({}) as never,
+      },
       timeout: RESEARCH_SEARCH_TIMEOUT_MS,
       maxRetries: 1,
     });
@@ -843,9 +847,9 @@ export abstract class AiSdkReasoningProvider implements ReasoningProvider {
     };
   }
 
-  // ai / @ai-sdk/google are ESM-only (no CJS build). This project is
-  // CommonJS, so a static import would compile to require() and crash at
-  // runtime with ERR_REQUIRE_ESM — dynamic import() is Node's documented
+  // ai / @ai-sdk/google-vertex are ESM-only (no CJS build). This project
+  // is CommonJS, so a static import would compile to require() and crash
+  // at runtime with ERR_REQUIRE_ESM — dynamic import() is Node's documented
   // way for CJS code to load an ESM-only package. Kept as their own
   // methods (rather than inline) so tests can override them directly —
   // Jest's VM test environment can't execute a real dynamic import()
@@ -872,8 +876,21 @@ export abstract class AiSdkReasoningProvider implements ReasoningProvider {
     return import('ai');
   }
 
-  protected async loadGoogleProvider() {
-    return import('@ai-sdk/google');
+  protected async loadVertexProvider() {
+    return import('@ai-sdk/google-vertex');
+  }
+
+  // One Vertex client per provider instance, authenticated with the
+  // project's service account — never an API key.
+  protected async getVertex() {
+    const { createVertex } = await this.loadVertexProvider();
+    return createVertex({
+      project: this.aiConf.vertexProjectId,
+      location: this.aiConf.vertexAiLocation,
+      googleAuthOptions: {
+        credentials: decodeBase64Json(this.aiConf.vertexServiceAccount),
+      },
+    });
   }
 
   private async getModel(modelId: string): Promise<LanguageModel> {
@@ -1152,21 +1169,22 @@ export class GeminiService extends AiSdkReasoningProvider {
 
   constructor(
     @Inject(AiConfig.KEY)
-    aiConf: Pick<ConfigType<typeof AiConfig>, 'geminiApiKey'>,
+    aiConf: Pick<
+      ConfigType<typeof AiConfig>,
+      'vertexProjectId' | 'vertexServiceAccount' | 'vertexAiLocation'
+    >,
   ) {
     super(aiConf);
   }
 
-  // GEMINI_API_KEY is required config.
+  // Vertex project + service account are required config.
   get enabled(): boolean {
     return true;
   }
 
   protected async createModel(modelId: string): Promise<LanguageModel> {
-    const { createGoogleGenerativeAI } = await this.loadGoogleProvider();
-    return createGoogleGenerativeAI({ apiKey: this.aiConf.geminiApiKey })(
-      modelId,
-    );
+    const vertex = await this.getVertex();
+    return vertex(modelId);
   }
 
   protected callSettings(

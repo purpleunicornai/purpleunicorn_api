@@ -24,7 +24,10 @@ export class AnthropicReasoningProvider extends AiSdkReasoningProvider {
     @Inject(AiConfig.KEY)
     aiConf: Pick<
       ConfigType<typeof AiConfig>,
-      'geminiApiKey' | 'anthropicApiKey'
+      | 'vertexProjectId'
+      | 'vertexServiceAccount'
+      | 'vertexAiLocation'
+      | 'anthropicApiKey'
     >,
   ) {
     super(aiConf);

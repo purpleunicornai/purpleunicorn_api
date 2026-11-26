@@ -4,18 +4,20 @@ import * as Joi from 'joi';
 export default registerWithValidation(
   'ai',
   () => ({
-    vertexProjectId: process.env.VERTEX_PROJECT_ID,
+    vertexProjectId: String(process.env.VERTEX_PROJECT_ID),
     vertexLocation: process.env.VERTEX_LOCATION || 'global',
     vertexEngineId: process.env.VERTEX_ENGINE_ID,
     vertexServingConfigId:
       process.env.VERTEX_SERVING_CONFIG_ID || 'default_search',
     // Base64 service-account JSON, decoded as yuv-api's
     // FIREBASE_SERVICE_ACCOUNT.
-    vertexServiceAccount: process.env.VERTEX_SERVICE_ACCOUNT,
+    vertexServiceAccount: String(process.env.VERTEX_SERVICE_ACCOUNT),
     // Optional alternative to the service account: searchLite (public
     // website data stores only).
     vertexApiKey: process.env.VERTEX_API_KEY,
-    geminiApiKey: String(process.env.GEMINI_API_KEY),
+    // Gemini models go through Vertex (not the Gemini API key). Distinct
+    // from VERTEX_LOCATION, which is the Discovery Engine search region.
+    vertexAiLocation: process.env.VERTEX_AI_LOCATION || 'global',
     // Optional: unset or empty turns RocketReach off (deep research skips
     // it and never charges for it).
     rocketReachApiKey: process.env.ROCKET_REACH_API_KEY || undefined,
@@ -37,14 +39,13 @@ export default registerWithValidation(
     VERTEX_ENGINE_ID: Joi.string().required(),
     VERTEX_LOCATION: Joi.string().allow('').default('global'),
     VERTEX_SERVING_CONFIG_ID: Joi.string().allow('').default('default_search'),
-    // Required unless VERTEX_API_KEY is set.
-    VERTEX_SERVICE_ACCOUNT: Joi.string().when('VERTEX_API_KEY', {
-      is: Joi.string().min(1).required(),
-      then: Joi.optional().allow(''),
-      otherwise: Joi.required(),
-    }),
+    // Required: Vertex AI Search and Gemini (via @ai-sdk/google-vertex)
+    // both authenticate with this service account.
+    VERTEX_SERVICE_ACCOUNT: Joi.string().required(),
+    // Optional fallback for Vertex AI Search (searchLite) only; Gemini
+    // does not use it.
     VERTEX_API_KEY: Joi.string().allow('').optional(),
-    GEMINI_API_KEY: Joi.string().required(),
+    VERTEX_AI_LOCATION: Joi.string().allow('').default('global'),
     ROCKET_REACH_API_KEY: Joi.string().allow('').optional(),
     ROCKETREACH_CACHE_TTL_DAYS: Joi.number().integer().min(0).default(30),
     OPENAI_API_KEY: Joi.string().allow('').optional(),

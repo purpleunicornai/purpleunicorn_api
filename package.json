@@ -25,6 +25,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.106",
     "@ai-sdk/google": "^4.0.122",
+    "@ai-sdk/google-vertex": "^4.0.239",
     "@ai-sdk/openai": "^4.0.121",
     "@clerk/backend": "^3.11.4",
     "@clerk/clerk-sdk-node": "^4.13.23",

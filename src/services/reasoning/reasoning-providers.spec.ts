@@ -1,9 +1,17 @@
+import { encodeBase64Json } from '../../common/utils/base64';
 import { GeminiService } from '../gemini/gemini.service';
 import { AnthropicReasoningProvider } from './anthropic-reasoning.provider';
 import { OpenAiReasoningProvider } from './openai-reasoning.provider';
 
+const VERTEX_CREDENTIALS = {
+  type: 'service_account',
+  client_email: 'sa@example.com',
+  private_key: 'fake-key',
+};
 const KEYS = {
-  geminiApiKey: 'gemini-key',
+  vertexProjectId: 'test-project',
+  vertexServiceAccount: encodeBase64Json(VERTEX_CREDENTIALS),
+  vertexAiLocation: 'global',
   openaiApiKey: 'openai-key',
   anthropicApiKey: 'anthropic-key',
 };
@@ -32,10 +40,13 @@ function mocked<
   };
   const modelFactory = (name: string) =>
     jest.fn(() => (modelId: string) => ({ provider: name, modelId }));
-  const createGoogleGenerativeAI = jest.fn(() =>
-    Object.assign((modelId: string) => ({ provider: 'google', modelId }), {
-      tools: { googleSearch: jest.fn(() => 'google_search_tool') },
-    }),
+  const createVertex = jest.fn(() =>
+    Object.assign(
+      (modelId: string) => ({ provider: 'google.vertex', modelId }),
+      {
+        tools: { googleSearch: jest.fn(() => 'google_search_tool') },
+      },
+    ),
   );
   const createOpenAI = modelFactory('openai');
   const createAnthropic = modelFactory('anthropic');
@@ -44,7 +55,7 @@ function mocked<
       .spyOn(provider as never, method as never)
       .mockResolvedValue(value as never);
   spy('loadAi', { generateText, Output });
-  spy('loadGoogleProvider', { createGoogleGenerativeAI });
+  spy('loadVertexProvider', { createVertex });
   if (provider instanceof OpenAiReasoningProvider) {
     spy('loadOpenAiProvider', { createOpenAI });
   }
@@ -57,7 +68,7 @@ function mocked<
     Output,
     createOpenAI,
     createAnthropic,
-    createGoogleGenerativeAI,
+    createVertex,
   };
 }
 
@@ -68,13 +79,13 @@ describe('reasoning providers', () => {
       expect(new AnthropicReasoningProvider(KEYS).enabled).toBe(true);
       expect(
         new OpenAiReasoningProvider({
-          geminiApiKey: 'k',
+          ...KEYS,
           openaiApiKey: undefined,
         }).enabled,
       ).toBe(false);
       expect(
         new AnthropicReasoningProvider({
-          geminiApiKey: 'k',
+          ...KEYS,
           anthropicApiKey: '',
         }).enabled,
       ).toBe(false);
@@ -182,11 +193,13 @@ describe('reasoning providers', () => {
       const [search, structure] = mocks.generateText.mock.calls.map(
         ([call]) => call,
       );
-      expect(mocks.createGoogleGenerativeAI).toHaveBeenCalledWith({
-        apiKey: 'gemini-key',
+      expect(mocks.createVertex).toHaveBeenCalledWith({
+        project: 'test-project',
+        location: 'global',
+        googleAuthOptions: { credentials: VERTEX_CREDENTIALS },
       });
       expect(search.model).toEqual({
-        provider: 'google',
+        provider: 'google.vertex',
         modelId: 'gemini-2.5-flash',
       });
       expect(search.tools).toEqual({ google_search: 'google_search_tool' });
