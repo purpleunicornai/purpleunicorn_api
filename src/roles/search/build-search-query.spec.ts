@@ -163,7 +163,7 @@ describe('buildSearchQuery', () => {
     const expansions: CriterionExpansions = {
       version: 1,
       generatedAt: '2026-11-15T12:00:00.000Z',
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       byCategory: {
         job_titles: [
           {

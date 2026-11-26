@@ -200,7 +200,7 @@ describe('reasoning providers', () => {
       });
       expect(search.model).toEqual({
         provider: 'google.vertex',
-        modelId: 'gemini-2.5-flash',
+        modelId: 'gemini-3.5-flash',
       });
       expect(search.tools).toEqual({ google_search: 'google_search_tool' });
       expect(structure.model.modelId).toBe(model);

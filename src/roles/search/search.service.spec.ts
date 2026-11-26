@@ -624,7 +624,7 @@ describe('SearchService', () => {
           tokens_used: 123,
           sources: ['Vertex'],
           ai_platform: 'Gemini',
-          ai_model: 'gemini-2.5-flash',
+          ai_model: 'gemini-3.5-flash',
         },
       });
       expect(
@@ -700,7 +700,7 @@ describe('SearchService', () => {
           tokens_used: 123,
           sources: ['GitHub'],
           ai_platform: 'Gemini',
-          ai_model: 'gemini-2.5-flash',
+          ai_model: 'gemini-3.5-flash',
         },
         include: { candidate: true },
       });
@@ -967,7 +967,7 @@ describe('SearchService', () => {
           tokens_used: 100,
           sources: ['Vertex'],
           ai_platform: 'Gemini',
-          ai_model: 'gemini-2.5-flash',
+          ai_model: 'gemini-3.5-flash',
           // The search snapshot a later deep research re-scores from.
           metadata: {
             searchEvidence: expect.objectContaining({
@@ -1400,7 +1400,7 @@ describe('SearchService', () => {
           tokens_used: 60,
           sources: ['Database'],
           ai_platform: 'Gemini',
-          ai_model: 'gemini-2.5-flash',
+          ai_model: 'gemini-3.5-flash',
           metadata: expect.objectContaining({
             searchScore: expect.objectContaining({ score: 72 }),
           }),
@@ -1746,7 +1746,7 @@ describe('SearchService', () => {
     const expansions = {
       version: 1,
       generatedAt: '2026-11-06T09:00:00.000Z',
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       byCategory: {
         job_titles: [
           {

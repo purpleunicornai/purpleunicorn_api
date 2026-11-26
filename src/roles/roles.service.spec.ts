@@ -95,7 +95,7 @@ function buildGeminiService(): jest.Mocked<GeminiService> {
   return {
     expandSearchTerms: jest.fn().mockResolvedValue({
       byCategory: {},
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       tokensUsed: 0,
     }),
   } as unknown as jest.Mocked<GeminiService>;
@@ -545,7 +545,7 @@ describe('RolesService', () => {
     it('saves the AI-elaborated OR groups for new titles on the filter set', async () => {
       geminiService.expandSearchTerms.mockResolvedValue({
         byCategory: { job_titles: [founderGroup, roleNameGroup] },
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
         tokensUsed: 42,
       });
 
@@ -564,7 +564,7 @@ describe('RolesService', () => {
         criterionExpansions: {
           version: 1,
           generatedAt: expect.stringMatching(/^\d{4}-\d\d-\d\dT/),
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           byCategory: { job_titles: [founderGroup, roleNameGroup] },
         },
       });
@@ -575,7 +575,7 @@ describe('RolesService', () => {
         criterionExpansions: {
           version: 1,
           generatedAt: '2026-11-01T10:00:00.000Z',
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           byCategory: {
             job_titles: [founderGroup, roleNameGroup],
             skills: [pythonGroup],
@@ -602,14 +602,14 @@ describe('RolesService', () => {
           criterionExpansions: {
             version: 1,
             generatedAt: '2026-11-01T10:00:00.000Z',
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.5-flash',
             byCategory: { job_titles: [founderGroup, roleNameGroup] },
           },
         },
       });
       geminiService.expandSearchTerms.mockResolvedValue({
         byCategory: { skills: [pythonGroup] },
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
         tokensUsed: 10,
       });
 
@@ -642,7 +642,7 @@ describe('RolesService', () => {
           criterionExpansions: {
             version: 1,
             generatedAt: '2026-11-01T10:00:00.000Z',
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.5-flash',
             byCategory: {
               job_titles: [founderGroup, roleNameGroup],
               skills: [pythonGroup],
@@ -658,7 +658,7 @@ describe('RolesService', () => {
         criterionExpansions: {
           version: 1,
           generatedAt: '2026-11-01T10:00:00.000Z',
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           byCategory: { job_titles: [founderGroup, roleNameGroup] },
         },
       });
@@ -696,7 +696,7 @@ describe('RolesService', () => {
       // Python came back without alternates, so normalization left it out.
       geminiService.expandSearchTerms.mockResolvedValue({
         byCategory: { job_titles: [founderGroup, roleNameGroup] },
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
         tokensUsed: 42,
       });
       await service.createFilter(
@@ -713,7 +713,7 @@ describe('RolesService', () => {
       prisma.role_filters.findFirst.mockResolvedValue({ metadata: firstSave });
       geminiService.expandSearchTerms.mockResolvedValue({
         byCategory: { skills: [pythonGroup] },
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
         tokensUsed: 10,
       });
       await service.createFilter(
@@ -744,7 +744,7 @@ describe('RolesService', () => {
         criterionExpansions: {
           version: 1,
           generatedAt: '2026-11-01T10:00:00.000Z',
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           byCategory: {
             job_titles: [
               { seed: 'founder', terms: ['founder'] },
@@ -766,7 +766,7 @@ describe('RolesService', () => {
         criterionExpansions: {
           version: 1,
           generatedAt: '2026-11-01T10:00:00.000Z',
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           byCategory: { job_titles: [founderGroup, roleNameGroup] },
         },
       };
@@ -788,7 +788,7 @@ describe('RolesService', () => {
         criterionExpansions: {
           version: 1,
           generatedAt: '2026-11-01T10:00:00.000Z',
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           byCategory: { job_titles: [founderGroup, roleNameGroup] },
         },
       };
@@ -817,7 +817,7 @@ describe('RolesService', () => {
         criterionExpansions: {
           version: 1,
           generatedAt: '2026-11-01T10:00:00.000Z',
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           byCategory: {
             job_titles: [founderGroup, roleNameGroup],
             skills: [pythonGroup],
@@ -889,7 +889,7 @@ describe('RolesService', () => {
       it('asks Gemini only for seeds that are neither edited nor saved, and ignores edits for removed seeds', async () => {
         geminiService.expandSearchTerms.mockResolvedValue({
           byCategory: { skills: [{ seed: 'Go', terms: ['Go', 'Golang'] }] },
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           tokensUsed: 9,
         });
 

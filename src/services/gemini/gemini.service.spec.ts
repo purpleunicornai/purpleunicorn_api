@@ -189,7 +189,7 @@ describe('GeminiService', () => {
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          model: expect.objectContaining({ modelId: 'gemini-3.5-flash' }),
           prompt: expect.stringContaining('Fullstack Developer'),
           output: expect.anything(),
         }),
@@ -430,7 +430,7 @@ describe('GeminiService', () => {
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          model: expect.objectContaining({ modelId: 'gemini-3.5-flash' }),
           prompt: expect.stringContaining('Senior Engineer'),
           output: expect.anything(),
           timeout: expect.any(Number),
@@ -516,7 +516,7 @@ describe('GeminiService', () => {
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          model: expect.objectContaining({ modelId: 'gemini-3.5-flash' }),
           prompt: expect.stringContaining('Jane Doe'),
           output: expect.anything(),
         }),
@@ -669,7 +669,7 @@ describe('GeminiService', () => {
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          model: expect.objectContaining({ modelId: 'gemini-3.5-flash' }),
           output: expect.anything(),
           timeout: 15_000,
           providerOptions: {
@@ -734,7 +734,7 @@ describe('GeminiService', () => {
             },
           ],
         },
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
         tokensUsed: 77,
       });
     });
@@ -775,7 +775,7 @@ describe('GeminiService', () => {
 
       expect(generateText).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: expect.objectContaining({ modelId: 'gemini-2.5-flash' }),
+          model: expect.objectContaining({ modelId: 'gemini-3.5-flash' }),
           prompt: expect.stringContaining(
             'Senior Software Engineer, London, React required.',
           ),
