@@ -1,17 +1,74 @@
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
-import { createApp } from './bootstrap';
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { RequestExceptionFilter } from './common/middleware/request-exception.filter';
 import baseConfig from './config/base.config';
 
 async function bootstrap() {
-  const app = await createApp();
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    cors: true,
+  });
 
-  // On Vercel, api/index.ts serves requests through the Express adapter.
-  // Listening here would bind a port inside the function for no benefit.
-  if (process.env.VERCEL) return;
+  // Base64 inflates file size by ~33% (job-spec-import accepts files up to
+  // 5MB decoded), so the raw request body needs headroom above Express's
+  // 100kb default or a 5MB-and-under file would still be rejected before
+  // JobSpecImportService's own size check ever runs.
+  app.useBodyParser('json', { limit: '7mb' });
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['content-type', 'origin', 'authorization'],
+  });
+
+  app.useGlobalFilters(new RequestExceptionFilter());
+  app.useGlobalInterceptors(new TimeoutInterceptor(120000)); // 2 minute timeout — the AI-backed candidate search can run long
+
+  const config = new DocumentBuilder()
+    .setTitle('Purple Unicorn Api')
+    .setDescription(
+      'The api to support the front end of the Purple Unicorn application',
+    )
+    .setVersion('1.0')
+    .addTag('Purple Unicorn')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description:
+          'Paste a Clerk session JWT (e.g. obtained from `await getToken()` on the client).',
+      },
+      'bearer',
+    )
+    .build();
+
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, documentFactory, {
+    jsonDocumentUrl: 'docs-json',
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
+
+  app.enableShutdownHooks();
+
+  // Vercel's NestJS preset wraps this listen() and serves the app as one
+  // function. It also sets PORT. Locally we fall back to the configured port.
   const baseConf: ConfigType<typeof baseConfig> = app.get(baseConfig.KEY);
-  const port = Number(baseConf.port ?? 4000);
+  const port = Number(process.env.PORT ?? baseConf.port ?? 4000);
   await app.listen(port);
   Logger.debug(
     `Purple Unicorn API listening on http://localhost:${port}`,
