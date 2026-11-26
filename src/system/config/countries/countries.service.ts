@@ -7,6 +7,7 @@ import {
   getStateByCode,
 } from '@countrystatecity/countries';
 import { RequestException } from '../../../common/exception/core/ExceptionBase';
+import './country-data-trace';
 
 @Injectable()
 export class CountriesService {
