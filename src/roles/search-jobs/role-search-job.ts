@@ -19,12 +19,22 @@ export function pagesPerRun(env: NodeJS.ProcessEnv = process.env): number {
 // Vertex and Gemini.
 export const ROLE_SEARCH_CONCURRENCY = 3;
 
-// Worker options for a process that may be a Vercel isolate: autorun so a
-// wake picks up jobs; a longer lock than one search page (Vertex + two
-// Gemini calls); less frequent stalled checks to cut Redis chatter.
+// Vercel freezes a function once it has responded, so a background worker
+// never finishes a job there. On Vercel the start endpoint runs the search
+// itself, inside the request (no job, no worker), and gives up with a margin
+// before the function's max duration (Settings > Functions, 300s).
+export const runsInline = (env: NodeJS.ProcessEnv = process.env) =>
+  Boolean(env.VERCEL);
+export const VERCEL_MAX_DURATION_MS = 300_000;
+export const INLINE_RUN_BUDGET_MS = VERCEL_MAX_DURATION_MS - 20_000;
+export const INLINE_TIMEOUT_MESSAGE = `The search timed out after ${INLINE_RUN_BUDGET_MS / 1000}s. Pages already loaded are kept; resume to carry on.`;
+
+// Worker options. Longer lock than one search page (Vertex + two Gemini
+// calls) and less frequent stalled checks to cut Redis chatter. Never
+// autorun on Vercel: nothing is queued there, so there is nothing to wake for.
 export const ROLE_SEARCH_WORKER = {
   concurrency: ROLE_SEARCH_CONCURRENCY,
-  autorun: true,
+  autorun: !runsInline(),
   drainDelay: 5,
   stalledInterval: 60_000,
   lockDuration: 120_000,

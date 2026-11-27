@@ -7,6 +7,10 @@ import { AppModule } from './app.module';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { RequestExceptionFilter } from './common/middleware/request-exception.filter';
 import baseConfig from './config/base.config';
+import {
+  runsInline,
+  VERCEL_MAX_DURATION_MS,
+} from './roles/search-jobs/role-search-job';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -34,7 +38,11 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new RequestExceptionFilter());
-  app.useGlobalInterceptors(new TimeoutInterceptor(120000)); // 2 minute timeout — the AI-backed candidate search can run long
+  // 2 minutes, the AI-backed candidate search can run long. On Vercel the
+  // start-search request runs the whole search, so allow the function's max.
+  app.useGlobalInterceptors(
+    new TimeoutInterceptor(runsInline() ? VERCEL_MAX_DURATION_MS : 120000),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Purple Unicorn Api')

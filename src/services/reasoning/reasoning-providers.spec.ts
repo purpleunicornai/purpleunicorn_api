@@ -236,12 +236,12 @@ describe('reasoning providers', () => {
       'Role',
       { name: 'Jane' },
       {
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3.1-pro-preview',
       },
     );
 
     const [search, structure] = mocks.generateText.mock.calls.map(([c]) => c);
-    expect(search.model.modelId).toBe('gemini-2.5-pro');
-    expect(structure.model.modelId).toBe('gemini-2.5-pro');
+    expect(search.model.modelId).toBe('gemini-3.1-pro-preview');
+    expect(structure.model.modelId).toBe('gemini-3.1-pro-preview');
   });
 });
