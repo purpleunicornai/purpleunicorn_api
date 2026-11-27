@@ -199,4 +199,79 @@ describe('RoleSearchProcessor', () => {
 
     expect(statuses()).toEqual(['running']);
   });
+
+  describe('runInline (Vercel)', () => {
+    const failedMessage = expect.stringContaining('timed out') as string;
+
+    it('runs the pages in the request with no job, and records how it ended', async () => {
+      searchService.runSearchPage
+        .mockResolvedValueOnce(page(1))
+        .mockResolvedValueOnce(page(2, false));
+
+      await processor.runInline(data());
+
+      expect(searchService.runSearchPage).toHaveBeenCalledTimes(2);
+      expect(statuses()).toEqual(['running', 'complete']);
+      expect(queue.getJob).not.toHaveBeenCalled();
+      expect(job.updateProgress).not.toHaveBeenCalled();
+    });
+
+    it('records a failure with its message', async () => {
+      searchService.runSearchPage.mockRejectedValue(new Error('Vertex down'));
+
+      await processor.runInline(data());
+
+      expect(searchService.saveSearchProgress).toHaveBeenLastCalledWith(
+        'filter-1',
+        { status: 'failed', error: 'Vertex down' },
+      );
+    });
+
+    it('marks the search failed with a clear message when it runs out of time, even if a page is stuck', async () => {
+      searchService.runSearchPage.mockReturnValue(new Promise(() => undefined));
+
+      await processor.runInline(data(), 20);
+
+      expect(statuses()).toEqual(['running', 'failed']);
+      expect(searchService.saveSearchProgress).toHaveBeenLastCalledWith(
+        'filter-1',
+        { status: 'failed', error: failedMessage },
+      );
+    });
+
+    it('cuts a page that is still going off at its next checkpoint, and does not overwrite the failure', async () => {
+      let release: (outcome: SearchPageOutcome) => void = () => undefined;
+      let stopAsked: boolean | undefined;
+      searchService.runSearchPage.mockImplementation(
+        (_r, _f, _u, _n, _name, hooks) =>
+          new Promise((resolve) => {
+            release = (outcome) =>
+              void hooks?.shouldStop?.().then((stop) => {
+                stopAsked = stop;
+                resolve(outcome);
+              });
+          }),
+      );
+
+      await processor.runInline(data(), 20);
+      release({ kind: 'stopped' });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(stopAsked).toBe(true);
+      expect(statuses()).toEqual(['running', 'failed']);
+    });
+
+    it('does not start another page once out of time', async () => {
+      searchService.runSearchPage.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return page(1);
+      });
+
+      await processor.runInline(data(), 10);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(searchService.runSearchPage).toHaveBeenCalledTimes(1);
+      expect(statuses()).toEqual(['running', 'failed']);
+    });
+  });
 });

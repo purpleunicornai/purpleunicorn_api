@@ -14,9 +14,9 @@ describe('resolveReasoningModel', () => {
     expect(
       resolveReasoningModel({
         ai_provider: 'google',
-        ai_model: 'gemini-2.5-pro',
+        ai_model: 'gemini-3.1-pro-preview',
       }),
-    ).toEqual({ provider: 'google', model: 'gemini-2.5-pro' });
+    ).toEqual({ provider: 'google', model: 'gemini-3.1-pro-preview' });
     expect(
       resolveReasoningModel({ ai_provider: 'openai', ai_model: 'gpt-6.2-sol' }),
     ).toEqual({ provider: 'openai', model: 'gpt-6.2-sol' });
@@ -28,7 +28,7 @@ describe('resolveReasoningModel', () => {
     ['a retired model', { ai_provider: 'google', ai_model: 'gemini-1.0' }],
     [
       'an unknown provider',
-      { ai_provider: 'acme', ai_model: 'gemini-2.5-pro' },
+      { ai_provider: 'acme', ai_model: 'gemini-3.1-pro-preview' },
     ],
     [
       'a model saved under the wrong provider',
@@ -65,7 +65,7 @@ describe('ReasoningService', () => {
     enabled: false,
   } as AnthropicReasoningProvider;
   const settings: Record<string, { ai_provider: string; ai_model: string }> = {
-    'org-pro': { ai_provider: 'google', ai_model: 'gemini-2.5-pro' },
+    'org-pro': { ai_provider: 'google', ai_model: 'gemini-3.1-pro-preview' },
     'org-openai': { ai_provider: 'openai', ai_model: 'gpt-6.2-astra' },
     'org-claude': { ai_provider: 'anthropic', ai_model: 'claude-opus-5-5' },
   };
@@ -93,7 +93,7 @@ describe('ReasoningService', () => {
   it('resolves each organization’s own model and provider', async () => {
     await expect(service.forOrganization('org-pro')).resolves.toEqual({
       provider: gemini,
-      model: 'gemini-2.5-pro',
+      model: 'gemini-3.1-pro-preview',
     });
     await expect(service.forOrganization('org-openai')).resolves.toEqual({
       provider: openai,
@@ -131,7 +131,7 @@ describe('ReasoningService', () => {
 
   it('resolves a role through its project’s organization', async () => {
     await expect(service.forRole('role-pro')).resolves.toMatchObject({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-3.1-pro-preview',
     });
     await expect(service.forRole('role-default')).resolves.toMatchObject({
       model: DEFAULT_REASONING_MODEL.model,

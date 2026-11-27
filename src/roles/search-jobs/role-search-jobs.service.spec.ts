@@ -3,6 +3,7 @@ import { SearchProgress } from '../search/search-progress';
 import { FakeJob, FakeQueue } from './fake-queue-spec';
 import { RoleSearchJobData, roleSearchJobId } from './role-search-job';
 import { RoleSearchJobsService } from './role-search-jobs.service';
+import { RoleSearchProcessor } from './role-search.processor';
 
 const progress = (patch: Partial<SearchProgress> = {}) => ({
   searchProgress: {
@@ -46,6 +47,7 @@ describe('RoleSearchJobsService', () => {
     saveSearchProgress: jest.Mock;
     canBroaden: jest.Mock;
   };
+  let processor: { runInline: jest.Mock };
   let service: RoleSearchJobsService;
   const jobId = roleSearchJobId('filter-1');
   const withFilterSet = (metadata: unknown) =>
@@ -67,9 +69,11 @@ describe('RoleSearchJobsService', () => {
       saveSearchProgress: jest.fn().mockResolvedValue(undefined),
       canBroaden: jest.fn().mockResolvedValue(true),
     };
+    processor = { runInline: jest.fn().mockResolvedValue(undefined) };
     service = new RoleSearchJobsService(
       queue as never,
       searchService as unknown as SearchService,
+      processor as unknown as RoleSearchProcessor,
     );
   });
 
@@ -292,6 +296,85 @@ describe('RoleSearchJobsService', () => {
       expect((await service.status('role-1')).pagesPerRun).toBe(8);
       process.env.ROLE_SEARCH_PAGES_PER_RUN = 'lots';
       expect((await service.status('role-1')).pagesPerRun).toBe(5);
+    });
+  });
+
+  // Vercel freezes a function once it responds, so there the start request
+  // runs the search itself and no job is queued.
+  describe('on Vercel', () => {
+    const justNow = () => new Date().toISOString();
+
+    beforeEach(() => {
+      process.env.VERCEL = '1';
+    });
+    afterEach(() => {
+      delete process.env.VERCEL;
+    });
+
+    it('runs the search inside the request, answers with how it ended, and never touches the queue', async () => {
+      withFilterSet(progress({ status: 'paused', updatedAt: justNow() }));
+      processor.runInline.mockImplementation(() => {
+        withFilterSet(progress({ status: 'complete', pagesLoaded: 5 }));
+        return Promise.resolve();
+      });
+
+      const state = await service.start(startInput, {});
+
+      expect(processor.runInline).toHaveBeenCalledWith(jobData());
+      expect(state).toEqual(
+        expect.objectContaining({ status: 'complete', pagesLoaded: 5 }),
+      );
+      expect(queue.add).not.toHaveBeenCalled();
+      expect(queue.getJob).not.toHaveBeenCalled();
+    });
+
+    it('resets a restart to page 1 before running it', async () => {
+      withFilterSet(progress());
+
+      await service.start(startInput, { restart: true });
+
+      expect(searchService.saveSearchProgress).toHaveBeenCalledWith(
+        'filter-1',
+        expect.objectContaining({ pagesLoaded: 0, status: 'running' }),
+      );
+      expect(processor.runInline).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves a run another request is on alone', async () => {
+      withFilterSet(progress({ status: 'running', updatedAt: justNow() }));
+
+      const state = await service.start(startInput, { restart: true });
+
+      expect(processor.runInline).not.toHaveBeenCalled();
+      expect(searchService.saveSearchProgress).not.toHaveBeenCalled();
+      expect(state.status).toBe('running');
+    });
+
+    it('picks up a run saved as running that outlived the max duration', async () => {
+      withFilterSet(
+        progress({
+          status: 'running',
+          updatedAt: new Date(Date.now() - 6 * 60_000).toISOString(),
+        }),
+      );
+
+      await service.start(startInput, {});
+
+      expect(processor.runInline).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a fresh running run as running and a stale one as stopped', async () => {
+      withFilterSet(progress({ status: 'running', updatedAt: justNow() }));
+      expect((await service.status('role-1')).status).toBe('running');
+
+      withFilterSet(
+        progress({
+          status: 'running',
+          updatedAt: new Date(Date.now() - 6 * 60_000).toISOString(),
+        }),
+      );
+      expect((await service.status('role-1')).status).toBe('stopped');
+      expect(queue.getJob).not.toHaveBeenCalled();
     });
   });
 });

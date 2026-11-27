@@ -13,7 +13,7 @@ export const SUPPORTED_REASONING_MODELS: Record<
   ReasoningProviderId,
   readonly string[]
 > = {
-  google: ['gemini-3.5-flash', 'gemini-3.5-pro'],
+  google: ['gemini-3.5-flash', 'gemini-3.1-pro-preview'],
   openai: ['gpt-6.2-sol', 'gpt-6-luna', 'gpt-6.1-terra', 'gpt-6.2-astra'],
   anthropic: ['claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-opus-5-5'],
 };

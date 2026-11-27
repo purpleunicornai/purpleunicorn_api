@@ -17,7 +17,10 @@ import {
   RoleSearchState,
   RoleSearchStatus,
   roleSearchJobId,
+  runsInline,
+  VERCEL_MAX_DURATION_MS,
 } from './role-search-job';
+import { RoleSearchProcessor } from './role-search.processor';
 
 type RoleSearchJob = Job<RoleSearchJobData>;
 
@@ -38,15 +41,17 @@ export interface StartRoleSearchInput {
   roleName?: string;
 }
 
-// Starts, pauses, stops and reports the role's background search. The job
-// does the work (RoleSearchProcessor); the filter set's metadata holds where
-// it got to and how the last run ended, so status survives restarts.
+// Starts, pauses, stops and reports the role's search. A job does the work
+// (RoleSearchProcessor), or on Vercel the start request itself does, with no
+// job; the filter set's metadata holds where it got to and how the last run
+// ended, so status survives restarts.
 @Injectable()
 export class RoleSearchJobsService {
   constructor(
     @InjectQueue(ROLE_SEARCH_QUEUE)
     private readonly queue: Queue<RoleSearchJobData>,
     private readonly searchService: SearchService,
+    private readonly processor: RoleSearchProcessor,
   ) {}
 
   async status(roleId: string): Promise<RoleSearchState> {
@@ -63,7 +68,9 @@ export class RoleSearchJobsService {
   }
 
   // Idempotent: a live job is left running (and un-paused, if a pause or
-  // stop was pending), and BullMQ dedupes concurrent adds by job id.
+  // stop was pending), and BullMQ dedupes concurrent adds by job id. On
+  // Vercel there is no job: a fresh "running" is another request's run, and
+  // otherwise this call runs the search and answers when it has ended.
   // `deeper` (Look deeper) carries an exhausted run on with the broader
   // query; it's a no-op when there is none. Searches never spend credits.
   async start(
@@ -84,21 +91,26 @@ export class RoleSearchJobsService {
       );
     }
 
+    const inline = runsInline();
     const jobId = roleSearchJobId(filterSet.uid);
-    const existing = await this.queue.getJob(jobId);
-    if (existing) {
-      const state = await existing.getState();
-      if (LIVE_STATES.has(state)) {
-        if (existing.data.control) {
-          await existing.updateData({ ...existing.data, control: null });
+    const progress = parseSearchProgress(filterSet.metadata);
+    if (inline) {
+      if (isRunningInline(progress)) return this.status(input.roleId);
+    } else {
+      const existing = await this.queue.getJob(jobId);
+      if (existing) {
+        const state = await existing.getState();
+        if (LIVE_STATES.has(state)) {
+          if (existing.data.control) {
+            await existing.updateData({ ...existing.data, control: null });
+          }
+          return this.status(input.roleId);
         }
-        return this.status(input.roleId);
+        // A finished job kept by a failed removal; clear it so the id is free.
+        await existing.remove();
       }
-      // A finished job kept by a failed removal; clear it so the id is free.
-      await existing.remove();
     }
 
-    const progress = parseSearchProgress(filterSet.metadata);
     if (deeper && !restart) {
       if (!progress || !(await this.canLookDeeper(filterSet.uid, progress))) {
         return this.status(input.roleId);
@@ -125,11 +137,16 @@ export class RoleSearchJobsService {
         error: null,
       });
     }
-    await this.queue.add(
-      'run',
-      { ...input, filterId: filterSet.uid, control: null },
-      { jobId, removeOnComplete: true, removeOnFail: true },
-    );
+    const data = { ...input, filterId: filterSet.uid, control: null };
+    if (inline) {
+      await this.processor.runInline(data);
+    } else {
+      await this.queue.add('run', data, {
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+      });
+    }
     return this.status(input.roleId);
   }
 
@@ -177,6 +194,7 @@ export class RoleSearchJobsService {
   private async liveJob(
     filterId: string,
   ): Promise<{ job: RoleSearchJob; state: string } | null> {
+    if (runsInline()) return null;
     const job = await this.queue.getJob(roleSearchJobId(filterId));
     if (!job) return null;
     const state = await job.getState();
@@ -213,9 +231,21 @@ export class RoleSearchJobsService {
       return state === 'active' ? 'running' : 'queued';
     }
     if (!progress) return 'idle';
-    // Saved as running but no job alive: the worker died mid-run.
-    return progress.status === 'running' ? 'stopped' : progress.status;
+    if (progress.status !== 'running') return progress.status;
+    // Saved as running but no job alive: the worker died mid-run (on Vercel,
+    // unless a request is still running it).
+    return isRunningInline(progress) ? 'running' : 'stopped';
   }
+}
+
+// On Vercel a run is a request, which can't outlast the function's max
+// duration: "running" saved within that long ago is still going.
+function isRunningInline(progress: SearchProgress | null): boolean {
+  return (
+    runsInline() &&
+    progress?.status === 'running' &&
+    Date.now() - Date.parse(progress.updatedAt) < VERCEL_MAX_DURATION_MS
+  );
 }
 
 function liveOf(job: RoleSearchJob): RoleSearchLive | null {
